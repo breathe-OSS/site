@@ -1,10 +1,49 @@
-const API_URL = "https://api.breatheoss.app"; 
+// Interfaces
 
-let allZones = [];
-let pinnedZoneIds = JSON.parse(localStorage.getItem('breathe_pinned_zones')) || [];
-let mapInstance = null;
-let detailChart = null;
-let mapTileLayer = null;
+interface Zone {
+    id: string;
+    name: string;
+    lat: number;
+    lon: number;
+    provider?: string;
+    zone_type?: string;
+}
+
+interface AQIHistory {
+    ts: number;
+    aqi: number;
+}
+
+interface Pollutants {
+    [key: string]: number;
+}
+
+interface AQIData {
+    aqi: number;
+    main_pollutant: string;
+    timestamp_unix: number;
+    history: AQIHistory[];
+    concentrations_us_units: Pollutants;
+    zone_id: string;
+    zone_name: string;
+    source: string;
+}
+
+interface AQIColorResult {
+    bg: string;
+    hex: string;
+}
+
+declare const L: any;
+declare const Chart: any;
+
+const API_URL = "https://api.breatheoss.app";
+
+let allZones: Zone[] = [];
+let pinnedZoneIds: string[] = JSON.parse(localStorage.getItem('breathe_pinned_zones') || '[]');
+let mapInstance: any = null;
+let detailChart: any = null;
+let mapTileLayer: any = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
@@ -12,46 +51,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderDashboard();
     updateNavHighlight('dashboard');
     
-    document.getElementById('zone-search').addEventListener('input', (e) => {
-        renderExploreList(e.target.value);
-    });
+    const searchInput = document.getElementById('zone-search') as HTMLInputElement;
+    if (searchInput) {
+        searchInput.addEventListener('input', (e: Event) => {
+            const target = e.target as HTMLInputElement;
+            renderExploreList(target.value);
+        });
+    }
 });
 
-function initTheme() {
-    const toggle = document.getElementById('theme-toggle');
+function initTheme(): void {
+    const toggle = document.getElementById('theme-toggle') as HTMLInputElement;
     const savedTheme = localStorage.getItem('theme') || 'dark';
     
     document.documentElement.setAttribute('data-theme', savedTheme);
-    toggle.checked = (savedTheme === 'dark');
-
-    toggle.addEventListener('change', (e) => {
-        const newTheme = e.target.checked ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        if(detailChart) detailChart.update();
-        if(mapInstance) updateMapTiles(newTheme);
-    });
+    if (toggle) {
+        toggle.checked = (savedTheme === 'dark');
+        toggle.addEventListener('change', (e: Event) => {
+            const target = e.target as HTMLInputElement;
+            const newTheme = target.checked ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            if(detailChart) detailChart.update();
+            if(mapInstance) updateMapTiles(newTheme);
+        });
+    }
 }
 
-async function fetchZones() {
+async function fetchZones(): Promise<void> {
     try {
         const res = await fetch(`${API_URL}/zones`);
         const data = await res.json();
         allZones = data.zones;
-    } catch (e) { console.error("Fetch failed", e); }
+    } catch (e) {
+        console.error("Fetch failed", e);
+    }
 }
 
-async function getZoneAQI(zoneId) {
+async function getZoneAQI(zoneId: string): Promise<AQIData | null> {
     try {
         const res = await fetch(`${API_URL}/aqi/${zoneId}`);
         return await res.json();
-    } catch (e) { return null; }
+    } catch (e) {
+        return null;
+    }
 }
 
-async function renderDashboard() {
+async function renderDashboard(): Promise<void> {
     const container = document.getElementById('pinned-container');
     const emptyState = document.getElementById('empty-state');
+    
+    if (!container || !emptyState) return;
+
     container.innerHTML = '';
     
     if (pinnedZoneIds.length === 0) {
@@ -87,8 +139,10 @@ async function renderDashboard() {
     }
 }
 
-function renderExploreList(filter = "") {
+function renderExploreList(filter: string = ""): void {
     const container = document.getElementById('zone-list');
+    if (!container) return;
+    
     container.innerHTML = '';
 
     const filtered = allZones.filter(z => z.name.toLowerCase().includes(filter.toLowerCase()));
@@ -103,15 +157,19 @@ function renderExploreList(filter = "") {
                 <div style="font-weight:500; font-size:16px; margin-bottom:4px;">${z.name}</div>
                 <div style="font-size:12px; color:var(--on-surface-variant);">${z.provider || 'openmeteo'}</div>
             </div>
-            <button class="pin-btn ${isPinned ? 'pinned' : ''}" onclick="togglePin('${z.id}', this)">
+            <button class="pin-btn ${isPinned ? 'pinned' : ''}" data-id="${z.id}">
                 <svg viewBox="0 0 24 24"><path d="M16 9V4l1 1c.55.55 1.45.55 2 0s.55-1.45 0-2l-7-7-7 7c-.55.55-.55 1.45 0 2s1.45.55 2 0l1-1v5c0 1.66-1.34 3-3 3h-1v2h12v-2h-1c-1.66 0-3-1.34-3-3zM12 2C13 2 14 3 14 4V9H10V4C10 3 11 2 12 2M12 14C13.5 14 15 13 15 11.5V10H9V11.5C9 13 10.5 14 12 14Z" transform="rotate(45 12 12)"/></svg>
             </button>
         `;
+
+        const btn = div.querySelector('.pin-btn') as HTMLButtonElement;
+        btn.addEventListener('click', () => togglePin(z.id, btn));
+
         container.appendChild(div);
     });
 }
 
-function togglePin(id, btn) {
+function togglePin(id: string, btn: HTMLButtonElement): void {
     if (pinnedZoneIds.includes(id)) {
         pinnedZoneIds = pinnedZoneIds.filter(zid => zid !== id);
         btn.classList.remove('pinned');
@@ -123,50 +181,68 @@ function togglePin(id, btn) {
     renderDashboard();
 }
 
-async function openZoneDetails(zoneId) {
+
+async function openZoneDetails(zoneId: string): Promise<void> {
     showView('details');
     
     const zoneConfig = allZones.find(z => z.id === zoneId);
-    if(zoneConfig) document.getElementById('detail-title-header').innerText = zoneConfig.name;
+    const titleHeader = document.getElementById('detail-title-header');
+    if(zoneConfig && titleHeader) titleHeader.innerText = zoneConfig.name;
 
     const data = await getZoneAQI(zoneId);
     if (!data) return;
 
     const colors = getAQIColor(data.aqi);
     const aqiEl = document.getElementById('detail-aqi');
-    const chipEl = document.querySelector('.naqi-chip');
-    
-    aqiEl.innerText = data.aqi;
-    aqiEl.style.color = colors.hex; 
-    
-    chipEl.style.backgroundColor = colors.hex; 
-    
-    document.getElementById('detail-primary').innerText = `Primary: ${data.main_pollutant.toUpperCase()}`;
-    
-    const now = Date.now() / 1000;
-    const diff = Math.floor((now - data.timestamp_unix) / 60);
-    document.getElementById('detail-updated').innerText = `Updated ${diff} min ago`;
-
-    const provider = zoneConfig.provider || 'openmeteo';
+    const chipEl = document.querySelector('.naqi-chip') as HTMLElement;
+    const primaryEl = document.getElementById('detail-primary');
+    const updatedEl = document.getElementById('detail-updated');
     const providerContainer = document.getElementById('detail-provider');
     
-    if (provider === 'openaq') {
-        providerContainer.innerHTML = `<a href="https://openaq.org" target="_blank" class="provider-link"><div class="openaq-bg"><img src="assets/images/open_aq_logo.png" alt="OpenAQ" style="height:20px; display:block;"></div></a>`;
-    } else {
-        providerContainer.innerHTML = `
-            <a href="https://open-meteo.com" target="_blank" class="provider-link">
-                <img src="assets/images/open_meteo_logo.png" class="dark-only" alt="OpenMeteo" style="height:24px;">
-                <img src="assets/images/open_meteo_logo_light.png" class="light-only" alt="OpenMeteo" style="height:24px;">
-            </a>
-        `;
+    if (aqiEl) {
+        aqiEl.innerText = data.aqi.toString();
+        aqiEl.style.color = colors.hex;
+    }
+    
+    if (chipEl) {
+        chipEl.style.backgroundColor = colors.hex;
+    }
+    
+    if (primaryEl) {
+        primaryEl.innerText = `Primary: ${data.main_pollutant.toUpperCase()}`;
+    }
+    
+    if (updatedEl) {
+        const now = Date.now() / 1000;
+        const diff = Math.floor((now - data.timestamp_unix) / 60);
+        updatedEl.innerText = `Updated ${diff} min ago`;
+    }
+
+    if (providerContainer && zoneConfig) {
+        const provider = zoneConfig.provider || 'openmeteo';
+        if (provider === 'openaq') {
+            providerContainer.innerHTML = `<a href="https://openaq.org" target="_blank" class="provider-link"><div class="openaq-bg"><img src="assets/images/open_aq_logo.png" alt="OpenAQ" style="height:20px; display:block;"></div></a>`;
+        } else {
+            providerContainer.innerHTML = `
+                <a href="https://open-meteo.com" target="_blank" class="provider-link">
+                    <img src="assets/images/open_meteo_logo.png" class="dark-only" alt="OpenMeteo" style="height:24px;">
+                    <img src="assets/images/open_meteo_logo_light.png" class="light-only" alt="OpenMeteo" style="height:24px;">
+                </a>
+            `;
+        }
     }
 
     renderDetailChart(data.history);
+
     renderPollutantGrid(data.concentrations_us_units || {});
 }
 
-function renderDetailChart(history) {
-    const ctx = document.getElementById('detailChart').getContext('2d');
+function renderDetailChart(history: AQIHistory[]): void {
+    const canvas = document.getElementById('detailChart') as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     if (detailChart) detailChart.destroy();
 
     const sorted = history.sort((a, b) => a.ts - b.ts);
@@ -218,8 +294,9 @@ function renderDetailChart(history) {
     });
 }
 
-function renderPollutantGrid(comps) {
+function renderPollutantGrid(comps: Pollutants): void {
     const container = document.getElementById('pollutant-grid');
+    if (!container) return;
     container.innerHTML = '';
 
     const defs = [
@@ -246,11 +323,11 @@ function renderPollutantGrid(comps) {
     });
 }
 
-function initMap() {
+function initMap(): void {
     if (mapInstance) return;
     mapInstance = L.map('map-container', { zoomControl: false }).setView([33.9, 75.5], 8);
     
-    updateMapTiles(document.documentElement.getAttribute('data-theme'));
+    updateMapTiles(document.documentElement.getAttribute('data-theme') || 'dark');
 
     allZones.forEach(async (z) => {
         if (!z.lat || !z.lon) return;
@@ -293,7 +370,7 @@ function initMap() {
     });
 }
 
-function updateMapTiles(theme) {
+function updateMapTiles(theme: string): void {
     if (mapTileLayer) mapTileLayer.remove();
     
     const url = theme === 'light' 
@@ -306,9 +383,11 @@ function updateMapTiles(theme) {
     }).addTo(mapInstance);
 }
 
-function showView(viewName) {
+window.showView = function(viewName: string): void {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active-view'));
-    document.getElementById(`view-${viewName}`).classList.add('active-view');
+    const view = document.getElementById(`view-${viewName}`);
+    if (view) view.classList.add('active-view');
+    
     updateNavHighlight(viewName);
 
     if (viewName === 'map') {
@@ -318,11 +397,22 @@ function showView(viewName) {
         }, 100);
     }
     if (viewName === 'explore') {
-        renderExploreList(document.getElementById('zone-search').value);
+        const searchInput = document.getElementById('zone-search') as HTMLInputElement;
+        renderExploreList(searchInput ? searchInput.value : "");
     }
 }
 
-function updateNavHighlight(viewName) {
+window.openModal = function(id: string): void {
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('hidden');
+}
+
+window.closeModal = function(id: string): void {
+    const el = document.getElementById(id);
+    if(el) el.classList.add('hidden');
+}
+
+function updateNavHighlight(viewName: string): void {
     document.querySelectorAll('.nav-item, .nav-btn').forEach(el => el.classList.remove('active'));
     
     let target = viewName;
@@ -335,7 +425,8 @@ function updateNavHighlight(viewName) {
     if (sideBtn) sideBtn.classList.add('active');
 }
 
-function getAQIColor(aqi) {
+
+function getAQIColor(aqi: number): AQIColorResult {
     const style = getComputedStyle(document.documentElement);
     
     if (aqi <= 50) return { bg: 'bg-good', hex: style.getPropertyValue('--aqi-good').trim() };
@@ -345,6 +436,3 @@ function getAQIColor(aqi) {
     if (aqi <= 400) return { bg: 'bg-very-poor', hex: style.getPropertyValue('--aqi-very-poor').trim() };
     return { bg: 'bg-severe', hex: style.getPropertyValue('--aqi-severe').trim() };
 }
-
-function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }

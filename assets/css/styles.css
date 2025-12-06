@@ -68,6 +68,7 @@ body {
 .content-scroll {
     flex: 1;
     overflow-y: auto;
+    height: 120%;
     padding: 16px;
     padding-bottom: 120px;
 }

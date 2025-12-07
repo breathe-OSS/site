@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2016",
     "module": "ESNext",
-    "outDir": "./assets/js", 
+    "outDir": "./assets/js",
     "rootDir": "./assets/ts",
     "strict": true,
     "moduleResolution": "node",

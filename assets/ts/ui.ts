@@ -1,8 +1,12 @@
 import { getAQIColor, getCurrentTheme } from './utils.js';
 import { Zone, AQIData, AQIHistory, Pollutants } from './types.js';
+import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
 
-declare const Chart: any;
-let detailChart: any = null;
+declare const Chart: typeof ChartJS;
+type LineChart = InstanceType<typeof Chart<'line', number[], string>>;
+
+// Chart is loaded via CDN, so we type the global constructor for TS.
+let detailChart: LineChart | null = null;
 
 // main dashboard
 export function renderDashboardCard(zone: Zone, data: AQIData, onClick: () => void): HTMLElement {
@@ -164,7 +168,7 @@ function renderChart(history: AQIHistory[]) {
   gradient.addColorStop(0, isDark ? 'rgba(168, 199, 250, 0.4)' : 'rgba(65, 105, 225, 0.4)');
   gradient.addColorStop(1, isDark ? 'rgba(168, 199, 250, 0.0)' : 'rgba(65, 105, 225, 0.0)');
 
-  detailChart = new Chart(ctx, {
+  const config: ChartConfiguration<'line', number[], string> = {
     type: 'line',
     data: {
       labels: labels,
@@ -189,5 +193,7 @@ function renderChart(history: AQIHistory[]) {
       scales: { x: { display: false }, y: { display: false, min: 0 } },
       layout: { padding: 0 },
     },
-  });
+  };
+
+  detailChart = new Chart(ctx, config);
 }

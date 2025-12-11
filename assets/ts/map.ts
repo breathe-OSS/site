@@ -1,12 +1,13 @@
 import { getZoneAQI } from './api.js';
 import { getAQIColor, getCurrentTheme } from './utils.js';
 import { Zone } from './types.js';
+import * as Leaflet from 'leaflet';
+
+declare const L: typeof Leaflet;
 
 // declare global Leaflet variable
-declare const L: any;
-
-let mapInstance: any = null;
-let mapTileLayer: any = null;
+let mapInstance: Leaflet.Map | null = null;
+let mapTileLayer: Leaflet.TileLayer | null = null;
 
 export function initMap(allZones: Zone[]): void {
   if (mapInstance) return;
@@ -34,12 +35,12 @@ export function updateMapTiles(theme: string): void {
 }
 
 export function resizeMap(): void {
-  if (mapInstance) {
-    setTimeout(() => mapInstance.invalidateSize(), 100);
-  }
+  if (!mapInstance) return;
+  setTimeout(() => mapInstance?.invalidateSize(), 100);
 }
 
 function populateMapMarkers(allZones: Zone[]) {
+  if (!mapInstance) return;
   allZones.forEach(async (z) => {
     if (!z.lat || !z.lon) return;
 
@@ -66,10 +67,12 @@ function populateMapMarkers(allZones: Zone[]) {
       iconAnchor: [15, 15],
     });
 
-    L.marker([z.lat, z.lon], { icon: icon }).addTo(mapInstance).bindPopup(`
+    L.marker([z.lat, z.lon], { icon: icon }).addTo(mapInstance!).bindPopup(`
                 <div style="text-align:center; color:#333;">
                     <h3 style="margin:0">${z.name}</h3>
-                    <div style="font-size:24px; font-weight:bold; margin:5px 0;">${data.aqi} AQI</div>
+                    <div style="font-size:24px; font-weight:bold; margin:5px 0;">${
+                      data.aqi
+                    } AQI</div>
                     <small>Primary: ${data.main_pollutant.toUpperCase()}</small>
                 </div>
             `);

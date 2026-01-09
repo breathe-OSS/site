@@ -18,6 +18,22 @@ function getPinIcon(isPinned: boolean): string {
   return isPinned ? PINNED_ICON : UNPINNED_ICON;
 }
 
+function getTrendHTML(currentAqi: number, currentTs: number, history: AQIHistory[]): string {
+  if (!history || history.length === 0) return '';
+  const oneHourAgo = currentTs - 3600;
+  const validHistory = history.filter(h => Math.abs(h.ts - oneHourAgo) < 1800);
+  if (validHistory.length === 0) return '';
+  validHistory.sort((a, b) => Math.abs(a.ts - oneHourAgo) - Math.abs(b.ts - oneHourAgo));
+  const pastEntry = validHistory[0];
+  const diff = currentAqi - pastEntry.aqi;
+  if (diff === 0) return '<span class="trend-neutral">-- (1h)</span>';
+  const isRising = diff > 0;
+  const sign = isRising ? '+' : '';
+  const arrow = isRising ? '▲' : '▼';
+  const colorClass = isRising ? 'trend-up' : 'trend-down';
+  return `<span class="${colorClass}">${arrow} ${sign}${diff} (1h)</span>`;
+}
+
 // main dashboard
 export function renderDashboardCard(zone: Zone, data: AQIData, onClick: () => void): HTMLElement {
   const colorClass = getAQIColor(data.aqi).bg;
@@ -91,6 +107,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   const chipEl = document.querySelector('.naqi-chip') as HTMLElement;
   const primaryEl = document.getElementById('detail-primary');
   const updatedEl = document.getElementById('detail-updated');
+  const trendEl = document.getElementById('detail-trend');
   const providerContainer = document.getElementById('detail-provider');
 
   if (aqiEl) {
@@ -99,6 +116,10 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   }
   if (chipEl) chipEl.style.backgroundColor = colors.hex;
   if (primaryEl) primaryEl.innerText = `Primary: ${data.main_pollutant.toUpperCase()}`;
+
+  if (trendEl) {
+    trendEl.innerHTML = getTrendHTML(data.aqi, data.timestamp_unix, data.history);
+  }
 
   if (updatedEl) {
     const now = Date.now() / 1000;

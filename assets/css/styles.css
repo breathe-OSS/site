@@ -840,3 +840,25 @@ input:checked + .slider:before {
     height: 13%;
   }
 }
+.trend-display {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 24px; 
+}
+
+.trend-up {
+  color: var(--aqi-very-poor); 
+}
+
+.trend-down {
+  color: var(--aqi-good);
+}
+
+.trend-neutral {
+  color: var(--on-surface-variant);
+}

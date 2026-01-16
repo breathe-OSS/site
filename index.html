@@ -158,7 +158,7 @@
 
                 <div class="settings-item clickable" onclick="openModal('data-source-modal')">
                     <div class="settings-title">Data Sources</div>
-                    <div class="settings-subtitle">OpenMeteo & OpenAQ</div>
+                    <div class="settings-subtitle">OpenMeteo & AirGradient</div>
                 </div>
 
                 <div class="settings-item clickable" onclick="showView('privacy')">
@@ -249,8 +249,8 @@
                         <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary);">2.1 Open-Meteo</div>
                         <p>Used for weather and global air quality modelling. <a href="https://open-meteo.com/" target="_blank" style="color: var(--primary); text-decoration: none;">Visit Open-Meteo</a>.</p>
 
-                        <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary);">2.2 OpenAQ & CPCB</div>
-                        <p>Used for sensor-based readings in specific regions (e.g., Srinagar). Data originates from the <a href="https://cpcb.gov.in/" target="_blank" style="color: var(--primary); text-decoration: none;">Central Pollution Control Board (CPCB)</a> via <a href="https://openaq.org/" target="_blank" style="color: var(--primary); text-decoration: none;">OpenAQ</a>.</p>
+                        <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary);">2.2 AirGradient</div>
+                        <p>Crowdfunded sensor-based readings in specific regions (Srinagar and Jammu)).  <a href="https://www.airgradient.com/" target="_blank" style="color: var(--primary); text-decoration: none;">Visit AirGradient</a>.</p>
 
                         <h3 class="section-title">3. Infrastructure</h3>
                         
@@ -276,7 +276,7 @@
         <div class="modal-card">
             <h3>Data Sources</h3>
             <div class="modal-body">
-                <p><strong>Jammu & Kashmir regions (excl. Srinagar)</strong></p>
+                <p><strong>Jammu & Kashmir regions (excl. Srinagar and Jammu)</strong></p>
                 <p class="modal-text">Air quality and weather data sourced from Open-Meteo.</p>
                 <a href="https://open-meteo.com/" target="_blank" class="link-img">
                     <img src="assets/images/open_meteo_logo.png" class="provider-logo dark-only" alt="OpenMeteo" />
@@ -285,17 +285,20 @@
 
                 <div class="divider"></div>
 
-                <p><strong>Srinagar region</strong></p>
+                <p><strong>Srinagar and Jammu</strong></p>
                 <p class="modal-text">
-                    Air quality data sourced from OpenAQ, using measurements published by the Central Pollution Control Board (CPCB). Ozone Data sourced from Open-Meteo.
+                    PM10 and PM2.5 sourced from AirGradient, other concentrations sourced from Open-Meteo.
                 </p>
                 <div style="display: flex; gap: 16px; align-items: center">
-                    <a href="https://openaq.org/" target="_blank" class="link-img">
+                    <a href="https://www.airgradient.com/" target="_blank" class="link-img">
                         <div class="openaq-bg">
-                            <img src="assets/images/open_aq_logo.png" class="provider-logo" style="margin-top: 0" alt="OpenAQ" />
+                            <img src="assets/images/air_gradient_logo.png" class="provider-logo" style="margin-top: 0" alt="AirGradient" />
                         </div>
                     </a>
-                    <a href="https://cpcb.nic.in/" target="_blank" class="link-text">cpcb.nic.in</a>
+                <a href="https://open-meteo.com/" target="_blank" class="link-img">
+                    <img src="assets/images/open_meteo_logo.png" class="provider-logo dark-only" alt="OpenMeteo" />
+                    <img src="assets/images/open_meteo_logo_light.png" class="provider-logo light-only" alt="OpenMeteo" />
+                </a>
                 </div>
             </div>
             <div class="modal-actions">

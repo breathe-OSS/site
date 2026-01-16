@@ -612,7 +612,7 @@ input:checked + .slider:before {
   display: none !important;
 }
 
-.openaq-bg {
+.air-gradient-bg {
   background: white;
   padding: 6px 10px;
   border-radius: 8px;

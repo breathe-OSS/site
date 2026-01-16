@@ -130,8 +130,8 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   // Provider Logo
   if (providerContainer) {
     const provider = zone.provider || 'openmeteo';
-    if (provider === 'openaq') {
-      providerContainer.innerHTML = `<a href="https://openaq.org" target="_blank" class="provider-link"><div class="openaq-bg"><img src="assets/images/open_aq_logo.png" alt="OpenAQ" style="height:20px; display:block;"></div></a>`;
+    if (provider === 'airgradient') {
+      providerContainer.innerHTML = `<a href="https://airgradient.com" target="_blank" class="provider-link"><div class="air-gradient-bg"><img src="assets/images/air_gradient_logo.png" alt="AirGradient" style="height:20px; display:block;"></div></a>`;
     } else {
       providerContainer.innerHTML = `
                 <a href="https://open-meteo.com" target="_blank" class="provider-link">

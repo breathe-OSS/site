@@ -178,9 +178,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
                 Real-time Ground Sensors
             </div>
             <a href="https://airgradient.com" target="_blank" class="provider-link">
-                <div class="air-gradient-bg">
-                    <img src="assets/images/air_gradient_logo.png" alt="AirGradient" style="height:20px; display:block;">
-                </div>
+                <img src="assets/images/air_gradient_logo.png" alt="AirGradient" style="height:20px; display:block;">
             </a>
         </div>`;
     } else {

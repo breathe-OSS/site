@@ -1,5 +1,5 @@
 import { getZoneAQI } from './api.js';
-import { getAQIColor, getCurrentTheme } from './utils.js';
+import { getAQIColor, getCurrentTheme, getAQIStandard } from './utils.js';
 import { Zone } from './types.js';
 import * as Leaflet from 'leaflet';
 
@@ -10,7 +10,10 @@ let mapInstance: Leaflet.Map | null = null;
 let mapTileLayer: Leaflet.TileLayer | null = null;
 
 export function initMap(allZones: Zone[]): void {
-  if (mapInstance) return;
+  if (mapInstance) {
+      mapInstance.remove();
+      mapInstance = null;
+  }
 
   // center on j&k
   mapInstance = L.map('map-container', { zoomControl: false }).setView([33.9, 75.5], 8);
@@ -41,13 +44,17 @@ export function resizeMap(): void {
 
 function populateMapMarkers(allZones: Zone[]) {
   if (!mapInstance) return;
+  
+  const std = getAQIStandard();
+
   allZones.forEach(async (z) => {
     if (!z.lat || !z.lon) return;
 
     const data = await getZoneAQI(z.id);
     if (!data) return;
 
-    const colors = getAQIColor(data.aqi);
+    const displayAqi = std === 'us' ? (data.us_aqi || 0) : data.aqi;
+    const colors = getAQIColor(displayAqi, std);
     const markerHtml = `
             <div style="
                 background-color: ${colors.hex};
@@ -57,7 +64,7 @@ function populateMapMarkers(allZones: Zone[]) {
                 display: flex; align-items: center; justify-content: center;
                 color: #000; font-weight: bold; font-size: 10px;
                 box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            ">${data.aqi}</div>
+            ">${displayAqi}</div>
         `;
 
     const icon = L.divIcon({
@@ -71,7 +78,7 @@ function populateMapMarkers(allZones: Zone[]) {
                 <div style="text-align:center; color:#333;">
                     <h3 style="margin:0">${z.name}</h3>
                     <div style="font-size:24px; font-weight:bold; margin:5px 0;">${
-                      data.aqi
+                      displayAqi
                     } AQI</div>
                     <small>Primary: ${data.main_pollutant.toUpperCase()}</small>
                 </div>

@@ -10,6 +10,7 @@ export interface Zone {
 export interface AQIHistory {
   ts: number;
   aqi: number;
+  us_aqi?: number;
 }
 
 export interface Pollutants {
@@ -18,6 +19,7 @@ export interface Pollutants {
 
 export interface AQIData {
   aqi: number;
+  us_aqi?: number;
   main_pollutant: string;
   timestamp_unix: number;
   history: AQIHistory[];

@@ -4,18 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Breathe</title>
-
-    <meta property="og:title" content="Breathe" />
-    <meta property="og:description" content="Track Air Quality Index (AQI) in real-time across Jammu & Kashmir. Open-source, data-driven, and accurate." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://breatheoss.app/" />
-    <meta property="og:image" content="https://breatheoss.app/assets/images/social_preview.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Breathe" />
-    <meta name="twitter:description" content="Track Air Quality Index (AQI) in real-time across Jammu & Kashmir." />
-    <meta name="twitter:image" content="https://breatheoss.app/assets/images/social_preview.png" />
-
     <meta name="theme-color" content="#a8c7fa" />
     <link rel="icon" type="image/x-icon" href="assets/images/web-icon.webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -57,7 +45,6 @@
     </nav>
 
     <main class="main-content">
-        
         <div id="view-dashboard" class="view active-view">
             <header>
                 <div class="header-title">
@@ -98,7 +85,9 @@
     
                         <div class="update-time" id="detail-updated">Updated --</div>
                         <div id="detail-provider" class="provider-container"></div>
-</div>
+                    </div>
+
+                    <div id="cigarette-card-container"></div>
 
                     <div class="card chart-card">
                         <h3>24 Hour Trend</h3>
@@ -149,11 +138,22 @@
                     </label>
                 </div>
 
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-title">US AQI Standard</div>
+                        <div class="settings-subtitle">Use United States EPA calculation</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="aqi-standard-toggle" />
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
                 <div class="divider"></div>
 
                 <div class="settings-item">
                     <div class="settings-title">Data Standards</div>
-                    <div class="settings-subtitle">Indian National Air Quality Index (NAQI)</div>
+                    <div class="settings-subtitle">NAQI & US EPA (Toggle above)</div>
                 </div>
 
                 <div class="settings-item clickable" onclick="openModal('data-source-modal')">

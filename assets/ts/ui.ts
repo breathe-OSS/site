@@ -152,14 +152,9 @@ export function updateDetailView(zone: Zone, data: AQIData) {
       
       if (cigs > 0.1) {
           cigaretteContainer.innerHTML = `
-            <div class="card" style="display:flex; align-items:center; gap:16px; padding:16px;">
-                <div style="background:var(--aqi-very-poor); width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1a1c22"><path d="M760-760v-80h80v80h-80Zm-320 0v-80h80v80h-80ZM280-760v-80h80v80h-80ZM120-120v-80h80v-360h120v360h80v-360h120v360h80v-360h120v360h120v80H120Zm160-520v-40h480v40H280Z"/></svg>
-                </div>
-                <div>
-                    <div style="font-size:18px; font-weight:700;">≈ ${cigs} cigarettes</div>
-                    <div style="font-size:12px; color:var(--on-surface-variant);">Equivalent PM2.5 inhalation today</div>
-                </div>
+            <div class="card" style="padding:16px;">
+                <div style="font-size:18px; font-weight:700;">≈ ${cigs} cigarettes</div>
+                <div style="font-size:12px; color:var(--on-surface-variant);">Equivalent PM2.5 inhalation today</div>
             </div>
           `;
       } else {

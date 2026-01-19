@@ -26,14 +26,12 @@ export function updateMapTiles(theme: string): void {
   if (!mapInstance) return;
   if (mapTileLayer) mapTileLayer.remove();
 
-  const url =
-    theme === 'light'
-      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-
+  // lyrs=m (standard roadmap), gl=in (region: india)
+  let url = 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&gl=in';
+  
   mapTileLayer = L.tileLayer(url, {
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
-    maxZoom: 19,
+    attribution: '&copy; Google Maps',
+    maxZoom: 20,
   }).addTo(mapInstance);
 }
 

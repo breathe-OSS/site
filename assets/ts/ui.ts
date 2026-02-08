@@ -102,7 +102,11 @@ export function renderNowViewing(zone: Zone, data: AQIData): void {
             <span class="live-dot"></span>
             Live Ground Sensors
           </div>
-        ` : ''}
+        ` : `
+          <div class="now-viewing-source" style="color: var(--on-surface-variant);">
+            Satellite and Model data
+          </div>
+        `}
       </div>
       ${isLive ? `
         <a href="https://airgradient.com" target="_blank" class="provider-link">
@@ -230,24 +234,35 @@ export function renderExploreItem(
   const div = document.createElement('div');
   div.className = 'explore-card';
   div.innerHTML = `
-        <div>
-            <div style="font-weight:500; font-size:16px; margin-bottom:4px;">${zone.name}</div>
-            <div style="font-size:12px; color:var(--on-surface-variant);">${
-              zone.provider || 'openmeteo'
-            }</div>
+        <div class="explore-card-inner">
+            <div>
+                <div style="font-weight:500; font-size:16px; margin-bottom:4px;">${zone.name}</div>
+                <div style="font-size:12px; color:var(--on-surface-variant);">${
+                  zone.provider || 'openmeteo'
+                }</div>
+            </div>
+            <button class="pin-btn ${isPinned ? 'pinned' : ''}">
+                ${getPinIcon(isPinned)}
+            </button>
         </div>
-        <button class="pin-btn ${isPinned ? 'pinned' : ''}">
-            ${getPinIcon(isPinned)}
-        </button>
     `;
   const btn = div.querySelector('.pin-btn') as HTMLButtonElement;
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
+  const handlePin = () => {
     onPinClick();
     btn.classList.toggle('pinned');
     const newIsPinned = btn.classList.contains('pinned');
     btn.innerHTML = getPinIcon(newIsPinned);
+    div.classList.remove('pin-flash');
+    void div.offsetWidth;
+    div.classList.add('pin-flash');
+  };
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    handlePin();
   });
+  div.addEventListener('click', handlePin);
+  div.addEventListener('animationend', () => div.classList.remove('pin-flash'));
+  div.style.cursor = 'pointer';
   return div;
 }
 
@@ -292,9 +307,12 @@ export function updateDetailView(zone: Zone, data: AQIData) {
         <span class="live-dot"></span>
         Live Ground Sensors
       `;
+      sourceIndicatorEl.style.color = '';
       sourceIndicatorEl.style.display = 'flex';
     } else {
-      sourceIndicatorEl.style.display = 'none';
+      sourceIndicatorEl.innerHTML = `Satellite and Model data`;
+      sourceIndicatorEl.style.color = 'var(--on-surface-variant)';
+      sourceIndicatorEl.style.display = 'flex';
     }
   }
 

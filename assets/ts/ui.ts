@@ -480,6 +480,10 @@ function renderChart(history: AQIHistory[]) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
+  // Prevent page scrolling when touching the chart
+  canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+  canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
   if (detailChart) detailChart.destroy();
 
   const std = getAQIStandard();

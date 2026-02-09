@@ -192,7 +192,7 @@ export function renderDashboardCard(zone: Zone, data: AQIData, onClick: () => vo
   const std = getAQIStandard();
   // Fallback to NAQI if us_aqi is missing (0)
   const displayAqi = std === 'us' ? (data.us_aqi || 0) : data.aqi;
-  const colorClass = getAQIColor(displayAqi, std).bg;
+  const colors = getAQIColor(displayAqi, std);
   
   const card = document.createElement('div');
   card.className = 'dashboard-card';
@@ -205,7 +205,7 @@ export function renderDashboardCard(zone: Zone, data: AQIData, onClick: () => vo
                 ${data.main_pollutant.toUpperCase()}
             </p>
         </div>
-        <div class="aqi-badge-small ${colorClass}">
+        <div class="aqi-badge-small" style="background-color: ${colors.hex};">
             ${displayAqi}
         </div>
     `;

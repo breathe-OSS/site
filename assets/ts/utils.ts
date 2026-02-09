@@ -98,8 +98,8 @@ export function getAQIColor(aqi: number, standard: 'india' | 'us' = 'india'): AQ
     if (aqi <= 50) return { bg: 'bg-good', hex: '#00E400' };
     if (aqi <= 100) return { bg: 'bg-moderate', hex: '#FFFF00' };
     if (aqi <= 150) return { bg: 'bg-poor', hex: '#FF7E00' };
-    if (aqi <= 200) return { bg: 'bg-very-poor', hex: '#FF0000' };
-    if (aqi <= 300) return { bg: 'bg-severe', hex: '#8F3F97' };
+    if (aqi <= 200) return { bg: 'bg-poor', hex: '#FF0000' };
+    if (aqi <= 300) return { bg: 'bg-very-poor', hex: '#8F3F97' };
     return { bg: 'bg-severe', hex: '#7E0023' };
   }
 

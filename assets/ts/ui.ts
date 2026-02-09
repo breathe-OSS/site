@@ -120,11 +120,11 @@ export function renderNowViewing(zone: Zone, data: AQIData): void {
         <div style="text-align: left;">
           <div class="aqi-display-large" style="color: ${colors.hex};">${displayAqi}</div>
           <div class="naqi-chip" style="background: ${colors.hex};">${std === 'us' ? 'US AQI' : 'NAQI'}</div>
+          ${trendHtml}
         </div>
         <div style="text-align: right;">
           <div class="primary-pollutant-label">Primary</div>
           <div class="primary-pollutant-value">${data.main_pollutant.toUpperCase()}</div>
-          ${trendHtml}
           <div class="update-time">${diff}m ago</div>
         </div>
       </div>

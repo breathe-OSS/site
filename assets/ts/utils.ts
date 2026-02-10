@@ -24,7 +24,8 @@ export function getCurrentTheme(): string {
 }
 
 export function getAQIStandard(): 'india' | 'us' {
-  return (localStorage.getItem(STORAGE_KEY_STANDARD) as 'india' | 'us') || 'us';
+  const saved = localStorage.getItem(STORAGE_KEY_STANDARD);
+  return saved === 'india' ? 'india' : 'us';
 }
 
 export function initStandard(onChange: (std: string) => void): void {

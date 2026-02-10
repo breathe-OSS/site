@@ -989,6 +989,17 @@ input:checked + .slider:before {
   font-size: 14px;
   color: var(--on-surface-variant);
   margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bottom-sheet-subtitle .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--aqi-good);
+  animation: pulse 2s infinite;
 }
 
 .bottom-sheet-aqi-card {
@@ -1634,7 +1645,18 @@ input:checked + .slider:before {
   50% { opacity: 0.5; }
 }
 
-/* Concentrations Section */
+.live-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background: var(--aqi-good);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--aqi-good);
+}
+
 .concentrations-section {
   margin-top: 16px;
 }

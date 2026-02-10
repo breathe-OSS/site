@@ -66,16 +66,21 @@ function populateMapMarkers(allZones: Zone[]) {
 
     const displayAqi = std === 'us' ? (data.us_aqi || 0) : data.aqi;
     const colors = getAQIColor(displayAqi, std);
+    const isLive = z.provider === 'airgradient';
+    const liveBadge = isLive ? '<div class="live-badge"></div>' : '';
     const markerHtml = `
-            <div style="
-                background-color: ${colors.hex};
-                width: 24px; height: 24px;
-                border-radius: 50%;
-                border: 2px solid #fff;
-                display: flex; align-items: center; justify-content: center;
-                color: #000; font-weight: bold; font-size: 10px;
-                box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            ">${displayAqi}</div>
+            <div style="position: relative;">
+              <div style="
+                  background-color: ${colors.hex};
+                  width: 24px; height: 24px;
+                  border-radius: 50%;
+                  border: 2px solid #fff;
+                  display: flex; align-items: center; justify-content: center;
+                  color: #000; font-weight: bold; font-size: 10px;
+                  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+              ">${displayAqi}</div>
+              ${liveBadge}
+            </div>
         `;
 
     const icon = L.divIcon({
@@ -113,8 +118,12 @@ function populateMapDetailSheet(zone: Zone, data: AQIData) {
 
   const sourceEl = document.getElementById('map-sheet-source');
   if (sourceEl) {
-    const sourceText = data.source === 'airgradient' ? 'Live Ground Sensors' : 'Satellite & Model Data';
-    sourceEl.textContent = sourceText;
+    const provider = zone.provider || 'openmeteo';
+    if (provider === 'airgradient') {
+      sourceEl.innerHTML = '<span class="live-dot"></span>Live Ground Sensors';
+    } else {
+      sourceEl.textContent = 'Satellite & Model Data';
+    }
   }
 
   const aqiValueEl = document.getElementById('map-sheet-aqi-value');

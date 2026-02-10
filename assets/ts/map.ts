@@ -16,8 +16,20 @@ export function initMap(allZones: Zone[]): void {
       mapInstance = null;
   }
 
+  // Define bounds for J&K region
+  const bounds: Leaflet.LatLngBoundsExpression = [
+    [32.5, 73.5],  
+    [37.0, 80.5]   
+  ];
+
   // center on j&k
-  mapInstance = L.map('map-container', { zoomControl: false }).setView([33.9, 75.5], 8);
+  mapInstance = L.map('map-container', { 
+    zoomControl: false,
+    minZoom: 7,
+    maxZoom: 15,
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0
+  }).setView([33.9, 75.5], 8);
 
   updateMapTiles(getCurrentTheme());
   populateMapMarkers(allZones);

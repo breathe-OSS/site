@@ -139,6 +139,17 @@ body {
   }
 }
 
+@keyframes slideUpCentered {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 @keyframes scaleIn {
   from {
     opacity: 0;
@@ -647,7 +658,7 @@ input:checked + .slider:before {
   transition: 
     background-color var(--motion-duration-medium2) var(--motion-easing-standard),
     transform var(--motion-duration-medium1) var(--motion-easing-emphasized);
-  animation: slideUp var(--motion-duration-long1) var(--motion-easing-emphasized-decelerate);
+  animation: slideUpCentered var(--motion-duration-long1) var(--motion-easing-emphasized-decelerate);
 }
 
 [data-theme='light'] .bottom-nav {

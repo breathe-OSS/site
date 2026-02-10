@@ -259,6 +259,48 @@
 
     </main>
 
+    <div id="map-detail-sheet" class="bottom-sheet-overlay hidden" onclick="if(event.target === this) closeMapDetailSheet()">
+        <div class="bottom-sheet">
+            <div class="bottom-sheet-handle"></div>
+            
+            <div class="bottom-sheet-header">
+                <div class="now-viewing-badge-compact">
+                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    Now Viewing
+                </div>
+                <button class="icon-btn-compact" onclick="closeMapDetailSheet()">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
+            </div>
+
+            <h2 class="bottom-sheet-title" id="map-sheet-zone-name">Location</h2>
+            <div class="bottom-sheet-subtitle" id="map-sheet-source">Satellite & Model Data</div>
+
+            <div class="bottom-sheet-aqi-card" id="map-sheet-aqi-card">
+                <div class="bottom-sheet-aqi-left">
+                    <div class="bottom-sheet-aqi-value" id="map-sheet-aqi-value">--</div>
+                    <div class="bottom-sheet-aqi-badge" id="map-sheet-aqi-badge">US AQI</div>
+                </div>
+                <div class="bottom-sheet-aqi-right">
+                    <div class="bottom-sheet-primary">
+                        <span class="bottom-sheet-label">Primary</span>
+                        <span class="bottom-sheet-pollutant" id="map-sheet-primary">--</span>
+                    </div>
+                    <div class="bottom-sheet-trend" id="map-sheet-trend">
+                        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M7 14l5-5 5 5z"/></svg>
+                        <span id="map-sheet-trend-text">-- /hr</span>
+                    </div>
+                    <div class="bottom-sheet-time" id="map-sheet-time">--</div>
+                </div>
+            </div>
+
+            <div class="bottom-sheet-actions">
+                <button class="btn-outlined" onclick="closeMapDetailSheet()">Close</button>
+                <button class="btn-outlined" onclick="openFullDetails()">View Full Details</button>
+            </div>
+        </div>
+    </div>
+
     <div id="data-source-modal" class="modal-overlay hidden">
         <div class="modal-card">
             <h3>Data Sources</h3>

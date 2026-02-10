@@ -45,6 +45,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   updateNavHighlight('dashboard');
 
+  // Listen for custom event from map detail sheet
+  window.addEventListener('openDetails', (e: Event) => {
+    const customEvent = e as CustomEvent;
+    if (customEvent.detail && customEvent.detail.zoneId) {
+      openDetails(customEvent.detail.zoneId);
+    }
+  });
+
   const searchInput = document.getElementById('zone-search') as HTMLInputElement;
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -134,6 +142,7 @@ async function openDetails(zoneId: string) {
 // navigation logic
 
 (window as any).showView = handleShowView;
+(window as any).openDetails = openDetails;
 (window as any).openModal = (id: string) => document.getElementById(id)?.classList.remove('hidden');
 (window as any).closeModal = (id: string) => document.getElementById(id)?.classList.add('hidden');
 

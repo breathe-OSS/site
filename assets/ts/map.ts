@@ -105,7 +105,10 @@ export function openMapDetailSheet(zoneId: string, zone: Zone, data: AQIData) {
 
   populateMapDetailSheet(zone, data);
 
+  sheet.classList.remove('closing');
   sheet.classList.remove('hidden');
+  
+  void sheet.offsetWidth;
 }
 
 function populateMapDetailSheet(zone: Zone, data: AQIData) {
@@ -203,8 +206,20 @@ function populateMapDetailSheet(zone: Zone, data: AQIData) {
 // Global functions for the HTML onclick handlers
 (window as any).closeMapDetailSheet = () => {
   const sheet = document.getElementById('map-detail-sheet');
-  if (sheet) sheet.classList.add('hidden');
-  currentMapZoneId = null;
+  if (!sheet) return;
+  
+  if (sheet.classList.contains('closing')) return;
+  
+  sheet.classList.add('closing');
+  
+  const handleAnimationEnd = () => {
+    sheet.classList.add('hidden');
+    sheet.classList.remove('closing');
+    currentMapZoneId = null;
+    sheet.removeEventListener('animationend', handleAnimationEnd);
+  };
+  
+  sheet.addEventListener('animationend', handleAnimationEnd);
 };
 
 (window as any).openFullDetails = () => {

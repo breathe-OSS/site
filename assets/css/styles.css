@@ -1397,7 +1397,7 @@ input:checked + .slider:before {
     align-content: start;
   }
   .detail-container {
-    max-width: 560px;
+    max-width: 900px;
     margin: 0 auto;
   }
   .pollutant-grid {
@@ -1405,7 +1405,7 @@ input:checked + .slider:before {
   }
 
   .now-viewing-container {
-    max-width: 600px;
+    max-width: 900px;
   }
   
   .now-viewing-name {

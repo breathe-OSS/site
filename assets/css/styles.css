@@ -301,18 +301,44 @@ header {
 }
 
 .card {
-  background-color: var(--surface);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-container) 100%);
   border-radius: var(--shape-corner-extra-large);
   padding: 24px;
   margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--outline-variant);
   transition:
-    background-color var(--motion-duration-medium2) var(--motion-easing-standard),
+    background var(--motion-duration-medium2) var(--motion-easing-standard),
     transform var(--motion-duration-short4) var(--motion-easing-emphasized),
-    box-shadow var(--motion-duration-medium1) var(--motion-easing-standard);
+    box-shadow var(--motion-duration-medium2) var(--motion-easing-standard),
+    border-color var(--motion-duration-medium2) var(--motion-easing-standard);
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16), 0 2px 4px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  border-color: var(--outline);
 }
 
 .card:active {
-  transform: scale(0.98);
+  transform: scale(0.98) translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='light'] .card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+[data-theme='light'] .card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+[data-theme='light'] .main-aqi-card {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+[data-theme='light'] .pollutants-container-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .main-aqi-card {
@@ -325,7 +351,11 @@ header {
   position: relative;
   overflow: hidden;
   border-radius: var(--shape-corner-extra-large);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-container-high) 100%);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--outline-variant);
   animation: scaleIn var(--motion-duration-medium3) var(--motion-easing-emphasized-decelerate);
+  transition: all var(--motion-duration-medium2) var(--motion-easing-standard);
 }
 
 .main-aqi-card::before {
@@ -439,10 +469,20 @@ header {
   padding: 0 10px;
 }
 
+.pollutants-container-card {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-container) 100%);
+  padding: 24px;
+  border-radius: var(--shape-corner-extra-large);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--outline-variant);
+  transition: all var(--motion-duration-medium2) var(--motion-easing-standard);
+}
+
 .section-title {
   font-size: 20px;
   font-weight: 700;
-  margin: 8px 0 16px 0;
+  margin: 0 0 20px 0;
+  text-align: center;
 }
 
 .pollutant-grid {
@@ -452,18 +492,27 @@ header {
 }
 
 .pollutant-card {
-  background: var(--surface);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-container) 100%);
   padding: 20px;
   border-radius: var(--shape-corner-large);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: transform var(--motion-duration-short3) var(--motion-easing-emphasized);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--outline-variant);
+  transition: all var(--motion-duration-medium2) var(--motion-easing-standard);
   animation: scaleIn var(--motion-duration-medium2) var(--motion-easing-emphasized-decelerate) both;
 }
 
+.pollutant-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16), 0 2px 4px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  border-color: var(--outline);
+}
+
 .pollutant-card:active {
-  transform: scale(0.97);
+  transform: scale(0.98) translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .p-name {
@@ -1591,10 +1640,21 @@ input:checked + .slider:before {
 .aqi-bar-container {
   width: 100%;
   margin: 12px 0;
-  padding: 0 16px;
+  padding: 20px;
   box-sizing: border-box;
   position: relative;
   z-index: 1;
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-container) 100%);
+  border-radius: var(--shape-corner-extra-large);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--outline-variant);
+  transition: all var(--motion-duration-medium2) var(--motion-easing-standard);
+}
+
+.aqi-bar-container:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16), 0 2px 4px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  border-color: var(--outline);
 }
 
 .aqi-bar-label {
@@ -1609,6 +1669,7 @@ input:checked + .slider:before {
   height: 8px;
   border-radius: var(--shape-corner-full);
   overflow: visible;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .aqi-bar-gradient {
@@ -1635,7 +1696,7 @@ input:checked + .slider:before {
   border-radius: 50%;
   background: var(--on-surface);
   border: 3px solid var(--background);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.3);
   transition: left var(--motion-duration-medium3) var(--motion-easing-emphasized);
 }
 
@@ -1791,19 +1852,29 @@ input:checked + .slider:before {
   align-items: center;
   gap: 14px;
   padding: 16px;
-  background: var(--surface);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-container) 100%);
   border-radius: var(--shape-corner-extra-large);
   margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--outline-variant);
+  transition: all var(--motion-duration-medium2) var(--motion-easing-standard);
+}
+
+.cigarette-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16), 0 2px 4px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+  border-color: var(--outline);
 }
 
 .cigarette-icon {
   width: 44px;
   height: 44px;
-  background: rgba(239, 68, 68, 0.15);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.12) 100%);
   border-radius: var(--shape-corner-medium);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .cigarette-icon svg {

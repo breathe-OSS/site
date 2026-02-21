@@ -1679,10 +1679,15 @@ input:checked + .slider:before {
     to right,
     var(--aqi-good) 0%,
     var(--aqi-good) 10%,
+    var(--aqi-satisfactory) 10%,
     var(--aqi-satisfactory) 20%,
-    var(--aqi-moderate) 35%,
-    var(--aqi-poor) 50%,
-    var(--aqi-very-poor) 70%,
+    var(--aqi-moderate) 20%,
+    var(--aqi-moderate) 40%,
+    var(--aqi-poor) 40%,
+    var(--aqi-poor) 60%,
+    var(--aqi-very-poor) 60%,
+    var(--aqi-very-poor) 80%,
+    var(--aqi-severe) 80%,
     var(--aqi-severe) 100%
   );
 }

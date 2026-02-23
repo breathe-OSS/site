@@ -452,7 +452,7 @@ function renderPollutantGrid(comps: Pollutants) {
     { key: 'pm10', label: 'PM10', unit: 'µg/m³' },
     { key: 'so2', label: 'SO₂', unit: 'µg/m³' },
     { key: 'no2', label: 'NO₂', unit: 'µg/m³' },
-    { key: 'o3', label: 'O₃', unit: 'µg/m³' },
+    { key: 'ch4', label: 'CH₄', unit: 'µg/m³' },
   ];
 
   defs.forEach((def) => {

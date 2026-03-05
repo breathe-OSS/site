@@ -28,6 +28,13 @@ export function getAQIStandard(): 'india' | 'us' {
   return saved === 'india' ? 'india' : 'us';
 }
 
+export function formatPollutantName(pollutant: string): string {
+  const upper = pollutant.toUpperCase();
+  if (upper === 'PM2_5') return 'PM<sub>2.5</sub>';
+  if (upper === 'PM10') return 'PM<sub>10</sub>';
+  return upper;
+}
+
 export function initStandard(onChange: (std: string) => void): void {
   const toggle = document.getElementById('aqi-standard-toggle') as HTMLInputElement;
   const saved = getAQIStandard();

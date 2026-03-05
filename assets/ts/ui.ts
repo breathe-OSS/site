@@ -1,4 +1,4 @@
-import { getAQIColor, getCurrentTheme, calculateCigarettes, getAQIStandard, getAQICategory, getAQIBarPosition } from './utils.js';
+import { getAQIColor, getCurrentTheme, calculateCigarettes, getAQIStandard, getAQICategory, getAQIBarPosition, formatPollutantName } from './utils.js';
 import { Zone, AQIData, AQIHistory, Pollutants } from './types.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
 
@@ -124,7 +124,7 @@ export function renderNowViewing(zone: Zone, data: AQIData): void {
         </div>
         <div style="text-align: right;">
           <div class="primary-pollutant-label">Primary</div>
-          <div class="primary-pollutant-value">${data.main_pollutant.toUpperCase()}</div>
+          <div class="primary-pollutant-value">${formatPollutantName(data.main_pollutant)}</div>
           <div class="update-time">${diff}m ago</div>
         </div>
       </div>
@@ -154,7 +154,7 @@ function renderCigaretteCard(pm25: number): string {
       </div>
       <div class="cigarette-content">
         <div class="cigarette-value">≈ ${cigs} cigarettes</div>
-        <div class="cigarette-label">Equivalent PM2.5 inhalation today</div>
+        <div class="cigarette-label">Equivalent PM<sub>2.5</sub> inhalation today</div>
       </div>
     </div>
   `;
@@ -162,8 +162,8 @@ function renderCigaretteCard(pm25: number): string {
 
 function renderConcentrationsPreview(comps: Pollutants): string {
   const defs = [
-    { key: 'pm2_5', label: 'PM2.5', unit: 'µg/m³' },
-    { key: 'pm10', label: 'PM10', unit: 'µg/m³' },
+    { key: 'pm2_5', label: 'PM<sub>2.5</sub>', unit: 'µg/m³' },
+    { key: 'pm10', label: 'PM<sub>10</sub>', unit: 'µg/m³' },
   ];
 
   const available = defs.filter(d => comps[d.key] !== undefined);
@@ -202,7 +202,7 @@ export function renderDashboardCard(zone: Zone, data: AQIData, onClick: () => vo
         <div>
             <h3 style="margin:0; font-size:18px; font-weight: 600;">${zone.name}</h3>
             <p style="margin:4px 0 0 0; color:var(--on-surface-variant); font-size:12px;">
-                ${data.main_pollutant.toUpperCase()}
+                ${formatPollutantName(data.main_pollutant)}
             </p>
         </div>
         <div class="aqi-badge-small" style="background-color: ${colors.hex};">
@@ -343,7 +343,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
     chipEl.innerText = std === 'us' ? 'US AQI' : 'NAQI';
   }
   
-  if (primaryEl) primaryEl.innerText = data.main_pollutant.toUpperCase();
+  if (primaryEl) primaryEl.innerHTML = formatPollutantName(data.main_pollutant);
 
   if (trendEl) {
     trendEl.innerHTML = getTrendHTML(displayAqi, data.timestamp_unix, data.history);
@@ -386,7 +386,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
           </div>
           <div class="cigarette-content">
             <div class="cigarette-value">≈ ${cigs} cigarettes</div>
-            <div class="cigarette-label">Equivalent PM2.5 inhalation today</div>
+            <div class="cigarette-label">Equivalent PM<sub>2.5</sub> inhalation today</div>
           </div>
         </div>
       `;
@@ -421,8 +421,8 @@ function renderConcentrationsDisplay(comps: Pollutants) {
   container.innerHTML = '';
 
   const mainPollutants = [
-    { key: 'pm2_5', label: 'PM2.5', unit: 'µg/m³' },
-    { key: 'pm10', label: 'PM10', unit: 'µg/m³' },
+    { key: 'pm2_5', label: 'PM<sub>2.5</sub>', unit: 'µg/m³' },
+    { key: 'pm10', label: 'PM<sub>10</sub>', unit: 'µg/m³' },
   ];
 
   mainPollutants.forEach((def) => {
@@ -447,9 +447,9 @@ function renderPollutantGrid(comps: Pollutants) {
   container.innerHTML = '';
 
   const defs = [
-    { key: 'pm2_5', label: 'PM2.5', unit: 'µg/m³' },
+    { key: 'pm2_5', label: 'PM<sub>2.5</sub>', unit: 'µg/m³' },
     { key: 'co', label: 'CO', unit: 'mg/m³' },
-    { key: 'pm10', label: 'PM10', unit: 'µg/m³' },
+    { key: 'pm10', label: 'PM<sub>10</sub>', unit: 'µg/m³' },
     { key: 'so2', label: 'SO₂', unit: 'µg/m³' },
     { key: 'no2', label: 'NO₂', unit: 'µg/m³' },
     { key: 'ch4', label: 'CH₄', unit: 'mg/m³' },

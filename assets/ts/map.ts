@@ -1,5 +1,5 @@
 import { getZoneAQI } from './api.js';
-import { getAQIColor, getCurrentTheme, getAQIStandard } from './utils.js';
+import { getAQIColor, getCurrentTheme, getAQIStandard, formatPollutantName } from './utils.js';
 import { Zone, AQIData } from './types.js';
 import * as Leaflet from 'leaflet';
 
@@ -149,7 +149,7 @@ function populateMapDetailSheet(zone: Zone, data: AQIData) {
   }
 
   const primaryEl = document.getElementById('map-sheet-primary');
-  if (primaryEl) primaryEl.textContent = data.main_pollutant.toUpperCase();
+  if (primaryEl) primaryEl.innerHTML = formatPollutantName(data.main_pollutant);
 
   // Calculate and set trend
   const trendEl = document.getElementById('map-sheet-trend');

@@ -79,16 +79,15 @@ export function getAQICategory(aqi: number, standard: 'india' | 'us' = 'india'):
 // Calculate position on AQI bar (0-100%)
 export function getAQIBarPosition(aqi: number, standard: 'india' | 'us' = 'india'): number {
   if (standard === 'us') {
-    if (aqi <= 50) return (aqi / 50) * 16.67;
-    if (aqi <= 100) return 16.67 + ((aqi - 50) / 50) * 16.67;
-    if (aqi <= 150) return 33.33 + ((aqi - 100) / 50) * 16.67;
-    if (aqi <= 200) return 50 + ((aqi - 150) / 50) * 16.67;
-    if (aqi <= 300) return 66.67 + ((aqi - 200) / 100) * 16.67;
-    return Math.min(83.33 + ((aqi - 300) / 200) * 16.67, 100);
+    if (aqi <= 50) return (aqi / 50) * 10;
+    if (aqi <= 100) return 10 + ((aqi - 50) / 50) * 10;
+    if (aqi <= 150) return 20 + ((aqi - 100) / 50) * 10;
+    if (aqi <= 200) return 30 + ((aqi - 150) / 50) * 10;
+    if (aqi <= 300) return 40 + ((aqi - 200) / 100) * 20;
+    return Math.min(60 + ((aqi - 300) / 200) * 40, 100);
   }
 
-  // NAQI scale: 0-500
-  // 0-50, 51-100, 101-200, 201-300, 301-400, 401-500
+  // NAQI scale
   if (aqi <= 50) return (aqi / 50) * 10;
   if (aqi <= 100) return 10 + ((aqi - 50) / 50) * 10;
   if (aqi <= 200) return 20 + ((aqi - 100) / 100) * 15;

@@ -3,7 +3,7 @@
   "version": "v1.1.0",
   "entity": {
     "name": "BreatheOSS",
-    "type": "organization",
+    "type": "group",
     "role": "maintainer",
     "description": "A fully FOSS full-stack app and community initiative to improve AQI monitoring across Jammu and Kashmir. Maintained by sidharthify (Lead Dev) and FlashWreck (DevOps/Ops), with support from community contributors.",
     "email": "contact@breatheoss.app",

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://fundingjson.org/schema/v1.1.0.json",
+  "version": "v1.1.0",
+  "entity": {
+    "name": "BreatheOSS",
+    "type": "organization",
+    "role": "maintainer",
+    "description": "A fully FOSS full-stack app and community initiative to improve AQI monitoring across Jammu and Kashmir. Maintained by sidharthify (Lead Dev) and FlashWreck (DevOps/Ops), with support from community contributors.",
+    "emails": ["contact@breatheoss.app"],
+    "webpages": ["https://breatheoss.app"]
+  },
+  "projects": [
+    {
+      "guid": "breathe-app",
+      "name": "Breathe Android App",
+      "description": "Android application for hyper-local AQI monitoring.",
+      "repositoryUrl": { "url": "https://github.com/breathe-OSS/breathe" },
+      "licenses": ["spdx:MIT"],
+      "tags": ["android", "kotlin", "aqi", "air-quality", "mobile"]
+    },
+    {
+      "guid": "breathe-site",
+      "name": "Breathe Website",
+      "description": "TypeScript-based web interface for the initiative and AQI monitoring.",
+      "repositoryUrl": { "url": "https://github.com/breathe-OSS/site" },
+      "licenses": ["spdx:MIT"],
+      "tags": ["typescript", "web", "frontend", "aqi"]
+    },
+    {
+      "guid": "breathe-ios",
+      "name": "Breathe iOS App",
+      "description": "iOS application for AQI monitoring (Work in Progress).",
+      "repositoryUrl": { "url": "https://github.com/breathe-OSS/breathe-ios" },
+      "licenses": ["spdx:MIT"],
+      "tags": ["ios", "mobile", "aqi", "swift"]
+    },
+    {
+      "guid": "breathe-bot",
+      "name": "Breathe Discord Bot",
+      "description": "Python-based Discord bot for community data access and engagement.",
+      "repositoryUrl": { "url": "https://github.com/breathe-OSS/bot" },
+      "licenses": ["spdx:MIT"],
+      "tags": ["python", "discord-bot", "community", "aqi"]
+    },
+    {
+      "guid": "breathe-api",
+      "name": "Breathe Backend API",
+      "description": "Python backend API handling Open-Meteo and AirGradient sensor data processing. As well as being publicly available to access, either freely or through the apps/website/bot.",
+      "repositoryUrl": { "url": "https://github.com/breathe-OSS/api" },
+      "licenses": ["spdx:MIT"],
+      "tags": ["python", "api", "backend", "data-processing", "heroku"]
+    }
+  ],
+  "funding": {
+    "channels": [
+      {
+        "guid": "upi-bank-transfer",
+        "type": "bank",
+        "address": "",
+        "description": "UPI or Indian bank transfer available upon request. Contact via email for details."
+      }
+    ],
+    "plans": [
+      {
+        "guid": "annual-domain-renewal",
+        "status": "active",
+        "name": "Domain Name Renewal",
+        "description": "Annual cost to keep the BreatheOSS domain running. Note: Infrastructure and hosting are currently secured via GitHub Education/Heroku.",
+        "amount": 2000,
+        "currency": "INR",
+        "frequency": "yearly"
+      },
+      {
+        "guid": "sensor-hardware-unit",
+        "status": "active",
+        "name": "Hardware: AQI Sensor Unit",
+        "description": "Cost to procure one complete physical AQI sensor unit for deployment in J&K.",
+        "amount": 7000,
+        "currency": "INR",
+        "frequency": "one-time"
+      },
+      {
+        "guid": "goodwill-support",
+        "status": "active",
+        "name": "Goodwill Support",
+        "description": "Pay anything you wish to show your goodwill for the project. Every little bit helps us keep the initiative running. Contact via email for payment details.",
+        "amount": 0,
+        "currency": "INR",
+        "frequency": "one-time"
+      }
+    ]
+  }
+}

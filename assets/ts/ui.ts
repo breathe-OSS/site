@@ -1,5 +1,13 @@
-import { getAQIColor, getCurrentTheme, calculateCigarettes, getAQIStandard, getAQICategory, getAQIBarPosition, formatPollutantName } from './utils.js';
-import { Zone, AQIData, AQIHistory, Pollutants } from './types.js';
+import {
+  getAQIColor,
+  getCurrentTheme,
+  calculateCigarettes,
+  getAQIStandard,
+  getAQICategory,
+  getAQIBarPosition,
+  formatPollutantName,
+} from './utils.js';
+import { Zone, AQIData, AQIHistory, Pollutants, NodeData } from './types.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
 
 declare const Chart: typeof ChartJS;
@@ -14,7 +22,8 @@ const UNPINNED_ICON =
   '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="m640-480 80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280Zm-286 80h252l-46-46v-314H400v314l-46 46Zm126 0Z"/></svg>';
 
 // Checkmark icon for selected chips
-const CHECKMARK_ICON = '<svg class="checkmark" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+const CHECKMARK_ICON =
+  '<svg class="checkmark" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
 
 function getPinIcon(isPinned: boolean): string {
   return isPinned ? PINNED_ICON : UNPINNED_ICON;
@@ -24,16 +33,16 @@ function getTrendHTML(currentAqi: number, currentTs: number, history: AQIHistory
   if (!history || history.length === 0) return '';
   const oneHourAgo = currentTs - 3600;
   const std = getAQIStandard();
-  
-  const validHistory = history.filter(h => Math.abs(h.ts - oneHourAgo) < 1800);
+
+  const validHistory = history.filter((h) => Math.abs(h.ts - oneHourAgo) < 1800);
   if (validHistory.length === 0) return '';
-  
+
   validHistory.sort((a, b) => Math.abs(a.ts - oneHourAgo) - Math.abs(b.ts - oneHourAgo));
   const pastEntry = validHistory[0];
-  
-  const pastVal = std === 'us' ? (pastEntry.us_aqi || 0) : pastEntry.aqi;
+
+  const pastVal = std === 'us' ? pastEntry.us_aqi || 0 : pastEntry.aqi;
   const diff = currentAqi - pastVal;
-  
+
   if (diff === 0) return '<span class="trend-badge">-- /hr</span>';
   const isRising = diff > 0;
   const sign = isRising ? '+' : '';
@@ -54,20 +63,20 @@ export function renderPinnedChips(
 
   zones.forEach(({ zone, data }) => {
     const std = getAQIStandard();
-    const displayAqi = std === 'us' ? (data.us_aqi || 0) : data.aqi;
+    const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
     const colors = getAQIColor(displayAqi, std);
     const isSelected = zone.id === selectedId;
-    
+
     const chip = document.createElement('button');
     chip.className = `pinned-chip${isSelected ? ' selected' : ''}`;
     chip.onclick = () => onSelect(zone.id);
-    
+
     chip.innerHTML = `
       ${isSelected ? CHECKMARK_ICON : ''}
       <span class="status-dot" style="background: ${colors.hex};"></span>
       ${zone.name}
     `;
-    
+
     container.appendChild(chip);
   });
 }
@@ -78,7 +87,7 @@ export function renderNowViewing(zone: Zone, data: AQIData): void {
   if (!container) return;
 
   const std = getAQIStandard();
-  const displayAqi = std === 'us' ? (data.us_aqi || 0) : data.aqi;
+  const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
   const colors = getAQIColor(displayAqi, std);
   const category = getAQICategory(displayAqi, std);
   const barPosition = getAQIBarPosition(displayAqi, std);
@@ -97,22 +106,30 @@ export function renderNowViewing(zone: Zone, data: AQIData): void {
           Now Viewing
         </div>
         <div class="now-viewing-name">${zone.name}</div>
-        ${isLive ? `
+        ${
+          isLive
+            ? `
           <div class="now-viewing-source">
             <span class="live-dot"></span>
             Live Ground Sensors
           </div>
-        ` : `
+        `
+            : `
           <div class="now-viewing-source" style="color: var(--on-surface-variant);">
             Satellite and Model data
           </div>
-        `}
+        `
+        }
       </div>
-      ${isLive ? `
+      ${
+        isLive
+          ? `
         <a href="https://airgradient.com" target="_blank" class="provider-link">
           <img src="assets/images/air_gradient_logo.png" alt="AirGradient" style="height: 24px;">
         </a>
-      ` : ''}
+      `
+          : ''
+      }
     </div>
 
     <div class="card main-aqi-card" style="--aqi-color: ${colors.hex};">
@@ -146,7 +163,7 @@ export function renderNowViewing(zone: Zone, data: AQIData): void {
 function renderCigaretteCard(pm25: number): string {
   const cigs = calculateCigarettes(pm25);
   if (cigs <= 0.1) return '';
-  
+
   return `
     <div class="cigarette-card">
       <div class="cigarette-icon">
@@ -166,14 +183,16 @@ function renderConcentrationsPreview(comps: Pollutants): string {
     { key: 'pm10', label: 'PM<sub>10</sub>', unit: 'µg/m³' },
   ];
 
-  const available = defs.filter(d => comps[d.key] !== undefined);
+  const available = defs.filter((d) => comps[d.key] !== undefined);
   if (available.length === 0) return '';
-  
+
   return `
     <div class="concentrations-section">
       <div class="concentrations-title">Concentrations</div>
       <div class="concentrations-grid">
-        ${available.map(def => `
+        ${available
+          .map(
+            (def) => `
           <div class="concentration-card">
             <span class="concentration-label">${def.label}</span>
             <div class="concentration-value">
@@ -181,19 +200,26 @@ function renderConcentrationsPreview(comps: Pollutants): string {
               <span class="unit">${def.unit}</span>
             </div>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
     </div>
   `;
 }
 
 // main dashboard
-export function renderDashboardCard(zone: Zone, data: AQIData, onClick: () => void, index: number = 0): HTMLElement {
+export function renderDashboardCard(
+  zone: Zone,
+  data: AQIData,
+  onClick: () => void,
+  index: number = 0
+): HTMLElement {
   const std = getAQIStandard();
   // Fallback to NAQI if us_aqi is missing (0)
-  const displayAqi = std === 'us' ? (data.us_aqi || 0) : data.aqi;
+  const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
   const colors = getAQIColor(displayAqi, std);
-  
+
   const card = document.createElement('div');
   card.className = 'dashboard-card';
   card.style.animationDelay = `${index * 50}ms`;
@@ -272,15 +298,15 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   if (titleHeader) titleHeader.innerText = zone.name;
 
   const std = getAQIStandard();
-  const displayAqi = std === 'us' ? (data.us_aqi || 0) : data.aqi;
+  const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
   const colors = getAQIColor(displayAqi, std);
   const category = getAQICategory(displayAqi, std);
   const barPosition = getAQIBarPosition(displayAqi, std);
-  
+
   // Now viewing section elements
   const zoneNameEl = document.getElementById('detail-zone-name');
   const sourceIndicatorEl = document.getElementById('detail-source-indicator');
-  
+
   // Main card elements
   const aqiEl = document.getElementById('detail-aqi');
   const chipEl = document.getElementById('detail-standard-chip') as HTMLElement;
@@ -290,7 +316,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   const providerContainer = document.getElementById('detail-provider');
   const cigaretteContainer = document.getElementById('cigarette-card-container');
   const mainCard = document.getElementById('detail-main-card');
-  
+
   // AQI Bar elements
   const aqiBarContainer = document.getElementById('aqi-bar-container');
   const aqiBarLabel = document.getElementById('aqi-bar-label');
@@ -299,7 +325,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
 
   // Update now viewing section
   if (zoneNameEl) zoneNameEl.innerText = zone.name;
-  
+
   const provider = zone.provider || 'openmeteo';
   if (sourceIndicatorEl) {
     if (provider === 'airgradient') {
@@ -337,12 +363,12 @@ export function updateDetailView(zone: Zone, data: AQIData) {
     aqiEl.innerText = displayAqi.toString();
     aqiEl.style.color = colors.hex;
   }
-  
+
   if (chipEl) {
     chipEl.style.backgroundColor = colors.hex;
     chipEl.innerText = std === 'us' ? 'US AQI' : 'NAQI';
   }
-  
+
   if (primaryEl) primaryEl.innerHTML = formatPollutantName(data.main_pollutant);
 
   if (trendEl) {
@@ -360,7 +386,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
     aqiBarLabel.innerText = category;
     aqiBarLabel.style.color = colors.hex;
   }
-  
+
   if (aqiBar) {
     if (std === 'us') {
       aqiBar.classList.add('aqi-bar-us');
@@ -368,7 +394,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
       aqiBar.classList.remove('aqi-bar-us');
     }
   }
-  
+
   if (aqiBarIndicator) {
     aqiBarIndicator.style.left = `${barPosition}%`;
   }
@@ -377,7 +403,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   if (cigaretteContainer) {
     const pm25 = data.concentrations_us_units['pm2_5'] || 0;
     const cigs = calculateCigarettes(pm25);
-    
+
     if (cigs > 0.1) {
       cigaretteContainer.innerHTML = `
         <div class="cigarette-card">
@@ -412,7 +438,59 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   }
 
   renderPollutantGrid(data.concentrations_us_units || {});
+  renderNodeReadings(data.nodes || {});
   renderChart(data.history);
+}
+
+function renderNodeReadings(nodes: { [name: string]: NodeData }) {
+  const container = document.getElementById('node-readings-container');
+  if (!container) return;
+
+  const nodeNames = Object.keys(nodes);
+  if (nodeNames.length === 0) {
+    container.innerHTML = '';
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+  const std = getAQIStandard();
+
+  container.innerHTML = `
+    <h3 class="section-title">Individual Node Readings</h3>
+    <div class="node-grid">
+      ${nodeNames
+        .map((name) => {
+          const node = nodes[name];
+          const displayAqi = std === 'us' ? node.us_aqi || 0 : node.aqi;
+          const colors = getAQIColor(displayAqi, std);
+
+          return `
+          <div class="node-card">
+            <div class="node-header">
+              <span class="node-name">${name}</span>
+            </div>
+            <div class="node-aqi-section">
+              <div class="node-aqi-value" style="color: ${colors.hex}">${displayAqi}</div>
+              <div class="node-aqi-label">${std === 'us' ? 'US AQI' : 'NAQI'}</div>
+            </div>
+            <div class="node-separator"></div>
+            <div class="node-pollutants">
+              <div class="node-pollutant">
+                <span class="node-pollutant-label">PM2.5</span>
+                <span class="node-pollutant-value">${node.pm2_5}</span>
+              </div>
+              <div class="node-pollutant">
+                <span class="node-pollutant-label">PM10</span>
+                <span class="node-pollutant-value">${node.pm10}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        })
+        .join('')}
+    </div>
+  `;
 }
 
 function renderConcentrationsDisplay(comps: Pollutants) {
@@ -492,9 +570,9 @@ function renderChart(history: AQIHistory[]) {
     const d = new Date(h.ts * 1000);
     return `${d.getHours()}:00`;
   });
-  
+
   // Choose correct dataset based on standard
-  const values = sorted.map((h) => std === 'us' ? (h.us_aqi || 0) : h.aqi);
+  const values = sorted.map((h) => (std === 'us' ? h.us_aqi || 0 : h.aqi));
 
   const isDark = getCurrentTheme() === 'dark';
   const lineColor = '#a8c7fa';

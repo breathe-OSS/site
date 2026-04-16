@@ -17,6 +17,16 @@ export interface Pollutants {
   [key: string]: number;
 }
 
+export interface NodeData {
+  pm2_5: number;
+  pm10: number;
+  temp: number;
+  humidity: number;
+  aqi: number;
+  us_aqi: number;
+  history?: AQIHistory[];
+}
+
 export interface AQIData {
   aqi: number;
   us_aqi?: number;
@@ -28,6 +38,7 @@ export interface AQIData {
   zone_name: string;
   source: string;
   warning?: string;
+  nodes?: { [name: string]: NodeData };
 }
 
 export interface AQIColorResult {

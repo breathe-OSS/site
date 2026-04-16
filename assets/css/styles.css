@@ -436,11 +436,7 @@ header {
   height: 200px;
   width: 100%;
   position: relative;
-  background-color: var(--surface-variant);
-  background-image:
-    linear-gradient(var(--outline-variant) 1px, transparent 1px),
-    linear-gradient(90deg, var(--outline-variant) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-color: transparent;
   border-radius: var(--shape-corner-medium);
   overflow: hidden;
 }

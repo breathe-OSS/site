@@ -439,6 +439,44 @@ export function updateDetailView(zone: Zone, data: AQIData) {
 
   renderPollutantGrid(data.concentrations_us_units || {});
   renderNodeReadings(data.nodes || {});
+
+  const chartSelect = document.getElementById('chart-node-select') as HTMLSelectElement;
+  if (chartSelect) {
+    const nodeNames = data.nodes ? Object.keys(data.nodes) : [];
+    const nodesWithHistory = nodeNames.filter(name => data.nodes![name].history && data.nodes![name].history!.length > 0);
+    
+    if (nodesWithHistory.length > 0) {
+      chartSelect.classList.remove('hidden');
+      chartSelect.innerHTML = `<option value="zone">Zone Average</option>`;
+      nodesWithHistory.forEach((name) => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.innerText = name;
+        chartSelect.appendChild(option);
+      });
+
+      chartSelect.onchange = () => {
+        const val = chartSelect.value;
+        if (val === 'zone') {
+          renderChart(data.history);
+        } else {
+          const history = data.nodes?.[val]?.history;
+          if (history) {
+            renderChart(history);
+          }
+        }
+      };
+      
+      chartSelect.addEventListener('click', (e) => e.stopPropagation());
+      chartSelect.addEventListener('mousedown', (e) => e.stopPropagation());
+      chartSelect.addEventListener('touchstart', (e) => e.stopPropagation());
+      
+      chartSelect.value = 'zone';
+    } else {
+      chartSelect.classList.add('hidden');
+    }
+  }
+
   renderChart(data.history);
 }
 

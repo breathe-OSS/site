@@ -426,11 +426,36 @@ header {
   color: var(--on-surface-variant);
   margin-top: 2px;
 }
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
 .chart-card h3 {
-  margin: 0 0 16px 0;
+  margin: 0;
   font-size: 16px;
   font-weight: 500;
   color: var(--on-surface-variant);
+}
+.chart-dropdown {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--shape-corner-small);
+  padding: 8px 16px;
+  min-width: 140px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+.chart-dropdown.hidden {
+  display: none;
+}
+.chart-dropdown:hover, .chart-dropdown:focus {
+  border-color: var(--primary);
 }
 .chart-wrapper {
   height: 200px;

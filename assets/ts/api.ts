@@ -76,3 +76,22 @@ export async function getZoneAQI(zoneId: string): Promise<AQIData | null> {
     return null;
   }
 }
+
+export async function getSensorInfoList(): Promise<any[] | null> {
+  const cacheKey = `breathe_sensor_info`;
+  const cached = getCachedData<any[]>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/sensor-info`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    setCachedData(cacheKey, data.sensors || []);
+    return data.sensors || [];
+  } catch (e) {
+    return null;
+  }
+}

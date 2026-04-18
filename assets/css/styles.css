@@ -1166,6 +1166,30 @@ input:checked + .slider:before {
     opacity: 1;
   }
 }
+
+.node-sheet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.node-sheet-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.node-sheet-label {
+  font-size: 15px;
+  color: var(--on-surface-variant);
+}
+
+.node-sheet-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--on-surface);
+}
 @keyframes slideDownToBottom {
   from {
     transform: translateY(0);
@@ -1818,7 +1842,11 @@ input:checked + .slider:before {
 }
 .node-header {
   margin-bottom: 8px;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 100%;
 }
 .node-name {
   font-size: 15px;

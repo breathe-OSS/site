@@ -439,23 +439,31 @@ header {
   color: var(--on-surface-variant);
 }
 .chart-dropdown {
-  background: var(--surface-container-high);
-  color: var(--on-surface);
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--shape-corner-small);
-  padding: 8px 16px;
-  min-width: 140px;
-  font-size: 13px;
-  font-weight: 500;
-  font-family: inherit;
+  background: transparent url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M3%2018h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z%22%20fill%3D%22%23c4c7d0%22%2F%3E%3C%2Fsvg%3E') no-repeat center center;
+  background-size: 24px 24px;
+  color: transparent;
+  border: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  min-width: unset;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   outline: none;
+  border-radius: 50%;
+  transition: background-color var(--motion-duration-short3) var(--motion-easing-standard);
 }
 .chart-dropdown.hidden {
   display: none;
 }
 .chart-dropdown:hover, .chart-dropdown:focus {
-  border-color: var(--primary);
+  background-color: var(--surface-variant);
+}
+.chart-dropdown option {
+  color: var(--on-surface);
+  background: var(--surface-container-high);
 }
 .chart-wrapper {
   height: 200px;

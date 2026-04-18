@@ -132,7 +132,10 @@
 
                     <div class="card chart-card">
                         <div class="chart-header">
-                            <h3>24 Hour Trend</h3>
+                            <div style="display: flex; align-items: baseline; gap: 8px;">
+                                <h3>24 Hour Trend</h3>
+                                <span id="chart-location-name" style="font-size: 13px; color: var(--on-surface-variant); display: none;">Zone Average</span>
+                            </div>
                             <select id="chart-node-select" class="chart-dropdown hidden"></select>
                         </div>
                         <div class="chart-wrapper">

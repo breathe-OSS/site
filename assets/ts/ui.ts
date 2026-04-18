@@ -441,12 +441,17 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   renderNodeReadings(data.nodes || {});
 
   const chartSelect = document.getElementById('chart-node-select') as HTMLSelectElement;
+  const chartLocationName = document.getElementById('chart-location-name');
   if (chartSelect) {
     const nodeNames = data.nodes ? Object.keys(data.nodes) : [];
     const nodesWithHistory = nodeNames.filter(name => data.nodes![name].history && data.nodes![name].history!.length > 0);
     
     if (nodesWithHistory.length > 0) {
       chartSelect.classList.remove('hidden');
+      if (chartLocationName) {
+        chartLocationName.style.display = 'inline';
+        chartLocationName.innerText = 'Zone Average';
+      }
       chartSelect.innerHTML = `<option value="zone">Zone Average</option>`;
       nodesWithHistory.forEach((name) => {
         const option = document.createElement('option');
@@ -457,6 +462,9 @@ export function updateDetailView(zone: Zone, data: AQIData) {
 
       chartSelect.onchange = () => {
         const val = chartSelect.value;
+        if (chartLocationName) {
+           chartLocationName.innerText = val === 'zone' ? 'Zone Average' : val;
+        }
         if (val === 'zone') {
           renderChart(data.history);
         } else {
@@ -474,6 +482,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
       chartSelect.value = 'zone';
     } else {
       chartSelect.classList.add('hidden');
+      if (chartLocationName) chartLocationName.style.display = 'none';
     }
   }
 

@@ -155,7 +155,7 @@ export function renderNowViewing(zone: Zone, data: AQIData): void {
       </div>
     </div>
 
-    ${renderCigaretteCard(data.concentrations_us_units['pm2_5'] || 0)}
+    ${renderCigaretteCard(data.averages_24h?.['pm2_5'] || data.concentrations_us_units['pm2_5'] || 0)}
     ${renderConcentrationsPreview(data.concentrations_us_units)}
   `;
 }
@@ -401,7 +401,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
 
   // Cigarettes Card
   if (cigaretteContainer) {
-    const pm25 = data.concentrations_us_units['pm2_5'] || 0;
+    const pm25 = data.averages_24h?.['pm2_5'] || data.concentrations_us_units['pm2_5'] || 0;
     const cigs = calculateCigarettes(pm25);
 
     if (cigs > 0.1) {

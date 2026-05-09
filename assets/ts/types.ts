@@ -33,6 +33,7 @@ export interface AQIData {
   main_pollutant: string;
   timestamp_unix: number;
   history: AQIHistory[];
+  averages_24h?: Pollutants;
   concentrations_us_units: Pollutants;
   zone_id: string;
   zone_name: string;

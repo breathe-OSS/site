@@ -179,6 +179,7 @@
                             <span>20:00</span>
                             <span>08:00</span>
                         </div>
+                        <button class="btn-outlined" style="width: 100%; margin-top: 16px;" onclick="openHistoryView()">View Extended History</button>
                     </div>
 
                     <div id="node-readings-container" class="pollutants-container-card" style="display: none;"></div>
@@ -188,6 +189,84 @@
                         <div class="pollutant-grid" id="pollutant-grid"></div>
                     </div>
                     <div style="height: 40px"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-history" class="view">
+            <header>
+                <button class="icon-btn" onclick="showView('details')">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                    </svg>
+                </button>
+                <h1 id="history-title-header">Location History</h1>
+            </header>
+
+            <div class="content-scroll">
+                <div class="detail-container">
+                    <div class="card chart-card" style="margin-top: 16px; padding: 24px 16px; cursor: default;">
+                        <h3 style="margin-bottom: 16px; text-align: center;">Extended History</h3>
+
+                        <div class="history-controls" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: center; justify-content: center;">
+                            <select id="hist-sensor-select" class="dropdown" onchange="loadCustomHistory()" style="padding: 6px; border-radius: 4px; border: 1px solid var(--outline); background: var(--surface); color: var(--on-surface);">
+                                <option value="zone">Zone Average</option>
+                            </select>
+                            
+                            <div class="checkbox-group" style="display: flex; gap: 8px; align-items: center;">
+                                <label><input type="checkbox" id="hist-pm25" value="pm2.5" checked onchange="loadCustomHistory()"> PM2.5</label>
+                                <label><input type="checkbox" id="hist-pm10" value="pm10" checked onchange="loadCustomHistory()"> PM10</label>
+                            </div>
+                        </div>
+
+                        <div class="toggle-group" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
+                            <button class="btn-outlined active" id="hist-1w" onclick="setHistoryRange('1w')">1 Week</button>
+                            <button class="btn-outlined" id="hist-1mo" onclick="setHistoryRange('1mo')">1 Month</button>
+                            <button class="btn-outlined" id="hist-6mo" onclick="setHistoryRange('6mo')">6 Months</button>
+                            <button class="btn-outlined" id="hist-custom-btn" onclick="toggleCustomRange()">Custom...</button>
+                        </div>
+
+                        <div id="hist-custom-inputs" style="display: none; gap: 8px; align-items: center; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; background: var(--surface-variant); padding: 12px; border-radius: 8px;">
+                            <input type="text" id="custom-range" placeholder="Range (e.g. 14d)" value="14d" style="width: 120px; padding: 6px; border-radius: 4px; border: 1px solid var(--outline); background: var(--surface); color: var(--on-surface);">
+                            <input type="text" id="custom-interval" placeholder="Interval (e.g. 1h)" value="1h" style="width: 120px; padding: 6px; border-radius: 4px; border: 1px solid var(--outline); background: var(--surface); color: var(--on-surface);">
+                            <button class="btn" style="padding: 6px 12px;" onclick="applyCustomHistory()">Apply</button>
+                        </div>
+
+                        <div id="hist-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; margin-bottom: 24px; padding: 16px; background: var(--surface-variant); border-radius: 12px; text-align: center;">
+                            <div class="stat-card">
+                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Max PM2.5</div>
+                                <div class="stat-value" id="stat-max-pm25" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Min PM2.5</div>
+                                <div class="stat-value" id="stat-min-pm25" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Avg PM2.5</div>
+                                <div class="stat-value" id="stat-avg-pm25" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Max PM10</div>
+                                <div class="stat-value" id="stat-max-pm10" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Min PM10</div>
+                                <div class="stat-value" id="stat-min-pm10" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Avg PM10</div>
+                                <div class="stat-value" id="stat-avg-pm10" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
+                            </div>
+                        </div>
+
+                        <div class="chart-wrapper" style="height: 350px; width: 100%;">
+                            <canvas id="extendedHistoryChart"></canvas>
+                        </div>
+                        
+                        <button class="btn-outlined" style="width: 100%; margin-top: 24px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="downloadHistoryCSV()">
+                            <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download CSV
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

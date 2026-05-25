@@ -95,3 +95,30 @@ export async function getSensorInfoList(): Promise<any[] | null> {
     return null;
   }
 }
+
+export async function fetchHistoricalData(
+  zoneId: string,
+  timeRange: string,
+  interval: string,
+  metrics: string = 'pm2.5,pm10'
+): Promise<any> {
+  const cacheKey = `breathe_hist_${zoneId}_${timeRange}_${interval}_${metrics}`;
+  const cached = getCachedData<any>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const res = await fetch(
+      `${API_URL}/historical-data/${zoneId}/${timeRange}/${interval}/${metrics}?format=json`
+    );
+    if (!res.ok) return { data: [], stats: {} };
+    const data = await res.json();
+    setCachedData(cacheKey, data);
+    return data;
+  } catch (e) {
+    console.error('Failed to fetch historical data', e);
+    return { data: [], stats: {} };
+  }
+}

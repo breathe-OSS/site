@@ -660,3 +660,102 @@ function renderChart(history: AQIHistory[]) {
 
   detailChart = new Chart(ctx, config);
 }
+
+let extendedHistoryChart: LineChart | null = null;
+
+export function renderExtendedHistoryChart(history: any[], showPm25: boolean = true, showPm10: boolean = true) {
+  const canvas = document.getElementById('extendedHistoryChart') as HTMLCanvasElement;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  if (extendedHistoryChart) extendedHistoryChart.destroy();
+
+  const isDark = getCurrentTheme() === 'dark';
+  const lineColor1 = '#a8c7fa';
+  const lineColor2 = '#d8b4fe';
+
+  const gradient1 = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient1.addColorStop(0, isDark ? 'rgba(168, 199, 250, 0.4)' : 'rgba(65, 105, 225, 0.4)');
+  gradient1.addColorStop(1, 'rgba(168, 199, 250, 0.0)');
+
+  const gradient2 = ctx.createLinearGradient(0, 0, 0, 300);
+  gradient2.addColorStop(0, isDark ? 'rgba(216, 180, 254, 0.4)' : 'rgba(147, 51, 234, 0.4)');
+  gradient2.addColorStop(1, 'rgba(216, 180, 254, 0.0)');
+
+  const labels = history.map(h => {
+    const d = new Date(h.ts * 1000);
+    const hrs = d.getHours() < 10 ? '0' + d.getHours() : d.getHours();
+    return `${d.getDate()}/${d.getMonth()+1} ${hrs}:00`;
+  });
+
+  const datasets = [];
+
+  if (showPm25) {
+      datasets.push({
+          label: 'PM2.5',
+          data: history.map(h => h.pm2_5),
+          borderColor: lineColor1,
+          backgroundColor: gradient1,
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          fill: true,
+      });
+  }
+
+  if (showPm10) {
+      datasets.push({
+          label: 'PM10',
+          data: history.map(h => h.pm10),
+          borderColor: lineColor2,
+          backgroundColor: gradient2,
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          fill: true,
+      });
+  }
+
+  const config: ChartConfiguration<'line', number[], string> = {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: datasets,
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { 
+        legend: { display: true, labels: { color: isDark ? '#fff' : '#000' } }, 
+        tooltip: { enabled: true } 
+      },
+      scales: { 
+        x: { 
+            display: true, 
+            ticks: { color: isDark ? '#aaa' : '#666', maxTicksLimit: 8 },
+            grid: { display: false }
+        }, 
+        y: { 
+            display: true, 
+            min: 0, 
+            ticks: { color: isDark ? '#aaa' : '#666' }, 
+            grid: { color: isDark ? '#333' : '#ddd' },
+            title: { display: true, text: 'Concentration (µg/m³)', color: isDark ? '#fff' : '#000' }
+        } 
+      },
+    },
+  };
+
+  extendedHistoryChart = new Chart(ctx, config);
+}
+
+export function updateExtendedChartTheme() {
+    if (extendedHistoryChart) {
+        // Redraw
+        extendedHistoryChart.update();
+    }
+}

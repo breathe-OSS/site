@@ -1,4 +1,4 @@
-import { STORAGE_KEY_PINS } from './config.js';
+import { STORAGE_KEY_PINS, API_URL } from './config.js';
 import { fetchZones, getZoneAQI } from './api.js';
 import { initTheme, initStandard } from './utils.js';
 import { initMap, updateMapTiles, resizeMap } from './map.js';
@@ -128,7 +128,10 @@ function togglePin(id: string) {
   refreshDashboard();
 }
 
+let currentZoneId: string | null = null;
+
 async function openDetails(zoneId: string) {
+  currentZoneId = zoneId;
   handleShowView('details');
   const zone = allZones.find((z) => z.id === zoneId);
   if (!zone) return;
@@ -185,11 +188,154 @@ async function openNodeDetails(nodeName: string, std: string, displayAqi: number
   sheet.classList.remove('hidden');
 }
 
+let currentHistoryZoneId: string | null = null;
+let currentHistoryRange: string = '1w';
+
+import { fetchHistoricalData } from './api.js';
+import { renderExtendedHistoryChart } from './ui.js';
+
+let currentHistoryData: any = null;
+
+async function openHistoryView() {
+  if (!currentZoneId) return;
+  const zone = allZones.find(z => z.id === currentZoneId);
+  if (!zone) return;
+  
+  currentHistoryZoneId = zone.id;
+  const histTitle = document.getElementById('history-title-header');
+  if (histTitle) histTitle.innerText = `${zone.name} History`;
+  
+  const aqiData = await getZoneAQI(zone.id);
+  const sensorSelect = document.getElementById('hist-sensor-select') as HTMLSelectElement;
+  if (sensorSelect) {
+      sensorSelect.innerHTML = '<option value="zone">Zone Average</option>';
+      if (aqiData && aqiData.nodes) {
+          Object.keys(aqiData.nodes).forEach(node => {
+              sensorSelect.innerHTML += `<option value="${node}">${node}</option>`;
+          });
+      }
+  }
+  
+  handleShowView('history');
+  setHistoryRange('1w');
+}
+
+function setHistoryRange(range: string) {
+    document.querySelectorAll('#view-history .btn-outlined').forEach(btn => btn.classList.remove('active'));
+    const btn = document.getElementById(`hist-${range}`);
+    if (btn) btn.classList.add('active');
+    
+    const customInputs = document.getElementById('hist-custom-inputs');
+    if (customInputs) customInputs.style.display = 'none';
+    
+    currentHistoryRange = range;
+    loadCustomHistory();
+}
+
+function toggleCustomRange() {
+    document.querySelectorAll('#view-history .btn-outlined').forEach(btn => btn.classList.remove('active'));
+    const btn = document.getElementById('hist-custom-btn');
+    if (btn) btn.classList.add('active');
+    
+    const customInputs = document.getElementById('hist-custom-inputs');
+    if (customInputs) customInputs.style.display = 'flex';
+}
+
+function applyCustomHistory() {
+    const rangeInput = document.getElementById('custom-range') as HTMLInputElement;
+    if (rangeInput && rangeInput.value) {
+        currentHistoryRange = rangeInput.value;
+        loadCustomHistory();
+    }
+}
+
+async function loadCustomHistory() {
+    if (!currentHistoryZoneId) return;
+    
+    const sensorSelect = document.getElementById('hist-sensor-select') as HTMLSelectElement;
+    const location = sensorSelect ? (sensorSelect.value === 'zone' ? currentHistoryZoneId : sensorSelect.value) : currentHistoryZoneId;
+    
+    const customInputs = document.getElementById('hist-custom-inputs');
+    let interval = '1h';
+    if (customInputs && customInputs.style.display === 'flex') {
+        const intInput = document.getElementById('custom-interval') as HTMLInputElement;
+        if (intInput && intInput.value) interval = intInput.value;
+    } else {
+        if (currentHistoryRange === '1w') interval = '1h';
+        else if (currentHistoryRange === '1mo') interval = '4h';
+        else if (currentHistoryRange === '6mo') interval = '1d';
+    }
+    
+    const pm25Cb = document.getElementById('hist-pm25') as HTMLInputElement;
+    const pm10Cb = document.getElementById('hist-pm10') as HTMLInputElement;
+    
+    const showPm25 = pm25Cb ? pm25Cb.checked : true;
+    const showPm10 = pm10Cb ? pm10Cb.checked : true;
+    
+    let metrics = [];
+    if (showPm25) metrics.push('pm2.5');
+    if (showPm10) metrics.push('pm10');
+    if (metrics.length === 0) metrics = ['pm2.5', 'pm10'];
+
+    const data = await fetchHistoricalData(location, currentHistoryRange, interval, metrics.join(','));
+    currentHistoryData = data;
+    
+    renderExtendedHistoryChart(data.data || [], showPm25, showPm10);
+    updateHistoryStatsUI();
+}
+
+function updateHistoryStatsUI() {
+    if (!currentHistoryData || !currentHistoryData.stats) return;
+    const stats = currentHistoryData.stats;
+    
+    const maxPm25El = document.getElementById('stat-max-pm25');
+    const minPm25El = document.getElementById('stat-min-pm25');
+    const avgPm25El = document.getElementById('stat-avg-pm25');
+    
+    const maxPm10El = document.getElementById('stat-max-pm10');
+    const minPm10El = document.getElementById('stat-min-pm10');
+    const avgPm10El = document.getElementById('stat-avg-pm10');
+    
+    if (maxPm25El) maxPm25El.innerText = stats.max_pm2_5 !== null ? stats.max_pm2_5 : '--';
+    if (minPm25El) minPm25El.innerText = stats.min_pm2_5 !== null ? stats.min_pm2_5 : '--';
+    if (avgPm25El) avgPm25El.innerText = stats.avg_pm2_5 !== null ? stats.avg_pm2_5 : '--';
+    
+    if (maxPm10El) maxPm10El.innerText = stats.max_pm10 !== null ? stats.max_pm10 : '--';
+    if (minPm10El) minPm10El.innerText = stats.min_pm10 !== null ? stats.min_pm10 : '--';
+    if (avgPm10El) avgPm10El.innerText = stats.avg_pm10 !== null ? stats.avg_pm10 : '--';
+}
+
+function downloadHistoryCSV() {
+    if (!currentHistoryZoneId) return;
+    const sensorSelect = document.getElementById('hist-sensor-select') as HTMLSelectElement;
+    const location = sensorSelect ? (sensorSelect.value === 'zone' ? currentHistoryZoneId : sensorSelect.value) : currentHistoryZoneId;
+    
+    const customInputs = document.getElementById('hist-custom-inputs');
+    let interval = '1h';
+    if (customInputs && customInputs.style.display === 'flex') {
+        const intInput = document.getElementById('custom-interval') as HTMLInputElement;
+        if (intInput && intInput.value) interval = intInput.value;
+    } else {
+        if (currentHistoryRange === '1w') interval = '1h';
+        else if (currentHistoryRange === '1mo') interval = '4h';
+        else if (currentHistoryRange === '6mo') interval = '1d';
+    }
+    
+    window.open(`${API_URL}/historical-data/${location}/${currentHistoryRange}/${interval}/pm2.5,pm10?format=csv`);
+}
+
 // navigation logic
 
 (window as any).showView = handleShowView;
 (window as any).openDetails = openDetails;
 (window as any).openNodeDetails = openNodeDetails;
+(window as any).openHistoryView = openHistoryView;
+(window as any).setHistoryRange = setHistoryRange;
+(window as any).toggleCustomRange = toggleCustomRange;
+(window as any).applyCustomHistory = applyCustomHistory;
+(window as any).loadCustomHistory = loadCustomHistory;
+(window as any).updateHistoryStatsUI = updateHistoryStatsUI;
+(window as any).downloadHistoryCSV = downloadHistoryCSV;
 (window as any).openModal = (id: string) => document.getElementById(id)?.classList.remove('hidden');
 (window as any).closeModal = (id: string) => document.getElementById(id)?.classList.add('hidden');
 
@@ -214,7 +360,7 @@ function updateNavHighlight(viewName: string) {
   document.querySelectorAll('.nav-item, .nav-btn').forEach((el) => el.classList.remove('active'));
 
   let target = viewName;
-  if (viewName === 'details') target = 'dashboard';
+  if (viewName === 'details' || viewName === 'history') target = 'dashboard';
 
   const mobBtn = document.getElementById(`nav-${target}`);
   if (mobBtn) mobBtn.classList.add('active');

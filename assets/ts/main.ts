@@ -253,7 +253,7 @@ async function loadCustomHistory() {
     if (!currentHistoryZoneId) return;
     
     const sensorSelect = document.getElementById('hist-sensor-select') as HTMLSelectElement;
-    const location = sensorSelect ? (sensorSelect.value === 'zone' ? currentHistoryZoneId : sensorSelect.value) : currentHistoryZoneId;
+    const location = sensorSelect ? (sensorSelect.value === 'zone' ? currentHistoryZoneId : `${currentHistoryZoneId}_${sensorSelect.value}`) : currentHistoryZoneId;
     
     const customInputs = document.getElementById('hist-custom-inputs');
     let interval = '1h';
@@ -308,7 +308,7 @@ function updateHistoryStatsUI() {
 function downloadHistoryCSV() {
     if (!currentHistoryZoneId) return;
     const sensorSelect = document.getElementById('hist-sensor-select') as HTMLSelectElement;
-    const location = sensorSelect ? (sensorSelect.value === 'zone' ? currentHistoryZoneId : sensorSelect.value) : currentHistoryZoneId;
+    const location = sensorSelect ? (sensorSelect.value === 'zone' ? currentHistoryZoneId : `${currentHistoryZoneId}_${sensorSelect.value}`) : currentHistoryZoneId;
     
     const customInputs = document.getElementById('hist-custom-inputs');
     let interval = '1h';

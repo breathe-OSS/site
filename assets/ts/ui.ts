@@ -342,6 +342,15 @@ export function updateDetailView(zone: Zone, data: AQIData) {
     }
   }
 
+  const btnHistory = document.getElementById('btn-extended-history');
+  if (btnHistory) {
+      if (provider === 'airgradient') {
+          btnHistory.style.display = 'block';
+      } else {
+          btnHistory.style.display = 'none';
+      }
+  }
+
   // Update main card with gradient background
   if (mainCard) {
     mainCard.style.setProperty('--aqi-color', colors.hex);

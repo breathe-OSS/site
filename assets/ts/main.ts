@@ -1,13 +1,14 @@
 import { STORAGE_KEY_PINS, API_URL } from './config.js';
 import { fetchZones, getZoneAQI } from './api.js';
 import { initTheme, initStandard } from './utils.js';
-import { initMap, updateMapTiles, resizeMap } from './map.js';
+import { initMap, updateMapTiles, resizeMap, getCurrentMapZoneId } from './map.js';
 import {
   renderDashboardCard,
   renderExploreItem,
   updateDetailView,
   updateChartTheme,
   renderSkeletonCard,
+  getPinIcon,
 } from './ui.js';
 import { Zone, AQIData } from './types.js';
 
@@ -368,3 +369,42 @@ function updateNavHighlight(viewName: string) {
   const sideBtn = document.getElementById(`side-${target}`);
   if (sideBtn) sideBtn.classList.add('active');
 }
+
+(window as any).toggleMapSheetPin = () => {
+  const zoneId = getCurrentMapZoneId();
+  if (zoneId) {
+    togglePin(zoneId);
+    
+    // update button UI
+    const pinBtn = document.getElementById('map-sheet-pin-btn');
+    const pinIcon = document.getElementById('map-sheet-pin-icon');
+    const pinText = document.getElementById('map-sheet-pin-text');
+    
+    if (pinBtn && pinIcon && pinText) {
+      const isPinned = pinnedZoneIds.includes(zoneId);
+      pinIcon.innerHTML = getPinIcon(isPinned);
+      
+      const svg = pinIcon.querySelector('svg');
+      if (svg) {
+        svg.style.width = '16px';
+        svg.style.height = '16px';
+      }
+      
+      if (isPinned) {
+        pinBtn.classList.add('pinned');
+        pinText.textContent = 'Pinned';
+        pinBtn.style.color = 'var(--primary)';
+        pinBtn.style.borderColor = 'var(--primary)';
+      } else {
+        pinBtn.classList.remove('pinned');
+        pinText.textContent = 'Pin to Home';
+        pinBtn.style.color = 'var(--on-surface-variant)';
+        pinBtn.style.borderColor = 'var(--outline)';
+      }
+      
+      pinBtn.classList.remove('pin-flash');
+      void pinBtn.offsetWidth;
+      pinBtn.classList.add('pin-flash');
+    }
+  }
+};

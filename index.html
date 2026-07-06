@@ -417,12 +417,18 @@
                     </svg>
                     Now Viewing
                 </div>
-                <button class="icon-btn-compact" onclick="closeMapDetailSheet()">
-                    <svg viewBox="0 0 24 24" width="24" height="24">
-                        <path
-                            d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                    </svg>
-                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn-outlined" style="display: flex; align-items: center; gap: 6px; padding: 6px 16px; font-size: 13px; color: var(--on-surface-variant); border-color: var(--outline);" id="map-sheet-pin-btn" onclick="toggleMapSheetPin()">
+                        <span id="map-sheet-pin-icon" style="display: flex; width: 18px; height: 18px; align-items: center; justify-content: center;"></span>
+                        <span id="map-sheet-pin-text">Pin to Home</span>
+                    </button>
+                    <button class="icon-btn-compact" onclick="closeMapDetailSheet()">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path
+                                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <h2 class="bottom-sheet-title" id="map-sheet-zone-name">Location</h2>

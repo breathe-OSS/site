@@ -1,6 +1,8 @@
 import { getZoneAQI } from './api.js';
 import { getAQIColor, getCurrentTheme, getAQIStandard, formatPollutantName } from './utils.js';
 import { Zone, AQIData } from './types.js';
+import { STORAGE_KEY_PINS } from './config.js';
+import { getPinIcon } from './ui.js';
 import * as Leaflet from 'leaflet';
 
 declare const L: typeof Leaflet;
@@ -9,6 +11,10 @@ declare const L: typeof Leaflet;
 let mapInstance: Leaflet.Map | null = null;
 let mapTileLayer: Leaflet.TileLayer | null = null;
 let currentMapZoneId: string | null = null;
+
+export function getCurrentMapZoneId() {
+  return currentMapZoneId;
+}
 
 export function initMap(allZones: Zone[]): void {
   if (mapInstance) {
@@ -115,6 +121,35 @@ function populateMapDetailSheet(zone: Zone, data: AQIData) {
   const std = getAQIStandard();
   const displayAqi = std === 'us' ? (data.us_aqi || 0) : data.aqi;
   const colors = getAQIColor(displayAqi, std);
+
+  const pinBtn = document.getElementById('map-sheet-pin-btn');
+  const pinIcon = document.getElementById('map-sheet-pin-icon');
+  const pinText = document.getElementById('map-sheet-pin-text');
+  
+  if (pinBtn && pinIcon && pinText) {
+    const pinnedZoneIds: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_PINS) || '[]');
+    const isPinned = pinnedZoneIds.includes(zone.id);
+    pinIcon.innerHTML = getPinIcon(isPinned);
+    
+    // Resize the SVG if needed
+    const svg = pinIcon.querySelector('svg');
+    if (svg) {
+      svg.style.width = '16px';
+      svg.style.height = '16px';
+    }
+    
+    if (isPinned) {
+      pinBtn.classList.add('pinned');
+      pinText.textContent = 'Pinned';
+      pinBtn.style.color = 'var(--primary)';
+      pinBtn.style.borderColor = 'var(--primary)';
+    } else {
+      pinBtn.classList.remove('pinned');
+      pinText.textContent = 'Pin to Home';
+      pinBtn.style.color = 'var(--on-surface-variant)';
+      pinBtn.style.borderColor = 'var(--outline)';
+    }
+  }
 
   const nameEl = document.getElementById('map-sheet-zone-name');
   if (nameEl) nameEl.textContent = zone.name;

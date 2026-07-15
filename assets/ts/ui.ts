@@ -478,10 +478,12 @@ export function updateDetailView(zone: Zone, data: AQIData) {
         }
         if (val === 'zone') {
           renderChart(data.history);
+          renderDotsHistory(data.history);
         } else {
           const history = data.nodes?.[val]?.history;
           if (history) {
             renderChart(history);
+            renderDotsHistory(history);
           }
         }
       };

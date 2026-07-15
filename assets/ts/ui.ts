@@ -496,6 +496,8 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   }
 
   renderChart(data.history);
+  renderDotsHistory(data.history);
+  setupChartPager();
 }
 
 function renderNodeReadings(nodes: { [name: string]: NodeData }) {
@@ -668,6 +670,134 @@ function renderChart(history: AQIHistory[]) {
   };
 
   detailChart = new Chart(ctx, config);
+}
+
+let dotTooltipEl: HTMLElement | null = null;
+let dotSelectedCell: HTMLElement | null = null;
+
+function showDotTooltip(cell: HTMLElement, text: string) {
+  if (!dotTooltipEl) {
+    dotTooltipEl = document.createElement('div');
+    dotTooltipEl.className = 'dot-tooltip';
+    document.body.appendChild(dotTooltipEl);
+  }
+  dotTooltipEl.textContent = text;
+  dotTooltipEl.style.display = 'block';
+  const r = cell.getBoundingClientRect();
+  dotTooltipEl.style.left = `${r.left + r.width / 2}px`;
+  dotTooltipEl.style.top = `${r.top - 6}px`;
+}
+
+function hideDotTooltip() {
+  if (dotTooltipEl) dotTooltipEl.style.display = 'none';
+}
+
+export function renderDotsHistory(history: AQIHistory[]) {
+  const container = document.getElementById('dots-history');
+  if (!container) return;
+  container.innerHTML = '';
+  dotSelectedCell = null;
+  if (!history || history.length === 0) return;
+
+  const std = getAQIStandard();
+  const sorted = [...history].sort((a, b) => a.ts - b.ts);
+
+  const fmtHour = (ts: number) => {
+    const d = new Date(ts * 1000);
+    const hh = d.getHours() < 10 ? '0' + d.getHours() : `${d.getHours()}`;
+    return `${hh}:00`;
+  };
+
+  const row = document.createElement('div');
+  row.className = 'dots-row';
+  sorted.forEach((h) => {
+    const value = std === 'us' ? h.us_aqi || 0 : h.aqi;
+    const cell = document.createElement('div');
+    cell.className = 'dot-cell';
+    cell.style.backgroundColor = getAQIColor(value, std).hex;
+    const label = `AQI ${value}  ·  ${fmtHour(h.ts)}`;
+    cell.dataset.label = label;
+    cell.addEventListener('mouseenter', () => showDotTooltip(cell, label));
+    cell.addEventListener('mouseleave', () => {
+      if (dotSelectedCell) showDotTooltip(dotSelectedCell, dotSelectedCell.dataset.label || '');
+      else hideDotTooltip();
+    });
+    cell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (dotSelectedCell === cell) {
+        dotSelectedCell = null;
+        hideDotTooltip();
+      } else {
+        dotSelectedCell = cell;
+        showDotTooltip(cell, label);
+      }
+    });
+    row.appendChild(cell);
+  });
+  container.appendChild(row);
+
+  const axis = document.createElement('div');
+  axis.className = 'dots-axis';
+  [0, Math.floor((sorted.length - 1) / 2), sorted.length - 1].forEach((i) => {
+    const span = document.createElement('span');
+    span.textContent = fmtHour(sorted[i].ts);
+    axis.appendChild(span);
+  });
+  container.appendChild(axis);
+
+  const legend = document.createElement('div');
+  legend.className = 'dots-legend';
+  const reps = std === 'us' ? [25, 75, 125, 175, 250, 400] : [25, 75, 150, 250, 350, 450];
+  const good = document.createElement('span');
+  good.textContent = 'Good';
+  legend.appendChild(good);
+  reps.forEach((rep) => {
+    const sw = document.createElement('span');
+    sw.className = 'dot-swatch';
+    sw.style.backgroundColor = getAQIColor(rep, std).hex;
+    legend.appendChild(sw);
+  });
+  const worst = document.createElement('span');
+  worst.textContent = std === 'us' ? 'Hazardous' : 'Severe';
+  legend.appendChild(worst);
+  container.appendChild(legend);
+}
+
+let chartPagerInit = false;
+
+export function setupChartPager() {
+  if (chartPagerInit) return;
+  const pager = document.getElementById('dashboard-chart-pager');
+  if (!pager) return;
+  chartPagerInit = true;
+
+  const prev = document.getElementById('chart-arrow-prev');
+  const next = document.getElementById('chart-arrow-next');
+  const dots = Array.from(document.querySelectorAll<HTMLElement>('#chart-pager-dots .pd'));
+  const hint = document.getElementById('chart-swipe-hint');
+
+  const goTo = (page: number) =>
+    pager.scrollTo({ left: page * pager.clientWidth, behavior: 'smooth' });
+  prev?.addEventListener('click', () => goTo(0));
+  next?.addEventListener('click', () => goTo(1));
+  dots.forEach((d) => d.addEventListener('click', () => goTo(parseInt(d.dataset.page || '0', 10))));
+
+  const update = () => {
+    const page = Math.round(pager.scrollLeft / Math.max(pager.clientWidth, 1));
+    dots.forEach((d, i) => d.classList.toggle('active', i === page));
+    if (prev) prev.style.visibility = page <= 0 ? 'hidden' : 'visible';
+    if (next) next.style.visibility = page >= dots.length - 1 ? 'hidden' : 'visible';
+    if (hint) hint.textContent = page === 0 ? 'Swipe for Dots History' : 'Swipe for Trend Graph';
+  };
+  pager.addEventListener('scroll', update);
+  window.addEventListener('resize', update);
+  document.addEventListener('click', (e) => {
+    if (!(e.target as HTMLElement).closest('.dot-cell')) {
+      dotSelectedCell = null;
+      hideDotTooltip();
+    }
+  });
+  update();
 }
 
 let extendedHistoryChart: LineChart | null = null;

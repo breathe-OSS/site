@@ -481,6 +481,131 @@ header {
   margin-top: 8px;
   padding: 0 10px;
 }
+.chart-pager-viewport {
+  position: relative;
+}
+.chart-pager {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+.chart-pager::-webkit-scrollbar {
+  display: none;
+}
+.chart-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+.chart-pager-arrow {
+  position: absolute;
+  bottom: 6px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chart-pager-arrow.left {
+  left: -8px;
+}
+.chart-pager-arrow.right {
+  right: -8px;
+}
+.dots-history {
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+.dots-row {
+  display: flex;
+  gap: 3px;
+}
+.dot-cell {
+  flex: 1;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform var(--motion-duration-short2) var(--motion-easing-standard);
+}
+.dot-cell:hover {
+  transform: scaleY(1.12);
+}
+.dots-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  padding: 0 2px;
+}
+.dots-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+.dots-legend .dot-swatch {
+  width: 16px;
+  height: 6px;
+  border-radius: 2px;
+}
+.chart-pager-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+.chart-pager-dots .pd {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--on-surface-variant);
+  opacity: 0.3;
+  cursor: pointer;
+}
+.chart-pager-dots .pd.active {
+  width: 8px;
+  height: 8px;
+  opacity: 1;
+  background: var(--primary);
+}
+.chart-swipe-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  margin-top: 6px;
+}
+.dot-tooltip {
+  position: fixed;
+  z-index: 1000;
+  transform: translate(-50%, -100%);
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  white-space: nowrap;
+  display: none;
+}
 .pollutants-container-card {
   background: linear-gradient(135deg, var(--surface) 0%, var(--surface-container) 100%);
   padding: 24px;

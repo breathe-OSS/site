@@ -171,14 +171,30 @@
                             </div>
                             <select id="chart-node-select" class="chart-dropdown hidden"></select>
                         </div>
-                        <div class="chart-wrapper">
-                            <canvas id="detailChart"></canvas>
+                        <div class="chart-pager-viewport">
+                            <button class="chart-pager-arrow left" id="chart-arrow-prev" aria-label="Previous view">‹</button>
+                            <div class="chart-pager" id="dashboard-chart-pager">
+                                <div class="chart-slide">
+                                    <div class="chart-wrapper">
+                                        <canvas id="detailChart"></canvas>
+                                    </div>
+                                    <div class="chart-labels">
+                                        <span>09:00</span>
+                                        <span>20:00</span>
+                                        <span>08:00</span>
+                                    </div>
+                                </div>
+                                <div class="chart-slide">
+                                    <div class="dots-history" id="dots-history"></div>
+                                </div>
+                            </div>
+                            <button class="chart-pager-arrow right" id="chart-arrow-next" aria-label="Next view">›</button>
                         </div>
-                        <div class="chart-labels">
-                            <span>09:00</span>
-                            <span>20:00</span>
-                            <span>08:00</span>
+                        <div class="chart-pager-dots" id="chart-pager-dots">
+                            <span class="pd active" data-page="0"></span>
+                            <span class="pd" data-page="1"></span>
                         </div>
+                        <div class="chart-swipe-hint" id="chart-swipe-hint">Swipe for Dots History</div>
                         <button id="btn-extended-history" class="btn-outlined" style="width: 100%; margin-top: 16px;" onclick="openHistoryView()">View Extended History</button>
                     </div>
 
@@ -526,7 +542,7 @@
         <div class="modal-card">
             <h3>Data Sources</h3>
             <div class="modal-body">
-                <p><strong>Jammu & Kashmir regions (excl. Srinagar, Jammu and Rajouri.)</strong></p>
+                <p><strong>Non AirGradient enabled zones</strong></p>
                 <p class="modal-text">Air quality and weather data sourced from Open-Meteo.</p>
                 <a href="https://open-meteo.com/" target="_blank" class="link-img">
                     <img src="assets/images/open_meteo_logo.png" class="provider-logo dark-only" alt="OpenMeteo" />
@@ -536,7 +552,7 @@
 
                 <div class="divider"></div>
 
-                <p><strong>Srinagar, Jammu and Rajouri.</strong></p>
+                <p><strong>AirGradient enabled zones</strong></p>
                 <p class="modal-text">
                     PM<sub>10</sub> and PM<sub>2.5</sub> sourced from AirGradient, other concentrations sourced from
                     Open-Meteo.

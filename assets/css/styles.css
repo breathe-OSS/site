@@ -534,11 +534,18 @@ header {
   display: flex;
   gap: 3px;
 }
+:root {
+  --dot-outline: rgba(255, 255, 255, 0.9);
+}
+[data-theme='light'] {
+  --dot-outline: rgba(0, 0, 0, 0.75);
+}
 .dot-cell {
   flex: 1;
   height: 32px;
   border-radius: 4px;
   cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--dot-outline);
   transition: transform var(--motion-duration-short2) var(--motion-easing-standard);
 }
 .dot-cell:hover {
@@ -636,10 +643,12 @@ header {
   height: 15px;
   border-radius: 3px;
   cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--dot-outline);
 }
 .ext-cell.empty {
   background-color: var(--surface-container-high);
   cursor: default;
+  box-shadow: none;
 }
 .ext-grid.cal .ext-cell {
   height: auto;

@@ -275,10 +275,29 @@
                             </div>
                         </div>
 
-                        <div class="chart-wrapper" style="height: 350px; width: 100%;">
-                            <canvas id="extendedHistoryChart"></canvas>
+                        <div class="chart-pager-viewport">
+                            <button class="chart-pager-arrow left" id="ext-arrow-prev" aria-label="Previous view">‹</button>
+                            <div class="chart-pager" id="extended-chart-pager">
+                                <div class="chart-slide">
+                                    <div class="chart-wrapper" style="height: 350px; width: 100%;">
+                                        <canvas id="extendedHistoryChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="chart-slide">
+                                    <div class="ext-dots-slide">
+                                        <div class="ext-dots-subtitle" id="extended-dots-subtitle"></div>
+                                        <div id="extended-dots-grid"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="chart-pager-arrow right" id="ext-arrow-next" aria-label="Next view">›</button>
                         </div>
-                        
+                        <div class="chart-pager-dots" id="ext-pager-dots">
+                            <span class="pd active" data-page="0"></span>
+                            <span class="pd" data-page="1"></span>
+                        </div>
+                        <div class="chart-swipe-hint" id="ext-swipe-hint">Swipe for Dots History</div>
+
                         <button class="btn-outlined" style="width: 100%; margin-top: 24px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="downloadHistoryCSV()">
                             <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download CSV
                         </button>

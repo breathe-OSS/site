@@ -606,6 +606,55 @@ header {
   white-space: nowrap;
   display: none;
 }
+.ext-dots-slide {
+  height: 350px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 8px;
+}
+.ext-dots-subtitle {
+  text-align: center;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+.ext-grid {
+  display: grid;
+  gap: 3px;
+  align-content: center;
+}
+.ext-grid.punch {
+  grid-template-columns: 34px repeat(24, minmax(0, 1fr));
+  grid-auto-rows: 15px;
+}
+.ext-grid.cal {
+  grid-template-rows: 14px repeat(7, 16px);
+  justify-content: center;
+}
+.ext-cell {
+  height: 15px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.ext-cell.empty {
+  background-color: var(--surface-container-high);
+  cursor: default;
+}
+.ext-grid.cal .ext-cell {
+  height: auto;
+}
+.ext-glabel,
+.ext-month,
+.ext-haxis {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  display: flex;
+  align-items: center;
+}
+.ext-haxis {
+  justify-content: center;
+}
 .pollutants-container-card {
   background: linear-gradient(135deg, var(--surface) 0%, var(--surface-container) 100%);
   padding: 24px;

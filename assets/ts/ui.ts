@@ -6,6 +6,8 @@ import {
   getAQICategory,
   getAQIBarPosition,
   formatPollutantName,
+  calculateUsAqi,
+  calculateUsAqiPm10,
 } from './utils.js';
 import { Zone, AQIData, AQIHistory, Pollutants, NodeData } from './types.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
@@ -890,6 +892,263 @@ export function renderExtendedHistoryChart(history: any[], showPm25: boolean = t
   };
 
   extendedHistoryChart = new Chart(ctx, config);
+}
+
+let extDotSelected: HTMLElement | null = null;
+
+function attachExtCell(cell: HTMLElement, label: string) {
+  cell.dataset.label = label;
+  cell.addEventListener('mouseenter', () => showDotTooltip(cell, label));
+  cell.addEventListener('mouseleave', () => {
+    if (extDotSelected) showDotTooltip(extDotSelected, extDotSelected.dataset.label || '');
+    else hideDotTooltip();
+  });
+  cell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (extDotSelected === cell) {
+      extDotSelected = null;
+      hideDotTooltip();
+    } else {
+      extDotSelected = cell;
+      showDotTooltip(cell, label);
+    }
+  });
+}
+
+interface ExtDay {
+  pm25: number[];
+  pm10: number[];
+  c25: number[];
+  c10: number[];
+}
+
+export function renderExtendedDotsGrid(history: any[], showPm25: boolean, showPm10: boolean) {
+  const container = document.getElementById('extended-dots-grid');
+  const subtitle = document.getElementById('extended-dots-subtitle');
+  if (!container) return;
+  container.innerHTML = '';
+  extDotSelected = null;
+  if (!history || history.length === 0) return;
+
+  const use25 = showPm25 || (!showPm25 && !showPm10);
+  const use10 = showPm10 || (!showPm25 && !showPm10);
+  const dayMs = 86400000;
+
+  const byDay = new Map<number, ExtDay>();
+  history.forEach((h) => {
+    const d = new Date(h.ts * 1000);
+    const hour = d.getHours();
+    d.setHours(0, 0, 0, 0);
+    const dayStart = d.getTime();
+    let e = byDay.get(dayStart);
+    if (!e) {
+      e = {
+        pm25: new Array(24).fill(NaN),
+        pm10: new Array(24).fill(NaN),
+        c25: new Array(24).fill(0),
+        c10: new Array(24).fill(0),
+      };
+      byDay.set(dayStart, e);
+    }
+    if (h.pm2_5 != null) {
+      e.pm25[hour] = isNaN(e.pm25[hour]) ? h.pm2_5 : (e.pm25[hour] * e.c25[hour] + h.pm2_5) / (e.c25[hour] + 1);
+      e.c25[hour]++;
+    }
+    if (h.pm10 != null) {
+      e.pm10[hour] = isNaN(e.pm10[hour]) ? h.pm10 : (e.pm10[hour] * e.c10[hour] + h.pm10) / (e.c10[hour] + 1);
+      e.c10[hour]++;
+    }
+  });
+
+  const days = Array.from(byDay.keys()).sort((a, b) => a - b);
+  if (days.length === 0) return;
+  const hourly = days.length <= 10;
+
+  const cellAqi = (pm25v: number, pm10v: number): number | null => {
+    let aqi: number | null = null;
+    if (use25 && !isNaN(pm25v)) aqi = calculateUsAqi(pm25v);
+    if (use10 && !isNaN(pm10v)) {
+      const a = calculateUsAqiPm10(pm10v);
+      if (aqi === null || a > aqi) aqi = a;
+    }
+    return aqi;
+  };
+  const cellValues = (pm25v: number, pm10v: number): string => {
+    const parts: string[] = [];
+    if (use25 && !isNaN(pm25v)) parts.push(`PM2.5 ${Math.round(pm25v)}`);
+    if (use10 && !isNaN(pm10v)) parts.push(`PM10 ${Math.round(pm10v)}`);
+    return parts.join('  ·  ');
+  };
+  const wd = (ts: number) => new Date(ts).toLocaleDateString(undefined, { weekday: 'short' });
+
+  const grid = document.createElement('div');
+
+  if (hourly) {
+    if (subtitle) subtitle.textContent = 'By Day and Hour  ·  Tap a Cell for Details';
+    grid.className = 'ext-grid punch';
+    days.forEach((day) => {
+      const e = byDay.get(day)!;
+      const lbl = document.createElement('div');
+      lbl.className = 'ext-glabel';
+      lbl.textContent = wd(day);
+      grid.appendChild(lbl);
+      for (let h = 0; h < 24; h++) {
+        const aqi = cellAqi(e.pm25[h], e.pm10[h]);
+        const cell = document.createElement('div');
+        cell.className = 'ext-cell';
+        if (aqi === null) {
+          cell.classList.add('empty');
+        } else {
+          cell.style.backgroundColor = getAQIColor(aqi, 'us').hex;
+          const label = `${cellValues(e.pm25[h], e.pm10[h])}  ·  ${wd(day)} ${h < 10 ? '0' + h : h}:00`;
+          attachExtCell(cell, label);
+        }
+        grid.appendChild(cell);
+      }
+    });
+    const corner = document.createElement('div');
+    corner.style.gridRow = `${days.length + 1}`;
+    corner.style.gridColumn = '1';
+    grid.appendChild(corner);
+    [0, 6, 12, 18].forEach((h) => {
+      const s = document.createElement('div');
+      s.className = 'ext-haxis';
+      s.textContent = `${h}`;
+      s.style.gridRow = `${days.length + 1}`;
+      s.style.gridColumn = `${h + 2}`;
+      grid.appendChild(s);
+    });
+  } else {
+    if (subtitle) subtitle.textContent = 'Daily Average  ·  Tap a Cell for Details';
+    grid.className = 'ext-grid cal';
+    const first = new Date(days[0]);
+    first.setDate(first.getDate() - first.getDay());
+    first.setHours(0, 0, 0, 0);
+    const gridStart = first.getTime();
+    const numWeeks = Math.floor((days[days.length - 1] - gridStart) / dayMs / 7) + 1;
+    grid.style.gridTemplateColumns = `28px repeat(${numWeeks}, minmax(0, 16px))`;
+
+    let lastMonth = '';
+    for (let w = 0; w < numWeeks; w++) {
+      const m = new Date(gridStart + w * 7 * dayMs).toLocaleDateString(undefined, { month: 'short' });
+      if (m !== lastMonth) {
+        const s = document.createElement('div');
+        s.className = 'ext-month';
+        s.textContent = m;
+        s.style.gridRow = '1';
+        s.style.gridColumn = `${w + 2}`;
+        grid.appendChild(s);
+        lastMonth = m;
+      }
+    }
+    [1, 3, 5].forEach((row) => {
+      const s = document.createElement('div');
+      s.className = 'ext-glabel';
+      s.textContent = wd(gridStart + row * dayMs);
+      s.style.gridRow = `${row + 2}`;
+      s.style.gridColumn = '1';
+      grid.appendChild(s);
+    });
+
+    const cells: HTMLElement[][] = [];
+    for (let w = 0; w < numWeeks; w++) {
+      cells[w] = [];
+      for (let row = 0; row < 7; row++) {
+        const c = document.createElement('div');
+        c.className = 'ext-cell empty';
+        c.style.gridRow = `${row + 2}`;
+        c.style.gridColumn = `${w + 2}`;
+        grid.appendChild(c);
+        cells[w][row] = c;
+      }
+    }
+
+    const avg = (arr: number[]): number => {
+      let s = 0;
+      let n = 0;
+      for (const x of arr) if (!isNaN(x)) {
+        s += x;
+        n++;
+      }
+      return n === 0 ? NaN : s / n;
+    };
+
+    days.forEach((day) => {
+      const e = byDay.get(day)!;
+      const pm25a = avg(e.pm25);
+      const pm10a = avg(e.pm10);
+      const aqi = cellAqi(pm25a, pm10a);
+      if (aqi === null) return;
+      const daysSince = Math.floor((day - gridStart) / dayMs);
+      const week = Math.floor(daysSince / 7);
+      const row = daysSince % 7;
+      if (week < 0 || week >= numWeeks || row < 0 || row > 6) return;
+      const cell = cells[week][row];
+      cell.classList.remove('empty');
+      cell.style.backgroundColor = getAQIColor(aqi, 'us').hex;
+      const label = `${cellValues(pm25a, pm10a)}  ·  ${new Date(day).toLocaleDateString(undefined, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      })}`;
+      attachExtCell(cell, label);
+    });
+  }
+
+  container.appendChild(grid);
+
+  const legend = document.createElement('div');
+  legend.className = 'dots-legend';
+  const good = document.createElement('span');
+  good.textContent = 'Good';
+  legend.appendChild(good);
+  [25, 75, 125, 175, 250, 400].forEach((r) => {
+    const sw = document.createElement('span');
+    sw.className = 'dot-swatch';
+    sw.style.backgroundColor = getAQIColor(r, 'us').hex;
+    legend.appendChild(sw);
+  });
+  const worst = document.createElement('span');
+  worst.textContent = 'Hazardous';
+  legend.appendChild(worst);
+  container.appendChild(legend);
+}
+
+let extPagerInit = false;
+
+export function setupExtendedPager() {
+  if (extPagerInit) return;
+  const pager = document.getElementById('extended-chart-pager');
+  if (!pager) return;
+  extPagerInit = true;
+
+  const prev = document.getElementById('ext-arrow-prev');
+  const next = document.getElementById('ext-arrow-next');
+  const dots = Array.from(document.querySelectorAll<HTMLElement>('#ext-pager-dots .pd'));
+  const hint = document.getElementById('ext-swipe-hint');
+
+  const goTo = (page: number) =>
+    pager.scrollTo({ left: page * pager.clientWidth, behavior: 'smooth' });
+  prev?.addEventListener('click', () => goTo(0));
+  next?.addEventListener('click', () => goTo(1));
+  dots.forEach((d) => d.addEventListener('click', () => goTo(parseInt(d.dataset.page || '0', 10))));
+
+  const update = () => {
+    const page = Math.round(pager.scrollLeft / Math.max(pager.clientWidth, 1));
+    dots.forEach((d, i) => d.classList.toggle('active', i === page));
+    if (prev) prev.style.visibility = page <= 0 ? 'hidden' : 'visible';
+    if (next) next.style.visibility = page >= dots.length - 1 ? 'hidden' : 'visible';
+    if (hint) hint.textContent = page === 0 ? 'Swipe for Dots History' : 'Swipe for Trend Graph';
+  };
+  pager.addEventListener('scroll', update);
+  window.addEventListener('resize', update);
+  document.addEventListener('click', (e) => {
+    if (!(e.target as HTMLElement).closest('.ext-cell')) {
+      extDotSelected = null;
+      hideDotTooltip();
+    }
+  });
+  update();
 }
 
 export function updateExtendedChartTheme() {

@@ -193,7 +193,7 @@ let currentHistoryZoneId: string | null = null;
 let currentHistoryRange: string = '1w';
 
 import { fetchHistoricalData } from './api.js';
-import { renderExtendedHistoryChart } from './ui.js';
+import { renderExtendedHistoryChart, renderExtendedDotsGrid, setupExtendedPager } from './ui.js';
 
 let currentHistoryData: any = null;
 
@@ -282,6 +282,8 @@ async function loadCustomHistory() {
     currentHistoryData = data;
     
     renderExtendedHistoryChart(data.data || [], showPm25, showPm10);
+    renderExtendedDotsGrid(data.data || [], showPm25, showPm10);
+    setupExtendedPager();
     updateHistoryStatsUI();
 }
 

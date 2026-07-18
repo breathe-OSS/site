@@ -2100,18 +2100,11 @@ input:checked + .slider:before {
     font-size: 18px;
   }
 }
-.explore-card .pin-btn {
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-}
-.explore-card .pin-btn.pinned {
-    opacity: 1; 
-}
-.explore-card:hover .pin-btn {
-    opacity: 1; 
-}
-@media (hover: none) {
-    .explore-card .pin-btn {
-        opacity: 0.3;
-    }
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: green;
+    border-radius: 50%;
+    margin-right: 5px;
 }

@@ -261,10 +261,9 @@ export function renderExploreItem(
 ): HTMLElement {
   const div = document.createElement('div');
   div.className = 'explore-card';
-  const provider = zone.provider || 'openmeteo';
-  const providerText = provider === 'airgradient' 
-    ? '🟢 Live Ground Sensors' 
-    : '🌍 Satellite & Model Data';
+ const providerText = provider === 'airgradient' 
+    ? '<span class="status-indicator"></span> Live Ground Sensors' 
+    : 'Satellite & Model Data';
 
   div.innerHTML = `
         <div class="explore-card-inner">

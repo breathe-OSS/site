@@ -261,20 +261,22 @@ export function renderExploreItem(
 ): HTMLElement {
   const div = document.createElement('div');
   div.className = 'explore-card';
- const providerText = provider === 'airgradient' 
+  const provider = zone.provider; 
+
+  const providerText = provider === 'airgradient' 
     ? '<span class="status-indicator"></span> Live Ground Sensors' 
     : 'Satellite & Model Data';
 
   div.innerHTML = `
-        <div class="explore-card-inner">
-            <div>
-                <div style="font-weight:500; font-size:16px; margin-bottom:4px;">${zone.name}</div>
-                <div style="font-size:12px; color:var(--on-surface-variant);">${providerText}</div>
-            </div>
-            <button class="pin-btn ${isPinned ? 'pinned' : ''}">
-                ${getPinIcon(isPinned)}
-            </button>
+    <div class="explore-card-inner">
+        <div>
+            <div style="font-weight:500; font-size:16px; margin-bottom:4px;">${zone.name}</div>
+            <div style="font-size:12px; color:var(--on-surface-variant);">${providerText}</div>
         </div>
+        <button class="pin-btn ${isPinned ? 'pinned' : ''}">
+            ${getPinIcon(isPinned)}
+        </button>
+    </div>
     `;
   const btn = div.querySelector('.pin-btn') as HTMLButtonElement;
   const handlePin = () => {

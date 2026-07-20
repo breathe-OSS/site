@@ -545,11 +545,11 @@ header {
   height: 32px;
   border-radius: 4px;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px var(--dot-outline);
   transition: transform var(--motion-duration-short2) var(--motion-easing-standard);
 }
-.dot-cell:hover {
+.dot-cell:hover, .dot-cell.selected {
   transform: scaleY(1.12);
+  box-shadow: inset 0 0 0 1px var(--dot-outline);
 }
 .dots-axis {
   display: flex;
@@ -643,6 +643,8 @@ header {
   height: 15px;
   border-radius: 3px;
   cursor: pointer;
+}
+.ext-cell:not(.empty):hover, .ext-cell.selected {
   box-shadow: inset 0 0 0 1px var(--dot-outline);
 }
 .ext-cell.empty {

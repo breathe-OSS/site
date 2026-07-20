@@ -733,10 +733,13 @@ export function renderDotsHistory(history: AQIHistory[]) {
     cell.addEventListener('click', (e) => {
       e.stopPropagation();
       if (dotSelectedCell === cell) {
+        dotSelectedCell.classList.remove('selected');
         dotSelectedCell = null;
         hideDotTooltip();
       } else {
+        if (dotSelectedCell) dotSelectedCell.classList.remove('selected');
         dotSelectedCell = cell;
+        dotSelectedCell.classList.add('selected');
         showDotTooltip(cell, label);
       }
     });
@@ -801,6 +804,7 @@ export function setupChartPager() {
   window.addEventListener('resize', update);
   document.addEventListener('click', (e) => {
     if (!(e.target as HTMLElement).closest('.dot-cell')) {
+      if (dotSelectedCell) dotSelectedCell.classList.remove('selected');
       dotSelectedCell = null;
       hideDotTooltip();
     }
@@ -912,10 +916,13 @@ function attachExtCell(cell: HTMLElement, label: string) {
   cell.addEventListener('click', (e) => {
     e.stopPropagation();
     if (extDotSelected === cell) {
+      extDotSelected.classList.remove('selected');
       extDotSelected = null;
       hideDotTooltip();
     } else {
+      if (extDotSelected) extDotSelected.classList.remove('selected');
       extDotSelected = cell;
+      extDotSelected.classList.add('selected');
       showDotTooltip(cell, label);
     }
   });
@@ -1150,6 +1157,7 @@ export function setupExtendedPager() {
   window.addEventListener('resize', update);
   document.addEventListener('click', (e) => {
     if (!(e.target as HTMLElement).closest('.ext-cell')) {
+      if (extDotSelected) extDotSelected.classList.remove('selected');
       extDotSelected = null;
       hideDotTooltip();
     }

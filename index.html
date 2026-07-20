@@ -70,6 +70,12 @@
                 </svg>
                 Explore
             </button>
+            <button class="nav-btn" onclick="showView('ranking')" id="side-ranking">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 11h5v10h-5v-10zm-6 3h5v7h-5v-7zm-6-6h5v13H4V8z" />
+                </svg>
+                Ranking
+            </button>
             <button class="nav-btn" onclick="showView('settings')" id="side-settings">
                 <svg viewBox="0 0 24 24">
                     <path
@@ -323,6 +329,22 @@
             <div id="zone-list" class="content-scroll grid-layout"></div>
         </div>
 
+        <div id="view-ranking" class="view">
+            <header>
+                <div class="header-title">
+                    <h1 class="desktop-only">City Rankings</h1>
+                    <h1 class="mobile-only">Rankings</h1>
+                </div>
+            </header>
+            <div class="content-scroll" style="padding: 16px;">
+                <div id="ranking-container" class="grid-layout">
+                    <div style="text-align: center; color: var(--on-surface-variant); padding: 24px;">
+                        Loading rankings...
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="view-settings" class="view">
             <header>
                 <h1>Settings</h1>
@@ -400,6 +422,11 @@
                 <div class="settings-item clickable" onclick="window.open('https://github.com/suveshmoza', '_blank')">
                     <div class="settings-title">Suvesh Moza</div>
                     <div class="settings-subtitle">@suveshmoza</div>
+                </div>
+
+                <div class="settings-item clickable" onclick="window.open('https://github.com/sandeepxi', '_blank')">
+                    <div class="settings-title">Sandeep Kumar</div>
+                    <div class="settings-subtitle">@sandeepxi</div>
                 </div>
 
                 <div class="spacer-24"></div>
@@ -616,6 +643,12 @@
                     d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z" />
             </svg>
             <span>Explore</span>
+        </button>
+        <button class="nav-item" onclick="showView('ranking')" id="nav-ranking">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 11h5v10h-5v-10zm-6 3h5v7h-5v-7zm-6-6h5v13H4V8z" />
+            </svg>
+            <span>Ranking</span>
         </button>
         <button class="nav-item" onclick="showView('settings')" id="nav-settings">
             <svg viewBox="0 0 24 24">

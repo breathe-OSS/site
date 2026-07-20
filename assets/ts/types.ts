@@ -46,3 +46,10 @@ export interface AQIColorResult {
   bg: string;
   hex: string;
 }
+
+export interface RankedCity {
+  rank: number;
+  name: string;
+  aqi: number;
+  trend?: 'up' | 'down' | 'stable';
+}

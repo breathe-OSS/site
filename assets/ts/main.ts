@@ -1,5 +1,5 @@
 import { STORAGE_KEY_PINS, API_URL } from './config.js';
-import { fetchZones, getZoneAQI } from './api.js';
+import { fetchZones, getZoneAQI, fetchCityRankings } from './api.js';
 import { initTheme, initStandard } from './utils.js';
 import { initMap, updateMapTiles, resizeMap, getCurrentMapZoneId } from './map.js';
 import {
@@ -9,6 +9,7 @@ import {
   updateChartTheme,
   renderSkeletonCard,
   getPinIcon,
+  renderRankings
 } from './ui.js';
 import { Zone, AQIData } from './types.js';
 
@@ -342,7 +343,7 @@ function downloadHistoryCSV() {
 (window as any).openModal = (id: string) => document.getElementById(id)?.classList.remove('hidden');
 (window as any).closeModal = (id: string) => document.getElementById(id)?.classList.add('hidden');
 
-function handleShowView(viewName: string) {
+async function handleShowView(viewName: string) {
   document.querySelectorAll('.view').forEach((el) => el.classList.remove('active-view'));
   const view = document.getElementById(`view-${viewName}`);
   if (view) view.classList.add('active-view');
@@ -356,6 +357,10 @@ function handleShowView(viewName: string) {
   if (viewName === 'explore') {
     const searchInput = document.getElementById('zone-search') as HTMLInputElement;
     refreshExploreList(searchInput ? searchInput.value : '');
+  }
+  if (viewName === 'ranking') {
+    const cities = await fetchCityRankings();
+    renderRankings(cities);
   }
 }
 
@@ -377,7 +382,6 @@ function updateNavHighlight(viewName: string) {
   if (zoneId) {
     togglePin(zoneId);
     
-    // update button UI
     const pinBtn = document.getElementById('map-sheet-pin-btn');
     const pinIcon = document.getElementById('map-sheet-pin-icon');
     const pinText = document.getElementById('map-sheet-pin-text');

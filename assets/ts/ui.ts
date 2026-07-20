@@ -9,7 +9,7 @@ import {
   calculateUsAqi,
   calculateUsAqiPm10,
 } from './utils.js';
-import { Zone, AQIData, AQIHistory, Pollutants, NodeData } from './types.js';
+import { Zone, AQIData, AQIHistory, Pollutants, NodeData, RankedCity } from './types.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
 
 declare const Chart: typeof ChartJS;
@@ -1162,4 +1162,35 @@ export function updateExtendedChartTheme() {
         // Redraw
         extendedHistoryChart.update();
     }
+}
+
+export function renderRankings(cities: RankedCity[]): void {
+  const container = document.getElementById('ranking-container');
+  if (!container) return;
+
+  if (!cities || cities.length === 0) {
+    container.innerHTML = '<div style="text-align: center; padding: 24px;">No data available.</div>';
+    return;
+  }
+
+  const std = getAQIStandard();
+
+  container.innerHTML = cities
+    .map((city, index) => { // Use index here
+      const colors = getAQIColor(city.aqi, std);
+      return `
+        <div class="card" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; padding: 16px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 16px; font-weight: 700; color: var(--on-surface-variant); min-width: 32px;">#${index + 1}</span>
+            <div>
+              <h3 style="margin: 0; font-size: 16px; font-weight: 600;">${city.name}</h3>
+            </div>
+          </div>
+          <div class="aqi-badge-small" style="background-color: ${colors.hex};">
+            ${city.aqi}
+          </div>
+        </div>
+      `;
+    })
+    .join('');
 }

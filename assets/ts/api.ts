@@ -1,7 +1,7 @@
 import { API_URL } from './config.js';
-import { Zone, AQIData } from './types.js';
+import { Zone, AQIData, RankedCity } from './types.js';
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000;
 
 interface CacheEntry<T> {
   data: T;
@@ -43,9 +43,7 @@ export async function fetchZones(): Promise<Zone[]> {
   const cacheKey = 'breathe_zones';
   const cached = getCachedData<Zone[]>(cacheKey);
   
-  if (cached) {
-    return cached;
-  }
+  if (cached) return cached;
 
   try {
     const res = await fetch(`${API_URL}/zones`);
@@ -63,9 +61,7 @@ export async function getZoneAQI(zoneId: string): Promise<AQIData | null> {
   const cacheKey = `breathe_aqi_${zoneId}`;
   const cached = getCachedData<AQIData>(cacheKey);
   
-  if (cached) {
-    return cached;
-  }
+  if (cached) return cached;
 
   try {
     const res = await fetch(`${API_URL}/aqi/${zoneId}`);
@@ -81,9 +77,7 @@ export async function getSensorInfoList(): Promise<any[] | null> {
   const cacheKey = `breathe_sensor_info`;
   const cached = getCachedData<any[]>(cacheKey);
 
-  if (cached) {
-    return cached;
-  }
+  if (cached) return cached;
 
   try {
     const res = await fetch(`${API_URL}/sensor-info`);
@@ -105,9 +99,7 @@ export async function fetchHistoricalData(
   const cacheKey = `breathe_hist_${zoneId}_${timeRange}_${interval}_${metrics}`;
   const cached = getCachedData<any>(cacheKey);
 
-  if (cached) {
-    return cached;
-  }
+  if (cached) return cached;
 
   try {
     const res = await fetch(
@@ -120,5 +112,41 @@ export async function fetchHistoricalData(
   } catch (e) {
     console.error('Failed to fetch historical data', e);
     return { data: [], stats: {} };
+  }
+}
+
+export async function fetchCityRankings(): Promise<RankedCity[]> {
+  const cacheKey = 'breathe_city_rankings';
+  
+  sessionStorage.removeItem(cacheKey); 
+
+  try {
+    const zones = await fetchZones();
+    if (!zones || zones.length === 0) return [];
+
+    const promises = zones.map(async (zone) => {
+        try {
+            const data = await getZoneAQI(zone.id);
+            const aqi = data ? (data.aqi ?? 0) : 0; 
+            return { rank: 0, name: zone.name, aqi: aqi, trend: 'stable' } as RankedCity;
+        } catch (error) {
+            return { rank: 0, name: zone.name, aqi: 0, trend: 'stable' } as RankedCity;
+        }
+    });
+
+    const results = await Promise.all(promises);
+    
+    results.sort((a, b) => a.aqi - b.aqi);
+
+    const rankings = results.map((item, index) => ({
+        ...item,
+        rank: index + 1
+    }));
+
+    setCachedData(cacheKey, rankings);
+    return rankings;
+  } catch (e) {
+    console.error('Failed to calculate city rankings', e);
+    return [];
   }
 }

@@ -328,83 +328,109 @@
                 <h1>Settings</h1>
             </header>
             <div class="content-scroll settings-content">
-                <div class="settings-row">
-                    <div>
-                        <div class="settings-title">Theme</div>
-                        <div class="settings-subtitle">Toggle light/dark mode</div>
+                <div class="settings-section-title">Appearance</div>
+                <div class="settings-card">
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-title">Theme</div>
+                            <div class="settings-subtitle">Toggle light/dark mode</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="theme-toggle" checked />
+                            <span class="slider round"></span>
+                        </label>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="theme-toggle" checked />
-                        <span class="slider round"></span>
-                    </label>
                 </div>
 
-                <div class="settings-row">
-                    <div>
-                        <div class="settings-title">US AQI Standard</div>
-                        <div class="settings-subtitle">Use United States EPA calculation</div>
+                <div class="settings-section-title">General</div>
+                <div class="settings-card">
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-title">US AQI Standard</div>
+                            <div class="settings-subtitle">Use United States EPA calculation</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="aqi-standard-toggle" />
+                            <span class="slider round"></span>
+                        </label>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="aqi-standard-toggle" />
-                        <span class="slider round"></span>
-                    </label>
+
+                    <div class="settings-item">
+                        <div>
+                            <div class="settings-title">Data Standards</div>
+                            <div class="settings-subtitle">NAQI & US EPA (Toggle above)</div>
+                        </div>
+                    </div>
+
+                    <div class="settings-item clickable" onclick="openModal('data-source-modal')">
+                        <div>
+                            <div class="settings-title">Data Sources</div>
+                            <div class="settings-subtitle">OpenMeteo & AirGradient</div>
+                        </div>
+                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+
+                    <div class="settings-item clickable" onclick="window.location.href='/privacy/'">
+                        <div>
+                            <div class="settings-title">Privacy Policy</div>
+                            <div class="settings-subtitle">See how we handle your data</div>
+                        </div>
+                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+
+                    <div class="settings-item clickable" onclick="window.open('https://github.com/breathe-OSS', '_blank')">
+                        <div>
+                            <div class="settings-title">Breathe OSS</div>
+                            <div class="settings-subtitle">View Source on GitHub</div>
+                        </div>
+                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
+
+                    <div class="settings-item clickable" onclick="window.open('https://about.breatheoss.app', '_blank')">
+                        <div>
+                            <div class="settings-title">About Breathe</div>
+                            <div class="settings-subtitle">View our philosophy & vision</div>
+                        </div>
+                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </div>
                 </div>
 
-                <div class="divider"></div>
-
-                <div class="settings-item">
-                    <div class="settings-title">Data Standards</div>
-                    <div class="settings-subtitle">NAQI & US EPA (Toggle above)</div>
+                <div class="settings-section-title">Developers</div>
+                <div class="settings-card">
+                    <div class="settings-item clickable" onclick="window.open('https://github.com/sidharthify', '_blank')">
+                        <div>
+                            <div class="settings-title">Sidharth Sharma</div>
+                            <div class="settings-subtitle">@sidharthify</div>
+                        </div>
+                    </div>
+                    <div class="settings-item clickable" onclick="window.open('https://github.com/Flashwreck', '_blank')">
+                        <div>
+                            <div class="settings-title">Aaditya Gupta</div>
+                            <div class="settings-subtitle">@Flashwreck</div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="settings-item clickable" onclick="openModal('data-source-modal')">
-                    <div class="settings-title">Data Sources</div>
-                    <div class="settings-subtitle">OpenMeteo & AirGradient</div>
-                </div>
-
-                <div class="settings-item clickable" onclick="window.location.href='/privacy/'">
-                    <div class="settings-title">Privacy Policy</div>
-                    <div class="settings-subtitle">See how we handle your data</div>
-                </div>
-
-                <div class="settings-item clickable" onclick="window.open('https://github.com/breathe-OSS', '_blank')">
-                    <div class="settings-title">Breathe OSS</div>
-                    <div class="settings-subtitle">View Source on GitHub</div>
-                </div>
-
-                <div class="settings-item clickable" onclick="window.open('https://about.breatheoss.app', '_blank')">
-                    <div class="settings-title">About Breathe</div>
-                    <div class="settings-subtitle">View our philosophy & vision</div>
-                </div>
-
-
-                <div class="spacer-24"></div>
-                <div class="section-header">Developers</div>
-
-                <div class="settings-item clickable" onclick="window.open('https://github.com/sidharthify', '_blank')">
-                    <div class="settings-title">Sidharth Sharma</div>
-                    <div class="settings-subtitle">@sidharthify</div>
-                </div>
-                <div class="settings-item clickable" onclick="window.open('https://github.com/Flashwreck', '_blank')">
-                    <div class="settings-title">Aaditya Gupta</div>
-                    <div class="settings-subtitle">@Flashwreck</div>
-                </div>
-
-                <div class="spacer-24"></div>
-                <div class="section-header">Contributors</div>
-                <div class="settings-item clickable" onclick="window.open('https://github.com/Lostless1907', '_blank')">
-                    <div class="settings-title">Veer P.S Sambyal</div>
-                    <div class="settings-subtitle">@Lostless1907</div>
-                </div>
-
-                <div class="settings-item clickable" onclick="window.open('https://github.com/suveshmoza', '_blank')">
-                    <div class="settings-title">Suvesh Moza</div>
-                    <div class="settings-subtitle">@suveshmoza</div>
-                </div>
-
-                <div class="settings-item clickable" onclick="window.open('https://github.com/sandeepxi', '_blank')">
-                    <div class="settings-title">Sandeep Kumar</div>
-                    <div class="settings-subtitle">@sandeepxi</div>
+                <div class="settings-section-title">Contributors</div>
+                <div class="settings-card">
+                    <div class="settings-item clickable" onclick="window.open('https://github.com/Lostless1907', '_blank')">
+                        <div>
+                            <div class="settings-title">Veer P.S Sambyal</div>
+                            <div class="settings-subtitle">@Lostless1907</div>
+                        </div>
+                    </div>
+                    <div class="settings-item clickable" onclick="window.open('https://github.com/suveshmoza', '_blank')">
+                        <div>
+                            <div class="settings-title">Suvesh Moza</div>
+                            <div class="settings-subtitle">@suveshmoza</div>
+                        </div>
+                    </div>
+                    <div class="settings-item clickable" onclick="window.open('https://github.com/sandeepxi', '_blank')">
+                        <div>
+                            <div class="settings-title">Sandeep Kumar</div>
+                            <div class="settings-subtitle">@sandeepxi</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="spacer-24"></div>

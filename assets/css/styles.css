@@ -972,16 +972,47 @@ input:checked + .slider:before {
 .desktop-text {
   display: none;
 }
+.settings-section-title {
+  color: var(--primary);
+  font-weight: 500;
+  font-size: 14px;
+  margin: 16px 0 8px 16px;
+}
+.settings-card {
+  background: var(--surface-container);
+  border-radius: var(--shape-corner-extra-large);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
 .settings-item {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--outline);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   opacity: 0.9;
+  position: relative;
+}
+.settings-item:not(:last-child)::after,
+.settings-row:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background-color: var(--outline-variant);
 }
 .settings-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
+  padding: 16px 20px;
+  position: relative;
+}
+.settings-chevron {
+  fill: var(--on-surface-variant);
+  width: 24px;
+  height: 24px;
 }
 .settings-title {
   font-size: 16px;

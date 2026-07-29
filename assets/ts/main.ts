@@ -41,6 +41,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Handle Radio Group Changes for AQI Standard selection
+  document.querySelectorAll<HTMLInputElement>('input[name="aqiStandard"]').forEach((input) => {
+      // Set initial checked state based on saved storage/init
+      if (input.value === localStorage.getItem('aqiStandard') || (!localStorage.getItem('aqiStandard') && input.value === 'naqi')) {
+          input.checked = true;
+      }
+
+      input.addEventListener('change', (e) => {
+          const target = e.target as HTMLInputElement;
+          const selectedStandard = target.value; // 'us' or 'naqi'
+          
+          localStorage.setItem('aqiStandard', selectedStandard);
+          
+          // Trigger standard change handlers
+          refreshDashboard();
+          const detailView = document.getElementById('view-details');
+          if (detailView && detailView.classList.contains('active-view')) {
+              const title = document.getElementById('detail-title-header')?.innerText;
+              const zone = allZones.find(z => z.name === title);
+              if (zone) openDetails(zone.id);
+          }
+      });
+  });
+
   allZones = await fetchZones();
   refreshDashboard();
 

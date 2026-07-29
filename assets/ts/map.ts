@@ -51,6 +51,7 @@ export function updateMapTiles(theme: string): void {
   mapTileLayer = L.tileLayer(url, {
     attribution: '&copy; Google Maps',
     maxZoom: 20,
+    className: theme === 'dark' ? 'dark-map-tiles' : ''
   }).addTo(mapInstance);
 }
 

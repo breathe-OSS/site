@@ -545,11 +545,11 @@ header {
   height: 32px;
   border-radius: 4px;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px var(--dot-outline);
   transition: transform var(--motion-duration-short2) var(--motion-easing-standard);
 }
-.dot-cell:hover {
+.dot-cell:hover, .dot-cell.selected {
   transform: scaleY(1.12);
+  box-shadow: inset 0 0 0 1px var(--dot-outline);
 }
 .dots-axis {
   display: flex;
@@ -643,6 +643,8 @@ header {
   height: 15px;
   border-radius: 3px;
   cursor: pointer;
+}
+.ext-cell:not(.empty):hover, .ext-cell.selected {
   box-shadow: inset 0 0 0 1px var(--dot-outline);
 }
 .ext-cell.empty {
@@ -970,16 +972,47 @@ input:checked + .slider:before {
 .desktop-text {
   display: none;
 }
+.settings-section-title {
+  color: var(--primary);
+  font-weight: 500;
+  font-size: 14px;
+  margin: 16px 0 8px 16px;
+}
+.settings-card {
+  background: var(--surface-container);
+  border-radius: var(--shape-corner-extra-large);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
 .settings-item {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--outline);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   opacity: 0.9;
+  position: relative;
+}
+.settings-item:not(:last-child)::after,
+.settings-row:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background-color: var(--outline-variant);
 }
 .settings-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
+  padding: 16px 20px;
+  position: relative;
+}
+.settings-chevron {
+  fill: var(--on-surface-variant);
+  width: 24px;
+  height: 24px;
 }
 .settings-title {
   font-size: 16px;
@@ -2107,4 +2140,8 @@ input:checked + .slider:before {
     background-color: green;
     border-radius: 50%;
     margin-right: 5px;
+}
+
+.dark-map-tiles {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }

@@ -344,21 +344,21 @@
 
                 <div class="settings-section-title">General</div>
                 <div class="settings-card">
-                    <!-- Fixed Mutually Exclusive AQI Standard Selection -->
-                    <div class="settings-item" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+                    <div class="settings-row">
                         <div>
-                            <div class="settings-title">AQI Standard</div>
-                            <div class="settings-subtitle">Choose your preferred calculation standard</div>
+                            <div class="settings-title">US AQI Standard</div>
+                            <div class="settings-subtitle">Use United States EPA calculation</div>
                         </div>
-                        <div class="radio-group" style="display: flex; gap: 24px; width: 100%; padding-top: 4px;">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--on-surface);">
-                                <input type="radio" name="aqiStandard" id="standard-naqi" value="naqi" checked />
-                                NAQI Standard
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--on-surface);">
-                                <input type="radio" name="aqiStandard" id="standard-us" value="us" />
-                                US EPA Standard
-                            </label>
+                        <label class="switch">
+                            <input type="checkbox" id="aqi-standard-toggle" />
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <div class="settings-item">
+                        <div>
+                            <div class="settings-title">Data Standards</div>
+                            <div class="settings-subtitle">NAQI & US EPA (Toggle above)</div>
                         </div>
                     </div>
 

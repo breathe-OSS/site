@@ -342,25 +342,32 @@
                     </div>
                 </div>
 
-                <div class="settings-section-title">General</div>
-                <div class="settings-card">
-                    <div class="settings-row">
-                        <div>
-                            <div class="settings-title">US AQI Standard</div>
-                            <div class="settings-subtitle">Use United States EPA calculation</div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="aqi-standard-toggle" />
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-
-                    <div class="settings-item">
-                        <div>
-                            <div class="settings-title">Data Standards</div>
-                            <div class="settings-subtitle">NAQI & US EPA (Toggle above)</div>
-                        </div>
-                    </div>
+               <div class="settings-section-title">General</div>
+<div class="settings-card">
+    <div class="settings-row">
+        <div>
+            
+            <div class="settings-title">US AQI Standard</div>
+            <div class="settings-subtitle">Use United States EPA calculation</div>
+        </div>
+        
+        <label class="switch">
+            <input type="radio" name="aqi-toggle-group" id="toggle-epa" value="us-epa" />
+            <span class="slider round"></span>
+        </label>
+    </div>
+    
+    <div class="settings-row">
+        <div>
+            <div class="settings-title">NAQI Standard</div>
+            <div class="settings-subtitle">Use National Air Quality Index calculation</div>
+        </div>
+        <label class="switch">
+         
+            <input type="radio" name="aqi-toggle-group" id="toggle-naqi" value="naqi" checked />
+            <span class="slider round"></span>
+        </label>
+    </div>
 
                     <div class="settings-item clickable" onclick="openModal('data-source-modal')">
                         <div>

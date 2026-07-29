@@ -36,18 +36,24 @@ export function formatPollutantName(pollutant: string): string {
 }
 
 export function initStandard(onChange: (std: string) => void): void {
-  const toggle = document.getElementById('aqi-standard-toggle') as HTMLInputElement;
   const saved = getAQIStandard();
-  
-  if (toggle) {
-    toggle.checked = saved === 'us';
-    toggle.addEventListener('change', (e: Event) => {
+
+  // Listen to the new radio group inputs
+  const radios = document.querySelectorAll<HTMLInputElement>('input[name="aqiStandard"]');
+  radios.forEach((radio) => {
+    if (radio.value === saved) {
+      radio.checked = true;
+    }
+
+    radio.addEventListener('change', (e: Event) => {
       const target = e.target as HTMLInputElement;
-      const newStd = target.checked ? 'us' : 'india';
-      localStorage.setItem(STORAGE_KEY_STANDARD, newStd);
-      onChange(newStd);
+      if (target.checked) {
+        const newStd = target.value === 'us' ? 'us' : 'india';
+        localStorage.setItem(STORAGE_KEY_STANDARD, newStd);
+        onChange(newStd);
+      }
     });
-  }
+  });
 }
 
 export function calculateCigarettes(pm25: number): number {

@@ -27,6 +27,14 @@ export interface NodeData {
   history?: AQIHistory[];
 }
 
+export interface WeatherInfo {
+  condition: string;
+  weather_code?: number;
+  precipitation?: number;
+  season: string;
+  text: string;
+}
+
 export interface AQIData {
   aqi: number;
   us_aqi?: number;
@@ -40,6 +48,19 @@ export interface AQIData {
   source: string;
   warning?: string;
   nodes?: { [name: string]: NodeData };
+  weather?: WeatherInfo;
+}
+
+export interface WeatherHistoryPoint {
+  ts: number;
+  condition: string;
+  precipitation: number;
+}
+
+export interface WeatherHistory {
+  interval: number;
+  points: WeatherHistoryPoint[];
+  zone_id?: string;
 }
 
 export interface AQIColorResult {

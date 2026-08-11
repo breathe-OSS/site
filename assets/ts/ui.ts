@@ -9,7 +9,7 @@ import {
   calculateUsAqi,
   calculateUsAqiPm10,
 } from './utils.js';
-import { Zone, AQIData, AQIHistory, Pollutants, NodeData } from './types.js';
+import { Zone, AQIData, AQIHistory, Pollutants, NodeData, WeatherInfo } from './types.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
 
 declare const Chart: typeof ChartJS;
@@ -261,11 +261,12 @@ export function renderExploreItem(
 ): HTMLElement {
   const div = document.createElement('div');
   div.className = 'explore-card';
-  const provider = zone.provider; 
+  const provider = zone.provider;
 
-  const providerText = provider === 'airgradient' 
-    ? '<span class="status-indicator"></span> Live Ground Sensors' 
-    : 'Satellite & Model Data';
+  const providerText =
+    provider === 'airgradient'
+      ? '<span class="status-indicator"></span> Live Ground Sensors'
+      : 'Satellite & Model Data';
 
   div.innerHTML = `
     <div class="explore-card-inner">
@@ -350,11 +351,11 @@ export function updateDetailView(zone: Zone, data: AQIData) {
 
   const btnHistory = document.getElementById('btn-extended-history');
   if (btnHistory) {
-      if (provider === 'airgradient') {
-          btnHistory.style.display = 'block';
-      } else {
-          btnHistory.style.display = 'none';
-      }
+    if (provider === 'airgradient') {
+      btnHistory.style.display = 'block';
+    } else {
+      btnHistory.style.display = 'none';
+    }
   }
 
   // Update main card with gradient background
@@ -452,6 +453,9 @@ export function updateDetailView(zone: Zone, data: AQIData) {
     }
   }
 
+  renderWeatherCard(data.weather);
+  renderSeasonalInfo(data.weather);
+
   renderPollutantGrid(data.concentrations_us_units || {});
   renderNodeReadings(data.nodes || {});
 
@@ -459,8 +463,10 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   const chartLocationName = document.getElementById('chart-location-name');
   if (chartSelect) {
     const nodeNames = data.nodes ? Object.keys(data.nodes) : [];
-    const nodesWithHistory = nodeNames.filter(name => data.nodes![name].history && data.nodes![name].history!.length > 0);
-    
+    const nodesWithHistory = nodeNames.filter(
+      (name) => data.nodes![name].history && data.nodes![name].history!.length > 0
+    );
+
     if (nodesWithHistory.length > 0) {
       chartSelect.classList.remove('hidden');
       if (chartLocationName) {
@@ -478,7 +484,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
       chartSelect.onchange = () => {
         const val = chartSelect.value;
         if (chartLocationName) {
-           chartLocationName.innerText = val === 'zone' ? 'Zone Average' : val;
+          chartLocationName.innerText = val === 'zone' ? 'Zone Average' : val;
         }
         if (val === 'zone') {
           renderChart(data.history);
@@ -491,11 +497,11 @@ export function updateDetailView(zone: Zone, data: AQIData) {
           }
         }
       };
-      
+
       chartSelect.addEventListener('click', (e) => e.stopPropagation());
       chartSelect.addEventListener('mousedown', (e) => e.stopPropagation());
       chartSelect.addEventListener('touchstart', (e) => e.stopPropagation());
-      
+
       chartSelect.value = 'zone';
     } else {
       chartSelect.classList.add('hidden');
@@ -619,6 +625,77 @@ function renderPollutantGrid(comps: Pollutants) {
 
 export function updateChartTheme() {
   if (detailChart) detailChart.update();
+}
+
+const WEATHER_CLOUD_PATH =
+  'M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z';
+const WEATHER_SUN_PATH =
+  'M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z';
+
+function weatherIconSvg(condition: string, color: string): string {
+  const path = condition === 'clear' ? WEATHER_SUN_PATH : WEATHER_CLOUD_PATH;
+  return `<svg viewBox="0 0 24 24" style="fill: ${color};"><path d="${path}"/></svg>`;
+}
+
+const SEASON_LABELS: { [key: string]: string } = {
+  winter: 'Winter',
+  spring: 'Spring',
+  summer: 'Summer',
+  monsoon: 'Monsoon',
+  autumn: 'Autumn',
+};
+
+const SEASON_TEXTS: { [key: string]: string } = {
+  winter:
+    'Cold air and heating smoke get trapped near the ground. This is typically the worst stretch of the year.',
+  spring: 'Air quality improves as temperatures rise and spring rains pick up.',
+  summer: 'Warm, drier air keeps pollution at moderate levels.',
+  monsoon: 'Rain washes particulates out of the air. Usually the cleanest time of the year.',
+  autumn: 'Dry weather and seasonal burning can push particulate levels back up.',
+};
+
+function renderSeasonalInfo(weather?: WeatherInfo) {
+  const card = document.getElementById('seasonal-card');
+  const summary = document.getElementById('seasonal-summary');
+  if (!card || !summary) return;
+
+  if (!weather || !weather.season || !SEASON_TEXTS[weather.season]) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = '';
+  const name = SEASON_LABELS[weather.season] || weather.season;
+  summary.innerHTML = `<strong>${name}:</strong> ${SEASON_TEXTS[weather.season]}`;
+}
+
+export function renderWeatherCard(weather?: WeatherInfo) {
+  const container = document.getElementById('weather-card-container');
+  if (!container) return;
+
+  if (!weather || !weather.text) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const isSmog = weather.condition === 'smog';
+  const season = SEASON_LABELS[weather.season] || weather.season;
+  const iconBg = isSmog
+    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.12) 100%)'
+    : 'linear-gradient(135deg, rgba(148, 163, 184, 0.2) 0%, rgba(148, 163, 184, 0.12) 100%)';
+  const iconColor = isSmog ? 'var(--aqi-poor)' : 'var(--on-surface-variant)';
+
+  container.innerHTML = `
+    <div class="cigarette-card">
+      <div class="cigarette-icon" style="background: ${iconBg}; box-shadow: none;">
+        ${weatherIconSvg(weather.condition, iconColor)}
+      </div>
+      <div class="cigarette-content">
+        <div class="cigarette-value" style="text-transform: capitalize;">${weather.condition} · ${season}</div>
+        <div class="cigarette-label">${weather.text}</div>
+      </div>
+    </div>
+  `;
 }
 
 function renderChart(history: AQIHistory[]) {
@@ -814,7 +891,11 @@ export function setupChartPager() {
 
 let extendedHistoryChart: LineChart | null = null;
 
-export function renderExtendedHistoryChart(history: any[], showPm25: boolean = true, showPm10: boolean = true) {
+export function renderExtendedHistoryChart(
+  history: any[],
+  showPm25: boolean = true,
+  showPm10: boolean = true
+) {
   const canvas = document.getElementById('extendedHistoryChart') as HTMLCanvasElement;
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -834,40 +915,40 @@ export function renderExtendedHistoryChart(history: any[], showPm25: boolean = t
   gradient2.addColorStop(0, isDark ? 'rgba(216, 180, 254, 0.4)' : 'rgba(147, 51, 234, 0.4)');
   gradient2.addColorStop(1, 'rgba(216, 180, 254, 0.0)');
 
-  const labels = history.map(h => {
+  const labels = history.map((h) => {
     const d = new Date(h.ts * 1000);
     const hrs = d.getHours() < 10 ? '0' + d.getHours() : d.getHours();
-    return `${d.getDate()}/${d.getMonth()+1} ${hrs}:00`;
+    return `${d.getDate()}/${d.getMonth() + 1} ${hrs}:00`;
   });
 
   const datasets = [];
 
   if (showPm25) {
-      datasets.push({
-          label: 'PM2.5',
-          data: history.map(h => h.pm2_5),
-          borderColor: lineColor1,
-          backgroundColor: gradient1,
-          borderWidth: 2,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 6,
-          fill: true,
-      });
+    datasets.push({
+      label: 'PM2.5',
+      data: history.map((h) => h.pm2_5),
+      borderColor: lineColor1,
+      backgroundColor: gradient1,
+      borderWidth: 2,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      fill: true,
+    });
   }
 
   if (showPm10) {
-      datasets.push({
-          label: 'PM10',
-          data: history.map(h => h.pm10),
-          borderColor: lineColor2,
-          backgroundColor: gradient2,
-          borderWidth: 2,
-          tension: 0.4,
-          pointRadius: 0,
-          pointHoverRadius: 6,
-          fill: true,
-      });
+    datasets.push({
+      label: 'PM10',
+      data: history.map((h) => h.pm10),
+      borderColor: lineColor2,
+      backgroundColor: gradient2,
+      borderWidth: 2,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      fill: true,
+    });
   }
 
   const config: ChartConfiguration<'line', number[], string> = {
@@ -880,23 +961,23 @@ export function renderExtendedHistoryChart(history: any[], showPm25: boolean = t
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: { 
-        legend: { display: true, labels: { color: isDark ? '#fff' : '#000' } }, 
-        tooltip: { enabled: true } 
+      plugins: {
+        legend: { display: true, labels: { color: isDark ? '#fff' : '#000' } },
+        tooltip: { enabled: true },
       },
-      scales: { 
-        x: { 
-            display: true, 
-            ticks: { color: isDark ? '#aaa' : '#666', maxTicksLimit: 8 },
-            grid: { display: false }
-        }, 
-        y: { 
-            display: true, 
-            min: 0, 
-            ticks: { color: isDark ? '#aaa' : '#666' }, 
-            grid: { color: isDark ? '#333' : '#ddd' },
-            title: { display: true, text: 'Concentration (µg/m³)', color: isDark ? '#fff' : '#000' }
-        } 
+      scales: {
+        x: {
+          display: true,
+          ticks: { color: isDark ? '#aaa' : '#666', maxTicksLimit: 8 },
+          grid: { display: false },
+        },
+        y: {
+          display: true,
+          min: 0,
+          ticks: { color: isDark ? '#aaa' : '#666' },
+          grid: { color: isDark ? '#333' : '#ddd' },
+          title: { display: true, text: 'Concentration (µg/m³)', color: isDark ? '#fff' : '#000' },
+        },
       },
     },
   };
@@ -964,11 +1045,15 @@ export function renderExtendedDotsGrid(history: any[], showPm25: boolean, showPm
       byDay.set(dayStart, e);
     }
     if (h.pm2_5 != null) {
-      e.pm25[hour] = isNaN(e.pm25[hour]) ? h.pm2_5 : (e.pm25[hour] * e.c25[hour] + h.pm2_5) / (e.c25[hour] + 1);
+      e.pm25[hour] = isNaN(e.pm25[hour])
+        ? h.pm2_5
+        : (e.pm25[hour] * e.c25[hour] + h.pm2_5) / (e.c25[hour] + 1);
       e.c25[hour]++;
     }
     if (h.pm10 != null) {
-      e.pm10[hour] = isNaN(e.pm10[hour]) ? h.pm10 : (e.pm10[hour] * e.c10[hour] + h.pm10) / (e.c10[hour] + 1);
+      e.pm10[hour] = isNaN(e.pm10[hour])
+        ? h.pm10
+        : (e.pm10[hour] * e.c10[hour] + h.pm10) / (e.c10[hour] + 1);
       e.c10[hour]++;
     }
   });
@@ -1043,7 +1128,9 @@ export function renderExtendedDotsGrid(history: any[], showPm25: boolean, showPm
 
     let lastMonth = '';
     for (let w = 0; w < numWeeks; w++) {
-      const m = new Date(gridStart + w * 7 * dayMs).toLocaleDateString(undefined, { month: 'short' });
+      const m = new Date(gridStart + w * 7 * dayMs).toLocaleDateString(undefined, {
+        month: 'short',
+      });
       if (m !== lastMonth) {
         const s = document.createElement('div');
         s.className = 'ext-month';
@@ -1079,10 +1166,11 @@ export function renderExtendedDotsGrid(history: any[], showPm25: boolean, showPm
     const avg = (arr: number[]): number => {
       let s = 0;
       let n = 0;
-      for (const x of arr) if (!isNaN(x)) {
-        s += x;
-        n++;
-      }
+      for (const x of arr)
+        if (!isNaN(x)) {
+          s += x;
+          n++;
+        }
       return n === 0 ? NaN : s / n;
     };
 
@@ -1166,8 +1254,8 @@ export function setupExtendedPager() {
 }
 
 export function updateExtendedChartTheme() {
-    if (extendedHistoryChart) {
-        // Redraw
-        extendedHistoryChart.update();
-    }
+  if (extendedHistoryChart) {
+    // Redraw
+    extendedHistoryChart.update();
+  }
 }

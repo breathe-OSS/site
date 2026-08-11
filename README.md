@@ -30,6 +30,8 @@
 - **24 Hour graph of AQI Data**
 - **Swipeable dots & contribution history**
 - **Detailed extended graph data for sensor based locations**
+- **Live weather context (rain washout, winter smog, clear days)**
+- **Filter extended history by weather condition**
 
 ## Tech Stack
 

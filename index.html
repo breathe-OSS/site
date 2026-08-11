@@ -161,6 +161,8 @@
 
                     <div id="cigarette-card-container"></div>
 
+                    <div id="weather-card-container"></div>
+
                     <div class="card chart-card">
                         <div class="chart-header">
                             <div style="display: flex; align-items: baseline; gap: 8px;">
@@ -196,6 +198,13 @@
                         </div>
                         <div class="chart-swipe-hint" id="chart-swipe-hint">Swipe for Dots History</div>
                         <button id="btn-extended-history" class="btn-outlined" style="width: 100%; margin-top: 16px;" onclick="openHistoryView()">View Extended History</button>
+                    </div>
+
+                    <div class="card chart-card" id="seasonal-card" style="display: none; cursor: default;">
+                        <div class="chart-header">
+                            <h3>Seasonal Patterns</h3>
+                        </div>
+                        <div id="seasonal-summary" style="font-size: 13px; color: var(--on-surface-variant); margin-top: 8px; line-height: 1.5;"></div>
                     </div>
 
                     <div id="node-readings-container" class="pollutants-container-card" style="display: none;"></div>
@@ -241,6 +250,20 @@
                             <button class="btn-outlined" id="hist-6mo" onclick="setHistoryRange('6mo')">6 Months</button>
                             <button class="btn-outlined" id="hist-custom-btn" onclick="toggleCustomRange()">Custom...</button>
                         </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 12px; color: var(--on-surface-variant); text-align: center; margin-bottom: 8px;">Filter by weather during that time</div>
+                            <div id="weather-filter-chips" class="toggle-group" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px;">
+                                <button class="btn-outlined active" id="wf-all" onclick="setWeatherFilter('all')">All Weather</button>
+                                <button class="btn-outlined" id="wf-rain" onclick="setWeatherFilter('rain')">Rain</button>
+                                <button class="btn-outlined" id="wf-snow" onclick="setWeatherFilter('snow')">Snow</button>
+                                <button class="btn-outlined" id="wf-fog" onclick="setWeatherFilter('fog')">Fog</button>
+                                <button class="btn-outlined" id="wf-cloudy" onclick="setWeatherFilter('cloudy')">Cloudy</button>
+                                <button class="btn-outlined" id="wf-clear" onclick="setWeatherFilter('clear')">Clear</button>
+                            </div>
+                        </div>
+
+                        <div id="weather-impact" style="margin-bottom: 24px;"></div>
 
                         <div id="hist-custom-inputs" style="display: none; gap: 8px; align-items: center; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; background: var(--surface-variant); padding: 12px; border-radius: 8px;">
                             <input type="text" id="custom-range" placeholder="Range (e.g. 14d)" value="14d" style="width: 120px; padding: 6px; border-radius: 4px; border: 1px solid var(--outline); background: var(--surface); color: var(--on-surface);">

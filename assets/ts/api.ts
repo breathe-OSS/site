@@ -1,5 +1,5 @@
 import { API_URL } from './config.js';
-import { Zone, AQIData } from './types.js';
+import { Zone, AQIData, WeatherHistory } from './types.js';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -42,7 +42,7 @@ function setCachedData<T>(key: string, data: T): void {
 export async function fetchZones(): Promise<Zone[]> {
   const cacheKey = 'breathe_zones';
   const cached = getCachedData<Zone[]>(cacheKey);
-  
+
   if (cached) {
     return cached;
   }
@@ -62,7 +62,7 @@ export async function fetchZones(): Promise<Zone[]> {
 export async function getZoneAQI(zoneId: string): Promise<AQIData | null> {
   const cacheKey = `breathe_aqi_${zoneId}`;
   const cached = getCachedData<AQIData>(cacheKey);
-  
+
   if (cached) {
     return cached;
   }
@@ -92,6 +92,30 @@ export async function getSensorInfoList(): Promise<any[] | null> {
     setCachedData(cacheKey, data.sensors || []);
     return data.sensors || [];
   } catch (e) {
+    return null;
+  }
+}
+
+export async function fetchWeatherHistory(
+  zoneId: string,
+  timeRange: string,
+  interval: string
+): Promise<WeatherHistory | null> {
+  const cacheKey = `breathe_weather_${zoneId}_${timeRange}_${interval}`;
+  const cached = getCachedData<WeatherHistory>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/weather-history/${zoneId}/${timeRange}/${interval}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    setCachedData(cacheKey, data);
+    return data;
+  } catch (e) {
+    console.error('Failed to fetch weather history', e);
     return null;
   }
 }

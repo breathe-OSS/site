@@ -454,7 +454,6 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   }
 
   renderWeatherCard(data.weather);
-  renderSeasonalInfo(data.weather);
 
   renderPollutantGrid(data.concentrations_us_units || {});
   renderNodeReadings(data.nodes || {});
@@ -654,21 +653,6 @@ const SEASON_TEXTS: { [key: string]: string } = {
   autumn: 'Dry weather and seasonal burning can push particulate levels back up.',
 };
 
-function renderSeasonalInfo(weather?: WeatherInfo) {
-  const card = document.getElementById('seasonal-card');
-  const summary = document.getElementById('seasonal-summary');
-  if (!card || !summary) return;
-
-  if (!weather || !weather.season || !SEASON_TEXTS[weather.season]) {
-    card.style.display = 'none';
-    return;
-  }
-
-  card.style.display = '';
-  const name = SEASON_LABELS[weather.season] || weather.season;
-  summary.innerHTML = `<strong>${name}:</strong> ${SEASON_TEXTS[weather.season]}`;
-}
-
 export function renderWeatherCard(weather?: WeatherInfo) {
   const container = document.getElementById('weather-card-container');
   if (!container) return;
@@ -680,6 +664,7 @@ export function renderWeatherCard(weather?: WeatherInfo) {
 
   const isSmog = weather.condition === 'smog';
   const season = SEASON_LABELS[weather.season] || weather.season;
+  const text = SEASON_TEXTS[weather.season] || weather.text;
   const iconBg = isSmog
     ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.12) 100%)'
     : 'linear-gradient(135deg, rgba(148, 163, 184, 0.2) 0%, rgba(148, 163, 184, 0.12) 100%)';
@@ -692,7 +677,7 @@ export function renderWeatherCard(weather?: WeatherInfo) {
       </div>
       <div class="cigarette-content">
         <div class="cigarette-value" style="text-transform: capitalize;">${weather.condition} · ${season}</div>
-        <div class="cigarette-label">${weather.text}</div>
+        <div class="cigarette-label">${text}</div>
       </div>
     </div>
   `;

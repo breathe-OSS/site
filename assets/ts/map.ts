@@ -18,23 +18,23 @@ export function getCurrentMapZoneId() {
 
 export function initMap(allZones: Zone[]): void {
   if (mapInstance) {
-      mapInstance.remove();
-      mapInstance = null;
+    mapInstance.remove();
+    mapInstance = null;
   }
 
   // Define bounds for J&K region
   const bounds: Leaflet.LatLngBoundsExpression = [
-    [31.5, 73.5],  
-    [37.0, 80.5]   
+    [31.5, 73.5],
+    [37.0, 80.5],
   ];
 
   // center on j&k
-  mapInstance = L.map('map-container', { 
+  mapInstance = L.map('map-container', {
     zoomControl: false,
     minZoom: 6,
     maxZoom: 15,
     maxBounds: bounds,
-    maxBoundsViscosity: 0.8
+    maxBoundsViscosity: 0.8,
   }).setView([33.9, 75.5], 7);
 
   updateMapTiles(getCurrentTheme());
@@ -47,11 +47,11 @@ export function updateMapTiles(theme: string): void {
 
   // lyrs=m (standard roadmap), gl=in (region: india)
   let url = 'https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&gl=in';
-  
+
   mapTileLayer = L.tileLayer(url, {
     attribution: '&copy; Google Maps',
     maxZoom: 20,
-    className: theme === 'dark' ? 'dark-map-tiles' : ''
+    className: theme === 'dark' ? 'dark-map-tiles' : '',
   }).addTo(mapInstance);
 }
 
@@ -62,7 +62,7 @@ export function resizeMap(): void {
 
 function populateMapMarkers(allZones: Zone[]) {
   if (!mapInstance) return;
-  
+
   const std = getAQIStandard();
 
   allZones.forEach(async (z) => {
@@ -71,7 +71,7 @@ function populateMapMarkers(allZones: Zone[]) {
     const data = await getZoneAQI(z.id);
     if (!data) return;
 
-    const displayAqi = std === 'us' ? (data.us_aqi || 0) : data.aqi;
+    const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
     const colors = getAQIColor(displayAqi, std);
     const isLive = z.provider === 'airgradient';
     const liveBadge = isLive ? '<div class="live-badge"></div>' : '';
@@ -114,31 +114,31 @@ export function openMapDetailSheet(zoneId: string, zone: Zone, data: AQIData) {
 
   sheet.classList.remove('closing');
   sheet.classList.remove('hidden');
-  
+
   void sheet.offsetWidth;
 }
 
 function populateMapDetailSheet(zone: Zone, data: AQIData) {
   const std = getAQIStandard();
-  const displayAqi = std === 'us' ? (data.us_aqi || 0) : data.aqi;
+  const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
   const colors = getAQIColor(displayAqi, std);
 
   const pinBtn = document.getElementById('map-sheet-pin-btn');
   const pinIcon = document.getElementById('map-sheet-pin-icon');
   const pinText = document.getElementById('map-sheet-pin-text');
-  
+
   if (pinBtn && pinIcon && pinText) {
     const pinnedZoneIds: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_PINS) || '[]');
     const isPinned = pinnedZoneIds.includes(zone.id);
     pinIcon.innerHTML = getPinIcon(isPinned);
-    
+
     // Resize the SVG if needed
     const svg = pinIcon.querySelector('svg');
     if (svg) {
       svg.style.width = '16px';
       svg.style.height = '16px';
     }
-    
+
     if (isPinned) {
       pinBtn.classList.add('pinned');
       pinText.textContent = 'Pinned';
@@ -192,12 +192,12 @@ function populateMapDetailSheet(zone: Zone, data: AQIData) {
   const trendTextEl = document.getElementById('map-sheet-trend-text');
   if (trendEl && trendTextEl && data.history && data.history.length > 0) {
     const oneHourAgo = data.timestamp_unix - 3600;
-    const validHistory = data.history.filter(h => Math.abs(h.ts - oneHourAgo) < 1800);
-    
+    const validHistory = data.history.filter((h) => Math.abs(h.ts - oneHourAgo) < 1800);
+
     if (validHistory.length > 0) {
       validHistory.sort((a, b) => Math.abs(a.ts - oneHourAgo) - Math.abs(b.ts - oneHourAgo));
       const pastEntry = validHistory[0];
-      const pastVal = std === 'us' ? (pastEntry.us_aqi || 0) : pastEntry.aqi;
+      const pastVal = std === 'us' ? pastEntry.us_aqi || 0 : pastEntry.aqi;
       const diff = displayAqi - pastVal;
 
       if (diff === 0) {
@@ -208,7 +208,7 @@ function populateMapDetailSheet(zone: Zone, data: AQIData) {
         const sign = isRising ? '+' : '';
         trendTextEl.textContent = `${sign}${diff} /hr`;
         trendEl.style.color = isRising ? 'var(--aqi-very-poor)' : 'var(--aqi-good)';
-        
+
         const arrow = trendEl.querySelector('svg path');
         if (arrow) {
           arrow.setAttribute('d', isRising ? 'M7 14l5-5 5 5z' : 'M7 10l5 5 5-5z');
@@ -226,7 +226,7 @@ function populateMapDetailSheet(zone: Zone, data: AQIData) {
     const diff = now - data.timestamp_unix;
     const hours = Math.floor(diff / 3600);
     const minutes = Math.floor((diff % 3600) / 60);
-    
+
     let timeText = '';
     if (hours > 0) {
       timeText = `${hours}h ago`;
@@ -243,18 +243,18 @@ function populateMapDetailSheet(zone: Zone, data: AQIData) {
 (window as any).closeMapDetailSheet = () => {
   const sheet = document.getElementById('map-detail-sheet');
   if (!sheet) return;
-  
+
   if (sheet.classList.contains('closing')) return;
-  
+
   sheet.classList.add('closing');
-  
+
   const handleAnimationEnd = () => {
     sheet.classList.add('hidden');
     sheet.classList.remove('closing');
     currentMapZoneId = null;
     sheet.removeEventListener('animationend', handleAnimationEnd);
   };
-  
+
   sheet.addEventListener('animationend', handleAnimationEnd);
 };
 

@@ -22,16 +22,8 @@
       "repositoryUrl": {
         "url": "https://github.com/breathe-OSS/breathe"
       },
-      "licenses": [
-        "spdx:MIT"
-      ],
-      "tags": [
-        "android",
-        "kotlin",
-        "aqi",
-        "air-quality",
-        "mobile"
-      ]
+      "licenses": ["spdx:MIT"],
+      "tags": ["android", "kotlin", "aqi", "air-quality", "mobile"]
     },
     {
       "guid": "breathe-site",
@@ -43,15 +35,8 @@
       "repositoryUrl": {
         "url": "https://github.com/breathe-OSS/site"
       },
-      "licenses": [
-        "spdx:MIT"
-      ],
-      "tags": [
-        "typescript",
-        "web",
-        "frontend",
-        "aqi"
-      ]
+      "licenses": ["spdx:MIT"],
+      "tags": ["typescript", "web", "frontend", "aqi"]
     },
     {
       "guid": "breathe-ios",
@@ -63,15 +48,8 @@
       "repositoryUrl": {
         "url": "https://github.com/breathe-OSS/breathe-ios"
       },
-      "licenses": [
-        "spdx:MIT"
-      ],
-      "tags": [
-        "ios",
-        "mobile",
-        "aqi",
-        "swift"
-      ]
+      "licenses": ["spdx:MIT"],
+      "tags": ["ios", "mobile", "aqi", "swift"]
     },
     {
       "guid": "breathe-bot",
@@ -83,15 +61,8 @@
       "repositoryUrl": {
         "url": "https://github.com/breathe-OSS/bot"
       },
-      "licenses": [
-        "spdx:MIT"
-      ],
-      "tags": [
-        "python",
-        "discord-bot",
-        "community",
-        "aqi"
-      ]
+      "licenses": ["spdx:MIT"],
+      "tags": ["python", "discord-bot", "community", "aqi"]
     },
     {
       "guid": "breathe-api",
@@ -103,16 +74,8 @@
       "repositoryUrl": {
         "url": "https://github.com/breathe-OSS/api"
       },
-      "licenses": [
-        "spdx:MIT"
-      ],
-      "tags": [
-        "python",
-        "api",
-        "backend",
-        "data-processing",
-        "heroku"
-      ]
+      "licenses": ["spdx:MIT"],
+      "tags": ["python", "api", "backend", "data-processing", "heroku"]
     }
   ],
   "funding": {

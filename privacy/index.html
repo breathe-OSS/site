@@ -1,127 +1,186 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="dark">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Privacy Policy - Breathe</title>
     <link rel="icon" type="image/x-icon" href="../assets/images/web-icon.webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet" />
     <link rel="stylesheet" href="../assets/css/styles.css" />
     <style>
-        .policy-text p {
-            color: var(--on-surface-variant);
-            line-height: 1.6;
-            margin-bottom: 16px;
-        }
+      .policy-text p {
+        color: var(--on-surface-variant);
+        line-height: 1.6;
+        margin-bottom: 16px;
+      }
 
-        .policy-text li {
-            color: var(--on-surface-variant);
-            margin-bottom: 8px;
-        }
+      .policy-text li {
+        color: var(--on-surface-variant);
+        margin-bottom: 8px;
+      }
 
-        .policy-text strong {
-            color: var(--on-surface);
-        }
+      .policy-text strong {
+        color: var(--on-surface);
+      }
 
-        .view {
-            display: flex;
-            height: 100vh;
-            flex-direction: column;
-        }
+      .view {
+        display: flex;
+        height: 100vh;
+        flex-direction: column;
+      }
     </style>
     <script>
-        const theme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', theme);
+      const theme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
     </script>
-</head>
+  </head>
 
-<body>
+  <body>
     <main class="main-content">
-        <div class="view active-view">
-            <header>
-                <button class="icon-btn" onclick="window.location.href='../'">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-                    </svg>
-                </button>
-                <h1>Privacy Policy</h1>
-            </header>
-            <div class="content-scroll">
-                <div class="detail-container">
-                    <div class="card policy-text" style="padding: 24px;">
-                        <p><strong>Last Updated:</strong> July 27, 2026</p>
+      <div class="view active-view">
+        <header>
+          <button class="icon-btn" onclick="window.location.href = '../'">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            </svg>
+          </button>
+          <h1>Privacy Policy</h1>
+        </header>
+        <div class="content-scroll">
+          <div class="detail-container">
+            <div class="card policy-text" style="padding: 24px">
+              <p><strong>Last Updated:</strong> July 27, 2026</p>
 
-                        <p>This Privacy Policy outlines the data handling practices of <a
-                                href="https://github.com/breathe-OSS" target="_blank"
-                                style="color: var(--primary); text-decoration: none;">BreatheOSS</a> ("we", "our", "the
-                            Project"), a non-profit, open-source initiative. We are committed to transparency and the
-                            absolute protection of user privacy.</p>
+              <p>
+                This Privacy Policy outlines the data handling practices of
+                <a
+                  href="https://github.com/breathe-OSS"
+                  target="_blank"
+                  style="color: var(--primary); text-decoration: none"
+                  >BreatheOSS</a
+                >
+                ("we", "our", "the Project"), a non-profit, open-source initiative. We are committed
+                to transparency and the absolute protection of user privacy.
+              </p>
 
-                        <h3 class="section-title">1. Data Collection</h3>
+              <h3 class="section-title">1. Data Collection</h3>
 
-                        <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary);">1.1 No Personal Data
-                            Collection</div>
-                        <p>We do not collect, store, process, or retain any personally identifiable information (PII).
-                            The Service operates without user accounts, cookies, or tracking pixels.</p>
-                        <p>We specifically <strong>do not</strong> collect:</p>
-                        <ul>
-                            <li>Names, emails, or phone numbers.</li>
-                            <li>GPS location data (users manually select regions).</li>
-                            <li>IP addresses in any identifiable format.</li>
-                            <li>Device identifiers or usage analytics.</li>
-                        </ul>
+              <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary)">
+                1.1 No Personal Data Collection
+              </div>
+              <p>
+                We do not collect, store, process, or retain any personally identifiable information
+                (PII). The Service operates without user accounts, cookies, or tracking pixels.
+              </p>
+              <p>We specifically <strong>do not</strong> collect:</p>
+              <ul>
+                <li>Names, emails, or phone numbers.</li>
+                <li>GPS location data (users manually select regions).</li>
+                <li>IP addresses in any identifiable format.</li>
+                <li>Device identifiers or usage analytics.</li>
+              </ul>
 
-                        <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary);">1.2 Permissions</div>
-                        <p>The Service requires internet access solely to fetch real-time environmental data. No other
-                            device permissions (e.g., storage, location, contacts) are requested.</p>
+              <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary)">
+                1.2 Permissions
+              </div>
+              <p>
+                The Service requires internet access solely to fetch real-time environmental data.
+                No other device permissions (e.g., storage, location, contacts) are requested.
+              </p>
 
-                        <h3 class="section-title">2. Environmental Data Sources</h3>
-                        <p>To provide accurate AQI readings, we query the following public APIs. We transmit only
-                            geographic coordinates for the requested zones; no user data is shared.</p>
+              <h3 class="section-title">2. Environmental Data Sources</h3>
+              <p>
+                To provide accurate AQI readings, we query the following public APIs. We transmit
+                only geographic coordinates for the requested zones; no user data is shared.
+              </p>
 
-                        <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary);">2.1 Open-Meteo</div>
-                        <p>Used for weather and global air quality modelling. <a href="https://open-meteo.com/"
-                                target="_blank" style="color: var(--primary); text-decoration: none;">Visit
-                                Open-Meteo</a>.</p>
+              <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary)">
+                2.1 Open-Meteo
+              </div>
+              <p>
+                Used for weather and global air quality modelling.
+                <a
+                  href="https://open-meteo.com/"
+                  target="_blank"
+                  style="color: var(--primary); text-decoration: none"
+                  >Visit Open-Meteo</a
+                >.
+              </p>
 
-                        <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary);">2.2 AirGradient</div>
-                        <p>Crowdfunded sensor-based readings in specific regions. <a
-                                href="https://www.airgradient.com/" target="_blank"
-                                style="color: var(--primary); text-decoration: none;">Visit AirGradient</a>.</p>
+              <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary)">
+                2.2 AirGradient
+              </div>
+              <p>
+                Crowdfunded sensor-based readings in specific regions.
+                <a
+                  href="https://www.airgradient.com/"
+                  target="_blank"
+                  style="color: var(--primary); text-decoration: none"
+                  >Visit AirGradient</a
+                >.
+              </p>
 
-                        <h3 class="section-title">3. Infrastructure</h3>
+              <h3 class="section-title">3. Infrastructure</h3>
 
-                        <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary);">3.1 Hosting & Security
-                        </div>
-                        <p>Our API is hosted on <a href="https://www.heroku.com/" target="_blank"
-                                style="color: var(--primary); text-decoration: none;">Heroku</a>, and we utilize <a
-                                href="https://www.cloudflare.com/" target="_blank"
-                                style="color: var(--primary); text-decoration: none;">Cloudflare</a> for DNS and
-                            security. While these providers may generate standard technical logs for operational
-                            security, BreatheOSS does not access, analyze, or retain these logs to track individual
-                            users.</p>
+              <div style="font-weight: 500; margin-bottom: 8px; color: var(--primary)">
+                3.1 Hosting & Security
+              </div>
+              <p>
+                Our API is hosted on
+                <a
+                  href="https://www.heroku.com/"
+                  target="_blank"
+                  style="color: var(--primary); text-decoration: none"
+                  >Heroku</a
+                >, and we utilize
+                <a
+                  href="https://www.cloudflare.com/"
+                  target="_blank"
+                  style="color: var(--primary); text-decoration: none"
+                  >Cloudflare</a
+                >
+                for DNS and security. While these providers may generate standard technical logs for
+                operational security, BreatheOSS does not access, analyze, or retain these logs to
+                track individual users.
+              </p>
 
-                        <h3 class="section-title">4. Open Source & Licensing</h3>
-                        <p>BreatheOSS is open-source software. Our code is publicly available for audit to verify our
-                            privacy claims. The project is licensed under the <strong
-                                style="color: var(--on-surface);">MIT License</strong>.</p>
-                        <p>You can inspect the source code at our <a href="https://github.com/breathe-OSS"
-                                target="_blank" style="color: var(--primary); text-decoration: none;">GitHub
-                                Organization</a>.</p>
+              <h3 class="section-title">4. Open Source & Licensing</h3>
+              <p>
+                BreatheOSS is open-source software. Our code is publicly available for audit to
+                verify our privacy claims. The project is licensed under the
+                <strong style="color: var(--on-surface)">MIT License</strong>.
+              </p>
+              <p>
+                You can inspect the source code at our
+                <a
+                  href="https://github.com/breathe-OSS"
+                  target="_blank"
+                  style="color: var(--primary); text-decoration: none"
+                  >GitHub Organization</a
+                >.
+              </p>
 
-                        <h3 class="section-title">5. Contact Information</h3>
-                        <p>For questions regarding this policy or the project, please contact us:</p>
-                        <p>Email: <a href="mailto:contact@breatheoss.app"
-                                style="color: var(--primary); text-decoration: none;">contact@breatheoss.app</a></p>
-                    </div>
-                    <div style="height: 40px;"></div>
-                </div>
+              <h3 class="section-title">5. Contact Information</h3>
+              <p>For questions regarding this policy or the project, please contact us:</p>
+              <p>
+                Email:
+                <a
+                  href="mailto:contact@breatheoss.app"
+                  style="color: var(--primary); text-decoration: none"
+                  >contact@breatheoss.app</a
+                >
+              </p>
             </div>
+            <div style="height: 40px"></div>
+          </div>
         </div>
+      </div>
     </main>
-</body>
-
+  </body>
 </html>

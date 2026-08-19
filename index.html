@@ -1,695 +1,1013 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="dark">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Breathe</title>
 
     <meta property="og:title" content="Breathe" />
-    <meta property="og:description"
-        content="Track Air Quality Index (AQI) in real-time across Jammu & Kashmir. Open-source, data-driven, and accurate." />
+    <meta
+      property="og:description"
+      content="Track Air Quality Index (AQI) in real-time across Jammu & Kashmir. Open-source, data-driven, and accurate." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://breatheoss.app/" />
     <meta property="og:image" content="https://breatheoss.app/assets/images/social_preview.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Breathe" />
-    <meta name="twitter:description" content="Track Air Quality Index (AQI) in real-time across Jammu & Kashmir." />
+    <meta
+      name="twitter:description"
+      content="Track Air Quality Index (AQI) in real-time across Jammu & Kashmir." />
     <meta name="twitter:image" content="https://breatheoss.app/assets/images/social_preview.png" />
 
     <meta name="theme-color" content="#a8c7fa" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Breathe" />
+
+    <link rel="manifest" href="manifest.json" />
     <link rel="icon" type="image/x-icon" href="assets/images/web-icon.webp" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="assets/css/styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .policy-text p {
-            color: var(--on-surface-variant);
-            line-height: 1.6;
-            margin-bottom: 16px;
-        }
+      .policy-text p {
+        color: var(--on-surface-variant);
+        line-height: 1.6;
+        margin-bottom: 16px;
+      }
 
-        .policy-text li {
-            color: var(--on-surface-variant);
-            margin-bottom: 8px;
-        }
+      .policy-text li {
+        color: var(--on-surface-variant);
+        margin-bottom: 8px;
+      }
 
-        .policy-text strong {
-            color: var(--on-surface);
-        }
+      .policy-text strong {
+        color: var(--on-surface);
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <nav class="sidebar">
-        <div class="brand">
-            <h2>Breathe <img src="assets/images/logo.png" alt="Logo" class="app-logo" /></h2>
-        </div>
-        <div class="nav-links">
-            <button class="nav-btn active" onclick="showView('dashboard')" id="side-dashboard">
-                <svg viewBox="0 0 24 24">
-                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-                </svg>
-                Home
-            </button>
-            <button class="nav-btn" onclick="showView('map')" id="side-map">
-                <svg viewBox="0 0 24 24">
-                    <path
-                        d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z" />
-                </svg>
-                Map
-            </button>
-            <button class="nav-btn" onclick="showView('explore')" id="side-explore">
-                <svg viewBox="0 0 24 24">
-                    <path
-                        d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z" />
-                </svg>
-                Explore
-            </button>
-            <button class="nav-btn" onclick="showView('settings')" id="side-settings">
-                <svg viewBox="0 0 24 24">
-                    <path
-                        d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
-                </svg>
-                Settings
-            </button>
-        </div>
+      <div class="brand">
+        <h2>Breathe <img src="assets/images/logo.png" alt="Logo" class="app-logo" /></h2>
+      </div>
+      <div class="nav-links">
+        <button class="nav-btn active" onclick="showView('dashboard')" id="side-dashboard">
+          <svg viewBox="0 0 24 24">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+          </svg>
+          Home
+        </button>
+        <button class="nav-btn" onclick="showView('map')" id="side-map">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z" />
+          </svg>
+          Map
+        </button>
+        <button class="nav-btn" onclick="showView('explore')" id="side-explore">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z" />
+          </svg>
+          Explore
+        </button>
+        <button class="nav-btn" onclick="showView('settings')" id="side-settings">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+          </svg>
+          Settings
+        </button>
+      </div>
     </nav>
 
     <main class="main-content">
-        <div id="view-dashboard" class="view active-view">
-            <header>
-                <div class="header-title">
-                    <h1 class="desktop-only">Dashboard</h1>
-                    <h1 class="mobile-only">Breathe <img src="assets/images/logo.png" alt="Logo" class="app-logo" />
-                    </h1>
-                </div>
+      <div id="view-dashboard" class="view active-view">
+        <header>
+          <div class="header-title">
+            <h1 class="desktop-only">Dashboard</h1>
+            <h1 class="mobile-only">
+              Breathe <img src="assets/images/logo.png" alt="Logo" class="app-logo" />
+            </h1>
+          </div>
 
-                <button class="add-btn" onclick="showView('explore')">
-                    <span class="desktop-text">Add Location</span>
-                    <span class="mobile-icon">+</span>
+          <button class="add-btn" onclick="showView('explore')">
+            <span class="desktop-text">Add Location</span>
+            <span class="mobile-icon">+</span>
+          </button>
+        </header>
+
+        <div id="pinned-container" class="content-scroll home-list"></div>
+
+        <div id="empty-state" class="empty-state hidden">
+          <p>No zones pinned yet.</p>
+          <button class="btn-outlined" onclick="showView('explore')">Explore Locations</button>
+        </div>
+      </div>
+
+      <div id="view-details" class="view">
+        <header>
+          <button class="icon-btn" onclick="showView('dashboard')">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            </svg>
+          </button>
+          <h1 id="detail-title-header">Location</h1>
+        </header>
+
+        <div class="content-scroll">
+          <div class="detail-container">
+            <div id="detail-now-viewing" class="now-viewing">
+              <div class="now-viewing-left">
+                <div class="now-viewing-badge">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                  </svg>
+                  Now Viewing
+                </div>
+                <div class="now-viewing-name" id="detail-zone-name">Location</div>
+                <div class="now-viewing-source" id="detail-source-indicator">
+                  <span class="live-dot"></span>
+                  Live Ground Sensors
+                </div>
+              </div>
+              <div id="detail-provider" class="provider-container"></div>
+            </div>
+
+            <div class="card main-aqi-card" id="detail-main-card">
+              <div
+                class="aqi-header"
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-start;
+                  width: 100%;
+                ">
+                <div style="text-align: left">
+                  <div class="aqi-display-large" id="detail-aqi">--</div>
+                  <div class="naqi-chip" id="detail-standard-chip">NAQI</div>
+                  <div id="detail-trend" class="trend-badge"></div>
+                </div>
+                <div style="text-align: right">
+                  <div class="primary-pollutant-label">Primary</div>
+                  <div class="primary-pollutant-value" id="detail-primary">PM<sub>2.5</sub></div>
+                  <div class="update-time" id="detail-updated">Updated --</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="aqi-bar-container" id="aqi-bar-container">
+              <div class="aqi-bar-label" id="aqi-bar-label">Moderate</div>
+              <div class="aqi-bar" id="aqi-bar">
+                <div class="aqi-bar-gradient"></div>
+                <div class="aqi-bar-indicator" id="aqi-bar-indicator"></div>
+              </div>
+            </div>
+
+            <div id="detail-warning"></div>
+
+            <div id="cigarette-card-container"></div>
+
+            <div id="weather-card-container"></div>
+
+            <div class="card chart-card">
+              <div class="chart-header">
+                <div style="display: flex; align-items: baseline; gap: 8px">
+                  <h3>24 Hour Trend</h3>
+                  <span
+                    id="chart-location-name"
+                    style="font-size: 13px; color: var(--on-surface-variant); display: none"
+                    >Zone Average</span
+                  >
+                </div>
+                <select id="chart-node-select" class="chart-dropdown hidden"></select>
+              </div>
+              <div class="chart-pager-viewport">
+                <button
+                  class="chart-pager-arrow left"
+                  id="chart-arrow-prev"
+                  aria-label="Previous view">
+                  ‹
                 </button>
-            </header>
-
-            <div id="pinned-container" class="content-scroll home-list"></div>
-
-            <div id="empty-state" class="empty-state hidden">
-                <p>No zones pinned yet.</p>
-                <button class="btn-outlined" onclick="showView('explore')">Explore Locations</button>
-            </div>
-        </div>
-
-        <div id="view-details" class="view">
-            <header>
-                <button class="icon-btn" onclick="showView('dashboard')">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-                    </svg>
+                <div class="chart-pager" id="dashboard-chart-pager">
+                  <div class="chart-slide">
+                    <div class="chart-wrapper">
+                      <canvas id="detailChart"></canvas>
+                    </div>
+                    <div class="chart-labels">
+                      <span>09:00</span>
+                      <span>20:00</span>
+                      <span>08:00</span>
+                    </div>
+                  </div>
+                  <div class="chart-slide">
+                    <div class="dots-history" id="dots-history"></div>
+                  </div>
+                </div>
+                <button
+                  class="chart-pager-arrow right"
+                  id="chart-arrow-next"
+                  aria-label="Next view">
+                  ›
                 </button>
-                <h1 id="detail-title-header">Location</h1>
-            </header>
-
-            <div class="content-scroll">
-                <div class="detail-container">
-                    <div id="detail-now-viewing" class="now-viewing">
-                        <div class="now-viewing-left">
-                            <div class="now-viewing-badge">
-                                <svg viewBox="0 0 24 24">
-                                    <path
-                                        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                                </svg>
-                                Now Viewing
-                            </div>
-                            <div class="now-viewing-name" id="detail-zone-name">Location</div>
-                            <div class="now-viewing-source" id="detail-source-indicator">
-                                <span class="live-dot"></span>
-                                Live Ground Sensors
-                            </div>
-                        </div>
-                        <div id="detail-provider" class="provider-container"></div>
-                    </div>
-
-                    <div class="card main-aqi-card" id="detail-main-card">
-                        <div class="aqi-header"
-                            style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-                            <div style="text-align: left;">
-                                <div class="aqi-display-large" id="detail-aqi">--</div>
-                                <div class="naqi-chip" id="detail-standard-chip">NAQI</div>
-                                <div id="detail-trend" class="trend-badge"></div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div class="primary-pollutant-label">Primary</div>
-                                <div class="primary-pollutant-value" id="detail-primary">PM<sub>2.5</sub></div>
-                                <div class="update-time" id="detail-updated">Updated --</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="aqi-bar-container" id="aqi-bar-container">
-                        <div class="aqi-bar-label" id="aqi-bar-label">Moderate</div>
-                        <div class="aqi-bar" id="aqi-bar">
-                            <div class="aqi-bar-gradient"></div>
-                            <div class="aqi-bar-indicator" id="aqi-bar-indicator"></div>
-                        </div>
-                    </div>
-
-                    <div id="detail-warning"></div>
-
-                    <div id="cigarette-card-container"></div>
-
-                    <div id="weather-card-container"></div>
-
-                    <div class="card chart-card">
-                        <div class="chart-header">
-                            <div style="display: flex; align-items: baseline; gap: 8px;">
-                                <h3>24 Hour Trend</h3>
-                                <span id="chart-location-name"
-                                    style="font-size: 13px; color: var(--on-surface-variant); display: none;">Zone
-                                    Average</span>
-                            </div>
-                            <select id="chart-node-select" class="chart-dropdown hidden"></select>
-                        </div>
-                        <div class="chart-pager-viewport">
-                            <button class="chart-pager-arrow left" id="chart-arrow-prev" aria-label="Previous view">‹</button>
-                            <div class="chart-pager" id="dashboard-chart-pager">
-                                <div class="chart-slide">
-                                    <div class="chart-wrapper">
-                                        <canvas id="detailChart"></canvas>
-                                    </div>
-                                    <div class="chart-labels">
-                                        <span>09:00</span>
-                                        <span>20:00</span>
-                                        <span>08:00</span>
-                                    </div>
-                                </div>
-                                <div class="chart-slide">
-                                    <div class="dots-history" id="dots-history"></div>
-                                </div>
-                            </div>
-                            <button class="chart-pager-arrow right" id="chart-arrow-next" aria-label="Next view">›</button>
-                        </div>
-                        <div class="chart-pager-dots" id="chart-pager-dots">
-                            <span class="pd active" data-page="0"></span>
-                            <span class="pd" data-page="1"></span>
-                        </div>
-                        <div class="chart-swipe-hint" id="chart-swipe-hint">Swipe for Dots History</div>
-                        <button id="btn-extended-history" class="btn-outlined" style="width: 100%; margin-top: 16px;" onclick="openHistoryView()">View Extended History</button>
-                    </div>
-
-                    <div id="node-readings-container" class="pollutants-container-card" style="display: none;"></div>
-
-                    <div class="pollutants-container-card">
-                        <h3 class="section-title">All Pollutants</h3>
-                        <div class="pollutant-grid" id="pollutant-grid"></div>
-                    </div>
-                    <div style="height: 40px"></div>
-                </div>
+              </div>
+              <div class="chart-pager-dots" id="chart-pager-dots">
+                <span class="pd active" data-page="0"></span>
+                <span class="pd" data-page="1"></span>
+              </div>
+              <div class="chart-swipe-hint" id="chart-swipe-hint">Swipe for Dots History</div>
+              <button
+                id="btn-extended-history"
+                class="btn-outlined"
+                style="width: 100%; margin-top: 16px"
+                onclick="openHistoryView()">
+                View Extended History
+              </button>
             </div>
-        </div>
 
-        <div id="view-history" class="view">
-            <header>
-                <button class="icon-btn" onclick="showView('details')">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-                    </svg>
+            <div
+              id="node-readings-container"
+              class="pollutants-container-card"
+              style="display: none"></div>
+
+            <div class="pollutants-container-card">
+              <h3 class="section-title">All Pollutants</h3>
+              <div class="pollutant-grid" id="pollutant-grid"></div>
+            </div>
+            <div style="height: 40px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-history" class="view">
+        <header>
+          <button class="icon-btn" onclick="showView('details')">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            </svg>
+          </button>
+          <h1 id="history-title-header">Location History</h1>
+        </header>
+
+        <div class="content-scroll">
+          <div class="detail-container">
+            <div
+              class="card chart-card"
+              style="margin-top: 16px; padding: 24px 16px; cursor: default">
+              <h3 style="margin-bottom: 16px; text-align: center">Extended History</h3>
+
+              <div
+                class="history-controls"
+                style="
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 12px;
+                  margin-bottom: 16px;
+                  align-items: center;
+                  justify-content: center;
+                ">
+                <select
+                  id="hist-sensor-select"
+                  class="dropdown"
+                  onchange="loadCustomHistory()"
+                  style="
+                    padding: 6px;
+                    border-radius: 4px;
+                    border: 1px solid var(--outline);
+                    background: var(--surface);
+                    color: var(--on-surface);
+                  ">
+                  <option value="zone">Zone Average</option>
+                </select>
+
+                <div class="checkbox-group" style="display: flex; gap: 8px; align-items: center">
+                  <label
+                    ><input
+                      type="checkbox"
+                      id="hist-pm25"
+                      value="pm2.5"
+                      checked
+                      onchange="loadCustomHistory()" />
+                    PM2.5</label
+                  >
+                  <label
+                    ><input
+                      type="checkbox"
+                      id="hist-pm10"
+                      value="pm10"
+                      checked
+                      onchange="loadCustomHistory()" />
+                    PM10</label
+                  >
+                </div>
+              </div>
+
+              <div
+                class="toggle-group"
+                style="
+                  display: flex;
+                  justify-content: center;
+                  flex-wrap: wrap;
+                  gap: 8px;
+                  margin-bottom: 16px;
+                ">
+                <button class="btn-outlined active" id="hist-1w" onclick="setHistoryRange('1w')">
+                  1 Week
                 </button>
-                <h1 id="history-title-header">Location History</h1>
-            </header>
+                <button class="btn-outlined" id="hist-1mo" onclick="setHistoryRange('1mo')">
+                  1 Month
+                </button>
+                <button class="btn-outlined" id="hist-6mo" onclick="setHistoryRange('6mo')">
+                  6 Months
+                </button>
+                <button class="btn-outlined" id="hist-custom-btn" onclick="toggleCustomRange()">
+                  Custom...
+                </button>
+              </div>
 
-            <div class="content-scroll">
-                <div class="detail-container">
-                    <div class="card chart-card" style="margin-top: 16px; padding: 24px 16px; cursor: default;">
-                        <h3 style="margin-bottom: 16px; text-align: center;">Extended History</h3>
-
-                        <div class="history-controls" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: center; justify-content: center;">
-                            <select id="hist-sensor-select" class="dropdown" onchange="loadCustomHistory()" style="padding: 6px; border-radius: 4px; border: 1px solid var(--outline); background: var(--surface); color: var(--on-surface);">
-                                <option value="zone">Zone Average</option>
-                            </select>
-                            
-                            <div class="checkbox-group" style="display: flex; gap: 8px; align-items: center;">
-                                <label><input type="checkbox" id="hist-pm25" value="pm2.5" checked onchange="loadCustomHistory()"> PM2.5</label>
-                                <label><input type="checkbox" id="hist-pm10" value="pm10" checked onchange="loadCustomHistory()"> PM10</label>
-                            </div>
-                        </div>
-
-                        <div class="toggle-group" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
-                            <button class="btn-outlined active" id="hist-1w" onclick="setHistoryRange('1w')">1 Week</button>
-                            <button class="btn-outlined" id="hist-1mo" onclick="setHistoryRange('1mo')">1 Month</button>
-                            <button class="btn-outlined" id="hist-6mo" onclick="setHistoryRange('6mo')">6 Months</button>
-                            <button class="btn-outlined" id="hist-custom-btn" onclick="toggleCustomRange()">Custom...</button>
-                        </div>
-
-                        <div style="margin-bottom: 16px;">
-                            <div style="font-size: 12px; color: var(--on-surface-variant); text-align: center; margin-bottom: 8px;">Filter by weather during that time</div>
-                            <div id="weather-filter-chips" class="toggle-group" style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px;">
-                                <button class="btn-outlined active" id="wf-all" onclick="setWeatherFilter('all')">All Weather</button>
-                                <button class="btn-outlined" id="wf-rain" onclick="setWeatherFilter('rain')">Rain</button>
-                                <button class="btn-outlined" id="wf-snow" onclick="setWeatherFilter('snow')">Snow</button>
-                                <button class="btn-outlined" id="wf-fog" onclick="setWeatherFilter('fog')">Fog</button>
-                                <button class="btn-outlined" id="wf-cloudy" onclick="setWeatherFilter('cloudy')">Cloudy</button>
-                                <button class="btn-outlined" id="wf-clear" onclick="setWeatherFilter('clear')">Clear</button>
-                            </div>
-                        </div>
-
-                        <div id="weather-impact" style="margin-bottom: 24px;"></div>
-
-                        <div id="hist-custom-inputs" style="display: none; gap: 8px; align-items: center; justify-content: center; margin-bottom: 16px; flex-wrap: wrap; background: var(--surface-variant); padding: 12px; border-radius: 8px;">
-                            <input type="text" id="custom-range" placeholder="Range (e.g. 14d)" value="14d" style="width: 120px; padding: 6px; border-radius: 4px; border: 1px solid var(--outline); background: var(--surface); color: var(--on-surface);">
-                            <input type="text" id="custom-interval" placeholder="Interval (e.g. 1h)" value="1h" style="width: 120px; padding: 6px; border-radius: 4px; border: 1px solid var(--outline); background: var(--surface); color: var(--on-surface);">
-                            <button class="btn" style="padding: 6px 12px;" onclick="applyCustomHistory()">Apply</button>
-                        </div>
-
-                        <div id="hist-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; margin-bottom: 24px; padding: 16px; background: var(--surface-variant); border-radius: 12px; text-align: center;">
-                            <div class="stat-card">
-                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Max PM2.5</div>
-                                <div class="stat-value" id="stat-max-pm25" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Min PM2.5</div>
-                                <div class="stat-value" id="stat-min-pm25" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Avg PM2.5</div>
-                                <div class="stat-value" id="stat-avg-pm25" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Max PM10</div>
-                                <div class="stat-value" id="stat-max-pm10" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Min PM10</div>
-                                <div class="stat-value" id="stat-min-pm10" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">Avg PM10</div>
-                                <div class="stat-value" id="stat-avg-pm10" style="font-size: 18px; font-weight: bold; margin-top: 4px;">--</div>
-                            </div>
-                        </div>
-
-                        <div class="chart-pager-viewport">
-                            <button class="chart-pager-arrow left" id="ext-arrow-prev" aria-label="Previous view">‹</button>
-                            <div class="chart-pager" id="extended-chart-pager">
-                                <div class="chart-slide">
-                                    <div class="chart-wrapper" style="height: 350px; width: 100%;">
-                                        <canvas id="extendedHistoryChart"></canvas>
-                                    </div>
-                                </div>
-                                <div class="chart-slide">
-                                    <div class="ext-dots-slide">
-                                        <div class="ext-dots-subtitle" id="extended-dots-subtitle"></div>
-                                        <div id="extended-dots-grid"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <button class="chart-pager-arrow right" id="ext-arrow-next" aria-label="Next view">›</button>
-                        </div>
-                        <div class="chart-pager-dots" id="ext-pager-dots">
-                            <span class="pd active" data-page="0"></span>
-                            <span class="pd" data-page="1"></span>
-                        </div>
-                        <div class="chart-swipe-hint" id="ext-swipe-hint">Swipe for Dots History</div>
-
-                        <button class="btn-outlined" style="width: 100%; margin-top: 24px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="downloadHistoryCSV()">
-                            <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg> Download CSV
-                        </button>
-                    </div>
+              <div style="margin-bottom: 16px">
+                <div
+                  style="
+                    font-size: 12px;
+                    color: var(--on-surface-variant);
+                    text-align: center;
+                    margin-bottom: 8px;
+                  ">
+                  Filter by weather during that time
                 </div>
+                <div
+                  id="weather-filter-chips"
+                  class="toggle-group"
+                  style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px">
+                  <button class="btn-outlined active" id="wf-all" onclick="setWeatherFilter('all')">
+                    All Weather
+                  </button>
+                  <button class="btn-outlined" id="wf-rain" onclick="setWeatherFilter('rain')">
+                    Rain
+                  </button>
+                  <button class="btn-outlined" id="wf-snow" onclick="setWeatherFilter('snow')">
+                    Snow
+                  </button>
+                  <button class="btn-outlined" id="wf-fog" onclick="setWeatherFilter('fog')">
+                    Fog
+                  </button>
+                  <button class="btn-outlined" id="wf-cloudy" onclick="setWeatherFilter('cloudy')">
+                    Cloudy
+                  </button>
+                  <button class="btn-outlined" id="wf-clear" onclick="setWeatherFilter('clear')">
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              <div id="weather-impact" style="margin-bottom: 24px"></div>
+
+              <div
+                id="hist-custom-inputs"
+                style="
+                  display: none;
+                  gap: 8px;
+                  align-items: center;
+                  justify-content: center;
+                  margin-bottom: 16px;
+                  flex-wrap: wrap;
+                  background: var(--surface-variant);
+                  padding: 12px;
+                  border-radius: 8px;
+                ">
+                <input
+                  type="text"
+                  id="custom-range"
+                  placeholder="Range (e.g. 14d)"
+                  value="14d"
+                  style="
+                    width: 120px;
+                    padding: 6px;
+                    border-radius: 4px;
+                    border: 1px solid var(--outline);
+                    background: var(--surface);
+                    color: var(--on-surface);
+                  " />
+                <input
+                  type="text"
+                  id="custom-interval"
+                  placeholder="Interval (e.g. 1h)"
+                  value="1h"
+                  style="
+                    width: 120px;
+                    padding: 6px;
+                    border-radius: 4px;
+                    border: 1px solid var(--outline);
+                    background: var(--surface);
+                    color: var(--on-surface);
+                  " />
+                <button class="btn" style="padding: 6px 12px" onclick="applyCustomHistory()">
+                  Apply
+                </button>
+              </div>
+
+              <div
+                id="hist-stats"
+                style="
+                  display: grid;
+                  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                  gap: 12px;
+                  margin-bottom: 24px;
+                  padding: 16px;
+                  background: var(--surface-variant);
+                  border-radius: 12px;
+                  text-align: center;
+                ">
+                <div class="stat-card">
+                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
+                    Max PM2.5
+                  </div>
+                  <div
+                    class="stat-value"
+                    id="stat-max-pm25"
+                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
+                    --
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
+                    Min PM2.5
+                  </div>
+                  <div
+                    class="stat-value"
+                    id="stat-min-pm25"
+                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
+                    --
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
+                    Avg PM2.5
+                  </div>
+                  <div
+                    class="stat-value"
+                    id="stat-avg-pm25"
+                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
+                    --
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
+                    Max PM10
+                  </div>
+                  <div
+                    class="stat-value"
+                    id="stat-max-pm10"
+                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
+                    --
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
+                    Min PM10
+                  </div>
+                  <div
+                    class="stat-value"
+                    id="stat-min-pm10"
+                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
+                    --
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
+                    Avg PM10
+                  </div>
+                  <div
+                    class="stat-value"
+                    id="stat-avg-pm10"
+                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
+                    --
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-pager-viewport">
+                <button
+                  class="chart-pager-arrow left"
+                  id="ext-arrow-prev"
+                  aria-label="Previous view">
+                  ‹
+                </button>
+                <div class="chart-pager" id="extended-chart-pager">
+                  <div class="chart-slide">
+                    <div class="chart-wrapper" style="height: 350px; width: 100%">
+                      <canvas id="extendedHistoryChart"></canvas>
+                    </div>
+                  </div>
+                  <div class="chart-slide">
+                    <div class="ext-dots-slide">
+                      <div class="ext-dots-subtitle" id="extended-dots-subtitle"></div>
+                      <div id="extended-dots-grid"></div>
+                    </div>
+                  </div>
+                </div>
+                <button class="chart-pager-arrow right" id="ext-arrow-next" aria-label="Next view">
+                  ›
+                </button>
+              </div>
+              <div class="chart-pager-dots" id="ext-pager-dots">
+                <span class="pd active" data-page="0"></span>
+                <span class="pd" data-page="1"></span>
+              </div>
+              <div class="chart-swipe-hint" id="ext-swipe-hint">Swipe for Dots History</div>
+
+              <button
+                class="btn-outlined"
+                style="
+                  width: 100%;
+                  margin-top: 24px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 8px;
+                "
+                onclick="downloadHistoryCSV()">
+                <svg style="width: 18px; height: 18px" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                </svg>
+                Download CSV
+              </button>
             </div>
+          </div>
         </div>
+      </div>
 
-        <div id="view-map" class="view">
-            <div id="map-container"></div>
+      <div id="view-map" class="view">
+        <div id="map-container"></div>
+      </div>
+
+      <div id="view-explore" class="view">
+        <div class="search-container">
+          <div class="search-bar">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+            </svg>
+            <input type="text" id="zone-search" placeholder="Search J&K..." />
+          </div>
         </div>
+        <div id="zone-list" class="content-scroll grid-layout"></div>
+      </div>
 
-        <div id="view-explore" class="view">
-            <div class="search-container">
-                <div class="search-bar">
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-                    </svg>
-                    <input type="text" id="zone-search" placeholder="Search J&K..." />
-                </div>
+      <div id="view-settings" class="view">
+        <header>
+          <h1>Settings</h1>
+        </header>
+        <div class="content-scroll settings-content">
+          <div class="settings-section-title">Appearance</div>
+          <div class="settings-card">
+            <div class="settings-row">
+              <div>
+                <div class="settings-title">Theme</div>
+                <div class="settings-subtitle">Toggle light/dark mode</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="theme-toggle" checked />
+                <span class="slider round"></span>
+              </label>
             </div>
-            <div id="zone-list" class="content-scroll grid-layout"></div>
-        </div>
+          </div>
 
-        <div id="view-settings" class="view">
-            <header>
-                <h1>Settings</h1>
-            </header>
-            <div class="content-scroll settings-content">
-                <div class="settings-section-title">Appearance</div>
-                <div class="settings-card">
-                    <div class="settings-row">
-                        <div>
-                            <div class="settings-title">Theme</div>
-                            <div class="settings-subtitle">Toggle light/dark mode</div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="theme-toggle" checked />
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </div>
+          <div class="settings-section-title">General</div>
+          <div class="settings-card">
+            <div class="settings-row">
+              <div>
+                <div class="settings-title">US AQI Standard</div>
+                <div class="settings-subtitle">Use United States EPA calculation</div>
+              </div>
 
-               <div class="settings-section-title">General</div>
-<div class="settings-card">
-    <div class="settings-row">
-        <div>
-            
-            <div class="settings-title">US AQI Standard</div>
-            <div class="settings-subtitle">Use United States EPA calculation</div>
-        </div>
-        
-        <label class="switch">
-            <input type="radio" name="aqi-toggle-group" id="toggle-epa" value="us-epa" />
-            <span class="slider round"></span>
-        </label>
-    </div>
-    
-    <div class="settings-row">
-        <div>
-            <div class="settings-title">NAQI Standard</div>
-            <div class="settings-subtitle">Use National Air Quality Index calculation</div>
-        </div>
-        <label class="switch">
-         
-            <input type="radio" name="aqi-toggle-group" id="toggle-naqi" value="naqi" checked />
-            <span class="slider round"></span>
-        </label>
-    </div>
-
-                    <div class="settings-item clickable" onclick="openModal('data-source-modal')">
-                        <div>
-                            <div class="settings-title">Data Sources</div>
-                            <div class="settings-subtitle">OpenMeteo & AirGradient</div>
-                        </div>
-                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
-                    </div>
-
-                    <div class="settings-item clickable" onclick="window.location.href='/privacy/'">
-                        <div>
-                            <div class="settings-title">Privacy Policy</div>
-                            <div class="settings-subtitle">See how we handle your data</div>
-                        </div>
-                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
-                    </div>
-
-                    <div class="settings-item clickable" onclick="window.open('https://github.com/breathe-OSS', '_blank')">
-                        <div>
-                            <div class="settings-title">Breathe OSS</div>
-                            <div class="settings-subtitle">View Source on GitHub</div>
-                        </div>
-                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
-                    </div>
-
-                    <div class="settings-item clickable" onclick="window.open('https://about.breatheoss.app', '_blank')">
-                        <div>
-                            <div class="settings-title">About Breathe</div>
-                            <div class="settings-subtitle">View our philosophy & vision</div>
-                        </div>
-                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
-                    </div>
-
-                    <div class="settings-item clickable" onclick="window.open('https://status.breatheoss.app', '_blank')">
-                        <div>
-                            <div class="settings-title">System Status</div>
-                            <div class="settings-subtitle">Check service status & uptime</div>
-                        </div>
-                        <svg class="settings-chevron" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
-                    </div>
-                </div>
-
-                <div class="settings-section-title">Developers</div>
-                <div class="settings-card">
-                    <div class="settings-item clickable" onclick="window.open('https://github.com/sidharthify', '_blank')">
-                        <div>
-                            <div class="settings-title">Sidharth Sharma</div>
-                            <div class="settings-subtitle">@sidharthify</div>
-                        </div>
-                    </div>
-                    <div class="settings-item clickable" onclick="window.open('https://github.com/Flashwreck', '_blank')">
-                        <div>
-                            <div class="settings-title">Aaditya Gupta</div>
-                            <div class="settings-subtitle">@Flashwreck</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="settings-section-title">Contributors</div>
-                <div class="settings-card">
-                    <div class="settings-item clickable" onclick="window.open('https://github.com/Lostless1907', '_blank')">
-                        <div>
-                            <div class="settings-title">Veer P.S Sambyal</div>
-                            <div class="settings-subtitle">@Lostless1907</div>
-                        </div>
-                    </div>
-                    <div class="settings-item clickable" onclick="window.open('https://github.com/suveshmoza', '_blank')">
-                        <div>
-                            <div class="settings-title">Suvesh Moza</div>
-                            <div class="settings-subtitle">@suveshmoza</div>
-                        </div>
-                    </div>
-                    <div class="settings-item clickable" onclick="window.open('https://github.com/sandeepxi', '_blank')">
-                        <div>
-                            <div class="settings-title">Sandeep Kumar</div>
-                            <div class="settings-subtitle">@sandeepxi</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="spacer-24"></div>
-
-                <div class="card promo-card clickable"
-                    onclick="window.open('https://play.google.com/store/apps/details?id=com.sidharthify.breathe', '_blank')">
-                    <div style="flex: 1">
-                        <div style="font-weight: 700; font-size: 16px; color: var(--primary); margin-bottom: 4px;">
-                            Download the Android App
-                        </div>
-                        <div style="font-size: 12px; color: var(--on-surface-variant); line-height: 1.4">
-                            A Fluid and Native Experience for Android Users.
-                        </div>
-                    </div>
-                    <img src="assets/images/google-play-badge.svg" alt="Get it on Google Play"
-                        style="height: 44px; margin-left: 16px" />
-                </div>
-
-                <div class="spacer-16"></div>
-
-                <div class="card promo-card clickable"
-                    onclick="window.open('https://apps.apple.com/in/app/breathe-aqi-monitor-for-j-k/id6761560112', '_blank')">
-                    <div style="flex: 1">
-                        <div style="font-weight: 700; font-size: 16px; color: var(--primary); margin-bottom: 4px;">
-                            Download the iOS app
-                        </div>
-                        <div style="font-size: 12px; color: var(--on-surface-variant); line-height: 1.4">
-                            A Fluid and Native Experience for iOS users
-                        </div>
-                    </div>
-                    <img src="assets/images/app-store-badge.svg" alt="Download on the App Store"
-                        style="height: 44px; margin-left: 16px" />
-                </div>
+              <label class="switch">
+                <input type="radio" name="aqi-toggle-group" id="toggle-epa" value="us-epa" />
+                <span class="slider round"></span>
+              </label>
             </div>
+
+            <div class="settings-row">
+              <div>
+                <div class="settings-title">NAQI Standard</div>
+                <div class="settings-subtitle">Use National Air Quality Index calculation</div>
+              </div>
+              <label class="switch">
+                <input type="radio" name="aqi-toggle-group" id="toggle-naqi" value="naqi" checked />
+                <span class="slider round"></span>
+              </label>
+            </div>
+
+            <div class="settings-item clickable" onclick="openModal('data-source-modal')">
+              <div>
+                <div class="settings-title">Data Sources</div>
+                <div class="settings-subtitle">OpenMeteo & AirGradient</div>
+              </div>
+              <svg class="settings-chevron" viewBox="0 0 24 24">
+                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+              </svg>
+            </div>
+
+            <div class="settings-item clickable" onclick="window.location.href = '/privacy/'">
+              <div>
+                <div class="settings-title">Privacy Policy</div>
+                <div class="settings-subtitle">See how we handle your data</div>
+              </div>
+              <svg class="settings-chevron" viewBox="0 0 24 24">
+                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+              </svg>
+            </div>
+
+            <div
+              class="settings-item clickable"
+              onclick="window.open('https://github.com/breathe-OSS', '_blank')">
+              <div>
+                <div class="settings-title">Breathe OSS</div>
+                <div class="settings-subtitle">View Source on GitHub</div>
+              </div>
+              <svg class="settings-chevron" viewBox="0 0 24 24">
+                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+              </svg>
+            </div>
+
+            <div
+              class="settings-item clickable"
+              onclick="window.open('https://about.breatheoss.app', '_blank')">
+              <div>
+                <div class="settings-title">About Breathe</div>
+                <div class="settings-subtitle">View our philosophy & vision</div>
+              </div>
+              <svg class="settings-chevron" viewBox="0 0 24 24">
+                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+              </svg>
+            </div>
+
+            <div
+              class="settings-item clickable"
+              onclick="window.open('https://status.breatheoss.app', '_blank')">
+              <div>
+                <div class="settings-title">System Status</div>
+                <div class="settings-subtitle">Check service status & uptime</div>
+              </div>
+              <svg class="settings-chevron" viewBox="0 0 24 24">
+                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="settings-section-title">Developers</div>
+          <div class="settings-card">
+            <div
+              class="settings-item clickable"
+              onclick="window.open('https://github.com/sidharthify', '_blank')">
+              <div>
+                <div class="settings-title">Sidharth Sharma</div>
+                <div class="settings-subtitle">@sidharthify</div>
+              </div>
+            </div>
+            <div
+              class="settings-item clickable"
+              onclick="window.open('https://github.com/Flashwreck', '_blank')">
+              <div>
+                <div class="settings-title">Aaditya Gupta</div>
+                <div class="settings-subtitle">@Flashwreck</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-section-title">Contributors</div>
+          <div class="settings-card">
+            <div
+              class="settings-item clickable"
+              onclick="window.open('https://github.com/Lostless1907', '_blank')">
+              <div>
+                <div class="settings-title">Veer P.S Sambyal</div>
+                <div class="settings-subtitle">@Lostless1907</div>
+              </div>
+            </div>
+            <div
+              class="settings-item clickable"
+              onclick="window.open('https://github.com/suveshmoza', '_blank')">
+              <div>
+                <div class="settings-title">Suvesh Moza</div>
+                <div class="settings-subtitle">@suveshmoza</div>
+              </div>
+            </div>
+            <div
+              class="settings-item clickable"
+              onclick="window.open('https://github.com/sandeepxi', '_blank')">
+              <div>
+                <div class="settings-title">Sandeep Kumar</div>
+                <div class="settings-subtitle">@sandeepxi</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spacer-24"></div>
+
+          <div
+            class="card promo-card clickable"
+            onclick="
+              window.open(
+                'https://play.google.com/store/apps/details?id=com.sidharthify.breathe',
+                '_blank'
+              )
+            ">
+            <div style="flex: 1">
+              <div
+                style="
+                  font-weight: 700;
+                  font-size: 16px;
+                  color: var(--primary);
+                  margin-bottom: 4px;
+                ">
+                Download the Android App
+              </div>
+              <div style="font-size: 12px; color: var(--on-surface-variant); line-height: 1.4">
+                A Fluid and Native Experience for Android Users.
+              </div>
+            </div>
+            <img
+              src="assets/images/google-play-badge.svg"
+              alt="Get it on Google Play"
+              style="height: 44px; margin-left: 16px" />
+          </div>
+
+          <div class="spacer-16"></div>
+
+          <div
+            class="card promo-card clickable"
+            onclick="
+              window.open(
+                'https://apps.apple.com/in/app/breathe-aqi-monitor-for-j-k/id6761560112',
+                '_blank'
+              )
+            ">
+            <div style="flex: 1">
+              <div
+                style="
+                  font-weight: 700;
+                  font-size: 16px;
+                  color: var(--primary);
+                  margin-bottom: 4px;
+                ">
+                Download the iOS app
+              </div>
+              <div style="font-size: 12px; color: var(--on-surface-variant); line-height: 1.4">
+                A Fluid and Native Experience for iOS users
+              </div>
+            </div>
+            <img
+              src="assets/images/app-store-badge.svg"
+              alt="Download on the App Store"
+              style="height: 44px; margin-left: 16px" />
+          </div>
         </div>
-
-
+      </div>
     </main>
 
-    <div id="map-detail-sheet" class="bottom-sheet-overlay hidden"
-        onclick="if(event.target === this) closeMapDetailSheet()">
-        <div class="bottom-sheet">
-            <div class="bottom-sheet-handle"></div>
+    <div
+      id="map-detail-sheet"
+      class="bottom-sheet-overlay hidden"
+      onclick="if (event.target === this) closeMapDetailSheet();">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
 
-            <div class="bottom-sheet-header">
-                <div class="now-viewing-badge-compact">
-                    <svg viewBox="0 0 24 24" width="16" height="16">
-                        <path
-                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                    </svg>
-                    Now Viewing
-                </div>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <button class="btn-outlined" style="display: flex; align-items: center; gap: 6px; padding: 6px 16px; font-size: 13px; color: var(--on-surface-variant); border-color: var(--outline);" id="map-sheet-pin-btn" onclick="toggleMapSheetPin()">
-                        <span id="map-sheet-pin-icon" style="display: flex; width: 18px; height: 18px; align-items: center; justify-content: center;"></span>
-                        <span id="map-sheet-pin-text">Pin to Home</span>
-                    </button>
-                    <button class="icon-btn-compact" onclick="closeMapDetailSheet()">
-                        <svg viewBox="0 0 24 24" width="24" height="24">
-                            <path
-                                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <h2 class="bottom-sheet-title" id="map-sheet-zone-name">Location</h2>
-            <div class="bottom-sheet-subtitle" id="map-sheet-source">Satellite & Model Data</div>
-
-            <div class="bottom-sheet-aqi-card" id="map-sheet-aqi-card">
-                <div class="bottom-sheet-aqi-left">
-                    <div class="bottom-sheet-aqi-value" id="map-sheet-aqi-value">--</div>
-                    <div class="bottom-sheet-aqi-badge" id="map-sheet-aqi-badge">US AQI</div>
-                </div>
-                <div class="bottom-sheet-aqi-right">
-                    <div class="bottom-sheet-primary">
-                        <span class="bottom-sheet-label">Primary</span>
-                        <span class="bottom-sheet-pollutant" id="map-sheet-primary">--</span>
-                    </div>
-                    <div class="bottom-sheet-trend" id="map-sheet-trend">
-                        <svg viewBox="0 0 24 24" width="16" height="16">
-                            <path d="M7 14l5-5 5 5z" />
-                        </svg>
-                        <span id="map-sheet-trend-text">-- /hr</span>
-                    </div>
-                    <div class="bottom-sheet-time" id="map-sheet-time">--</div>
-                </div>
-            </div>
-
-            <div class="bottom-sheet-actions">
-                <button class="btn-outlined" onclick="closeMapDetailSheet()">Close</button>
-                <button class="btn-outlined" onclick="openFullDetails()">View Full Details</button>
-            </div>
+        <div class="bottom-sheet-header">
+          <div class="now-viewing-badge-compact">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path
+                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+            </svg>
+            Now Viewing
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <button
+              class="btn-outlined"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 16px;
+                font-size: 13px;
+                color: var(--on-surface-variant);
+                border-color: var(--outline);
+              "
+              id="map-sheet-pin-btn"
+              onclick="toggleMapSheetPin()">
+              <span
+                id="map-sheet-pin-icon"
+                style="
+                  display: flex;
+                  width: 18px;
+                  height: 18px;
+                  align-items: center;
+                  justify-content: center;
+                "></span>
+              <span id="map-sheet-pin-text">Pin to Home</span>
+            </button>
+            <button class="icon-btn-compact" onclick="closeMapDetailSheet()">
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                <path
+                  d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+              </svg>
+            </button>
+          </div>
         </div>
+
+        <h2 class="bottom-sheet-title" id="map-sheet-zone-name">Location</h2>
+        <div class="bottom-sheet-subtitle" id="map-sheet-source">Satellite & Model Data</div>
+
+        <div class="bottom-sheet-aqi-card" id="map-sheet-aqi-card">
+          <div class="bottom-sheet-aqi-left">
+            <div class="bottom-sheet-aqi-value" id="map-sheet-aqi-value">--</div>
+            <div class="bottom-sheet-aqi-badge" id="map-sheet-aqi-badge">US AQI</div>
+          </div>
+          <div class="bottom-sheet-aqi-right">
+            <div class="bottom-sheet-primary">
+              <span class="bottom-sheet-label">Primary</span>
+              <span class="bottom-sheet-pollutant" id="map-sheet-primary">--</span>
+            </div>
+            <div class="bottom-sheet-trend" id="map-sheet-trend">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path d="M7 14l5-5 5 5z" />
+              </svg>
+              <span id="map-sheet-trend-text">-- /hr</span>
+            </div>
+            <div class="bottom-sheet-time" id="map-sheet-time">--</div>
+          </div>
+        </div>
+
+        <div class="bottom-sheet-actions">
+          <button class="btn-outlined" onclick="closeMapDetailSheet()">Close</button>
+          <button class="btn-outlined" onclick="openFullDetails()">View Full Details</button>
+        </div>
+      </div>
     </div>
 
-    <div id="node-detail-sheet" class="bottom-sheet-overlay hidden"
-        onclick="if(event.target === this) document.getElementById('node-detail-sheet').classList.add('hidden');">
-        <div class="bottom-sheet">
-            <div class="bottom-sheet-handle"></div>
+    <div
+      id="node-detail-sheet"
+      class="bottom-sheet-overlay hidden"
+      onclick="
+        if (event.target === this)
+          document.getElementById('node-detail-sheet').classList.add('hidden');
+      ">
+      <div class="bottom-sheet">
+        <div class="bottom-sheet-handle"></div>
 
-            <div class="bottom-sheet-header" style="margin-bottom: 24px;">
-                <h2 class="bottom-sheet-title" id="node-sheet-title" style="margin: 0;">--</h2>
-                <button class="icon-btn-compact"
-                    onclick="document.getElementById('node-detail-sheet').classList.add('hidden')">
-                    <svg viewBox="0 0 24 24" width="24" height="24">
-                        <path
-                            d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                    </svg>
-                </button>
-            </div>
-
-            <div class="node-sheet-list">
-                <div class="node-sheet-item">
-                    <div class="node-sheet-label">AQI</div>
-                    <div class="node-sheet-value" id="node-sheet-aqi">--</div>
-                </div>
-                <div class="node-sheet-item">
-                    <div class="node-sheet-label">AQI Standard</div>
-                    <div class="node-sheet-value" id="node-sheet-std">--</div>
-                </div>
-                <div class="node-sheet-item">
-                    <div class="node-sheet-label">PM2.5</div>
-                    <div class="node-sheet-value" id="node-sheet-pm25">--</div>
-                </div>
-                <div class="node-sheet-item">
-                    <div class="node-sheet-label">PM10</div>
-                    <div class="node-sheet-value" id="node-sheet-pm10">--</div>
-                </div>
-                <div class="node-sheet-item">
-                    <div class="node-sheet-label">Temperature</div>
-                    <div class="node-sheet-value" id="node-sheet-temp">--</div>
-                </div>
-                <div class="node-sheet-item">
-                    <div class="node-sheet-label">Humidity</div>
-                    <div class="node-sheet-value" id="node-sheet-humid">--</div>
-                </div>
-                <div class="node-sheet-item">
-                    <div class="node-sheet-label">Provider</div>
-                    <div class="node-sheet-value" id="node-sheet-provider">--</div>
-                </div>
-                <div class="node-sheet-item">
-                    <div class="node-sheet-label">Model</div>
-                    <div class="node-sheet-value" id="node-sheet-model">--</div>
-                </div>
-                <div class="node-sheet-item">
-                    <div class="node-sheet-label">Location ID</div>
-                    <div class="node-sheet-value" id="node-sheet-locid">--</div>
-                </div>
-                <div class="node-sheet-item">
-                    <div class="node-sheet-label">Install Date</div>
-                    <div class="node-sheet-value" id="node-sheet-install">--</div>
-                </div>
-            </div>
+        <div class="bottom-sheet-header" style="margin-bottom: 24px">
+          <h2 class="bottom-sheet-title" id="node-sheet-title" style="margin: 0">--</h2>
+          <button
+            class="icon-btn-compact"
+            onclick="document.getElementById('node-detail-sheet').classList.add('hidden')">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+            </svg>
+          </button>
         </div>
+
+        <div class="node-sheet-list">
+          <div class="node-sheet-item">
+            <div class="node-sheet-label">AQI</div>
+            <div class="node-sheet-value" id="node-sheet-aqi">--</div>
+          </div>
+          <div class="node-sheet-item">
+            <div class="node-sheet-label">AQI Standard</div>
+            <div class="node-sheet-value" id="node-sheet-std">--</div>
+          </div>
+          <div class="node-sheet-item">
+            <div class="node-sheet-label">PM2.5</div>
+            <div class="node-sheet-value" id="node-sheet-pm25">--</div>
+          </div>
+          <div class="node-sheet-item">
+            <div class="node-sheet-label">PM10</div>
+            <div class="node-sheet-value" id="node-sheet-pm10">--</div>
+          </div>
+          <div class="node-sheet-item">
+            <div class="node-sheet-label">Temperature</div>
+            <div class="node-sheet-value" id="node-sheet-temp">--</div>
+          </div>
+          <div class="node-sheet-item">
+            <div class="node-sheet-label">Humidity</div>
+            <div class="node-sheet-value" id="node-sheet-humid">--</div>
+          </div>
+          <div class="node-sheet-item">
+            <div class="node-sheet-label">Provider</div>
+            <div class="node-sheet-value" id="node-sheet-provider">--</div>
+          </div>
+          <div class="node-sheet-item">
+            <div class="node-sheet-label">Model</div>
+            <div class="node-sheet-value" id="node-sheet-model">--</div>
+          </div>
+          <div class="node-sheet-item">
+            <div class="node-sheet-label">Location ID</div>
+            <div class="node-sheet-value" id="node-sheet-locid">--</div>
+          </div>
+          <div class="node-sheet-item">
+            <div class="node-sheet-label">Install Date</div>
+            <div class="node-sheet-value" id="node-sheet-install">--</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="data-source-modal" class="modal-overlay hidden">
-        <div class="modal-card">
-            <h3>Data Sources</h3>
-            <div class="modal-body">
-                <p><strong>Non AirGradient enabled zones</strong></p>
-                <p class="modal-text">Air quality and weather data sourced from Open-Meteo.</p>
-                <a href="https://open-meteo.com/" target="_blank" class="link-img">
-                    <img src="assets/images/open_meteo_logo.png" class="provider-logo dark-only" alt="OpenMeteo" />
-                    <img src="assets/images/open_meteo_logo_light.png" class="provider-logo light-only"
-                        alt="OpenMeteo" />
-                </a>
+      <div class="modal-card">
+        <h3>Data Sources</h3>
+        <div class="modal-body">
+          <p><strong>Non AirGradient enabled zones</strong></p>
+          <p class="modal-text">Air quality and weather data sourced from Open-Meteo.</p>
+          <a href="https://open-meteo.com/" target="_blank" class="link-img">
+            <img
+              src="assets/images/open_meteo_logo.png"
+              class="provider-logo dark-only"
+              alt="OpenMeteo" />
+            <img
+              src="assets/images/open_meteo_logo_light.png"
+              class="provider-logo light-only"
+              alt="OpenMeteo" />
+          </a>
 
-                <div class="divider"></div>
+          <div class="divider"></div>
 
-                <p><strong>AirGradient enabled zones</strong></p>
-                <p class="modal-text">
-                    PM<sub>10</sub> and PM<sub>2.5</sub> sourced from AirGradient, other concentrations sourced from
-                    Open-Meteo.
-                </p>
-                <div style="display: flex; gap: 16px; align-items: center">
-                    <a href="https://www.airgradient.com/" target="_blank" class="link-img">
-                        <div class="openaq-bg">
-                            <img src="assets/images/air_gradient_logo.png" class="provider-logo" style="margin-top: 0"
-                                alt="AirGradient" />
-                        </div>
-                    </a>
-                    <a href="https://open-meteo.com/" target="_blank" class="link-img">
-                        <img src="assets/images/open_meteo_logo.png" class="provider-logo dark-only" alt="OpenMeteo" />
-                        <img src="assets/images/open_meteo_logo_light.png" class="provider-logo light-only"
-                            alt="OpenMeteo" />
-                    </a>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn-text" onclick="closeModal('data-source-modal')">Close</button>
-            </div>
+          <p><strong>AirGradient enabled zones</strong></p>
+          <p class="modal-text">
+            PM<sub>10</sub> and PM<sub>2.5</sub> sourced from AirGradient, other concentrations
+            sourced from Open-Meteo.
+          </p>
+          <div style="display: flex; gap: 16px; align-items: center">
+            <a href="https://www.airgradient.com/" target="_blank" class="link-img">
+              <div class="openaq-bg">
+                <img
+                  src="assets/images/air_gradient_logo.png"
+                  class="provider-logo"
+                  style="margin-top: 0"
+                  alt="AirGradient" />
+              </div>
+            </a>
+            <a href="https://open-meteo.com/" target="_blank" class="link-img">
+              <img
+                src="assets/images/open_meteo_logo.png"
+                class="provider-logo dark-only"
+                alt="OpenMeteo" />
+              <img
+                src="assets/images/open_meteo_logo_light.png"
+                class="provider-logo light-only"
+                alt="OpenMeteo" />
+            </a>
+          </div>
         </div>
+        <div class="modal-actions">
+          <button class="btn-text" onclick="closeModal('data-source-modal')">Close</button>
+        </div>
+      </div>
     </div>
 
     <nav class="bottom-nav mobile-only-flex">
-        <button class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard">
-            <svg viewBox="0 0 24 24">
-                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-            </svg>
-            <span>Home</span>
-        </button>
-        <button class="nav-item" onclick="showView('map')" id="nav-map">
-            <svg viewBox="0 0 24 24">
-                <path
-                    d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z" />
-            </svg>
-            <span>Map</span>
-        </button>
-        <button class="nav-item" onclick="showView('explore')" id="nav-explore">
-            <svg viewBox="0 0 24 24">
-                <path
-                    d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z" />
-            </svg>
-            <span>Explore</span>
-        </button>
-        <button class="nav-item" onclick="showView('settings')" id="nav-settings">
-            <svg viewBox="0 0 24 24">
-                <path
-                    d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
-            </svg>
-            <span>Settings</span>
-        </button>
+      <button class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard">
+        <svg viewBox="0 0 24 24">
+          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+        </svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-item" onclick="showView('map')" id="nav-map">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z" />
+        </svg>
+        <span>Map</span>
+      </button>
+      <button class="nav-item" onclick="showView('explore')" id="nav-explore">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M12 10.9c-.61 0-1.1.49-1.1 1.1s.49 1.1 1.1 1.1c.61 0 1.1-.49 1.1-1.1s-.49-1.1-1.1-1.1zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm2.19 12.19L6 18l3.81-8.19L18 6l-3.81 8.19z" />
+        </svg>
+        <span>Explore</span>
+      </button>
+      <button class="nav-item" onclick="showView('settings')" id="nav-settings">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+        </svg>
+        <span>Settings</span>
+      </button>
     </nav>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="assets/js/main.js"></script>
-</body>
-
+  </body>
 </html>

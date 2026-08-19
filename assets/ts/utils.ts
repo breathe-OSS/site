@@ -38,7 +38,7 @@ export function formatPollutantName(pollutant: string): string {
 export function initStandard(onChange: (std: string) => void): void {
   const toggle = document.getElementById('aqi-standard-toggle') as HTMLInputElement;
   const saved = getAQIStandard();
-  
+
   if (toggle) {
     toggle.checked = saved === 'us';
     toggle.addEventListener('change', (e: Event) => {

@@ -588,25 +588,29 @@
 
           <div class="settings-section-title">General</div>
           <div class="settings-card">
-            <div class="settings-row">
+            <div
+              class="settings-row clickable"
+              onclick="document.getElementById('toggle-epa').click()">
               <div>
                 <div class="settings-title">US AQI Standard</div>
                 <div class="settings-subtitle">Use United States EPA calculation</div>
               </div>
 
-              <label class="switch">
-                <input type="radio" name="aqi-toggle-group" id="toggle-epa" value="us-epa" />
+              <label class="switch" onclick="event.stopPropagation()">
+                <input type="radio" name="aqi-toggle-group" id="toggle-epa" value="us" />
                 <span class="slider round"></span>
               </label>
             </div>
 
-            <div class="settings-row">
+            <div
+              class="settings-row clickable"
+              onclick="document.getElementById('toggle-naqi').click()">
               <div>
                 <div class="settings-title">NAQI Standard</div>
                 <div class="settings-subtitle">Use National Air Quality Index calculation</div>
               </div>
-              <label class="switch">
-                <input type="radio" name="aqi-toggle-group" id="toggle-naqi" value="naqi" checked />
+              <label class="switch" onclick="event.stopPropagation()">
+                <input type="radio" name="aqi-toggle-group" id="toggle-naqi" value="india" checked />
                 <span class="slider round"></span>
               </label>
             </div>

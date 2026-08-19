@@ -25,7 +25,7 @@ export function getCurrentTheme(): string {
 
 export function getAQIStandard(): 'india' | 'us' {
   const saved = localStorage.getItem(STORAGE_KEY_STANDARD);
-  return saved === 'india' ? 'india' : 'us';
+  return saved === 'us' ? 'us' : 'india';
 }
 
 export function formatPollutantName(pollutant: string): string {
@@ -36,16 +36,31 @@ export function formatPollutantName(pollutant: string): string {
 }
 
 export function initStandard(onChange: (std: string) => void): void {
-  const toggle = document.getElementById('aqi-standard-toggle') as HTMLInputElement;
+  const epaRadio = document.getElementById('toggle-epa') as HTMLInputElement | null;
+  const naqiRadio = document.getElementById('toggle-naqi') as HTMLInputElement | null;
   const saved = getAQIStandard();
 
-  if (toggle) {
-    toggle.checked = saved === 'us';
-    toggle.addEventListener('change', (e: Event) => {
-      const target = e.target as HTMLInputElement;
-      const newStd = target.checked ? 'us' : 'india';
+  if (epaRadio && naqiRadio) {
+    epaRadio.checked = saved === 'us';
+    naqiRadio.checked = saved === 'india';
+
+    const handleStandardChange = (newStd: 'india' | 'us') => {
+      epaRadio.checked = newStd === 'us';
+      naqiRadio.checked = newStd === 'india';
       localStorage.setItem(STORAGE_KEY_STANDARD, newStd);
       onChange(newStd);
+    };
+
+    epaRadio.addEventListener('change', () => {
+      if (epaRadio.checked) {
+        handleStandardChange('us');
+      }
+    });
+
+    naqiRadio.addEventListener('change', () => {
+      if (naqiRadio.checked) {
+        handleStandardChange('india');
+      }
     });
   }
 }

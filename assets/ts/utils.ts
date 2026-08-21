@@ -25,7 +25,7 @@ export function getCurrentTheme(): string {
 
 export function getAQIStandard(): 'india' | 'us' {
   const saved = localStorage.getItem(STORAGE_KEY_STANDARD);
-  return saved === 'us' ? 'us' : 'india';
+  return saved === 'india' ? 'india' : 'us';
 }
 
 export function formatPollutantName(pollutant: string): string {
@@ -72,7 +72,7 @@ export function calculateCigarettes(pm25: number): number {
 }
 
 // AQI category labels
-export function getAQICategory(aqi: number, standard: 'india' | 'us' = 'india'): string {
+export function getAQICategory(aqi: number, standard: 'india' | 'us' = 'us'): string {
   if (standard === 'us') {
     if (aqi <= 50) return 'Good';
     if (aqi <= 100) return 'Moderate';
@@ -92,7 +92,7 @@ export function getAQICategory(aqi: number, standard: 'india' | 'us' = 'india'):
 }
 
 // Calculate position on AQI bar (0-100%)
-export function getAQIBarPosition(aqi: number, standard: 'india' | 'us' = 'india'): number {
+export function getAQIBarPosition(aqi: number, standard: 'india' | 'us' = 'us'): number {
   if (standard === 'us') {
     if (aqi <= 50) return (aqi / 50) * 10;
     if (aqi <= 100) return 10 + ((aqi - 50) / 50) * 10;
@@ -112,7 +112,7 @@ export function getAQIBarPosition(aqi: number, standard: 'india' | 'us' = 'india
 }
 
 // aqi colors
-export function getAQIColor(aqi: number, standard: 'india' | 'us' = 'india'): AQIColorResult {
+export function getAQIColor(aqi: number, standard: 'india' | 'us' = 'us'): AQIColorResult {
   const style = getComputedStyle(document.documentElement);
 
   if (standard === 'us') {

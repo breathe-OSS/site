@@ -28,8 +28,24 @@ const UNPINNED_ICON =
 const CHECKMARK_ICON =
   '<svg class="checkmark" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
 
-export function getPinIcon(isPinned: boolean): string {
-  return isPinned ? PINNED_ICON : UNPINNED_ICON;
+export function getPinIconStack(isPinned: boolean, small: boolean = false): string {
+  const classes = ['pin-icon'];
+  if (isPinned) {
+    classes.push('pinned');
+  }
+  if (small) {
+    classes.push('small');
+  }
+  return `<span class="${classes.join(' ')}">${UNPINNED_ICON}${PINNED_ICON}</span>`;
+}
+
+export function setPinIcon(host: HTMLElement, isPinned: boolean, small: boolean = false): void {
+  const existing = host.querySelector('.pin-icon');
+  if (existing) {
+    existing.classList.toggle('pinned', isPinned);
+    return;
+  }
+  host.innerHTML = getPinIconStack(isPinned, small);
 }
 
 function getTrendHTML(currentAqi: number, currentTs: number, history: AQIHistory[]): string {
@@ -277,7 +293,7 @@ export function renderExploreItem(
             <div style="font-size:12px; color:var(--on-surface-variant);">${providerText}</div>
         </div>
         <button class="pin-btn ${isPinned ? 'pinned' : ''}">
-            ${getPinIcon(isPinned)}
+            ${getPinIconStack(isPinned)}
         </button>
     </div>
     `;
@@ -286,7 +302,7 @@ export function renderExploreItem(
     onPinClick();
     btn.classList.toggle('pinned');
     const newIsPinned = btn.classList.contains('pinned');
-    btn.innerHTML = getPinIcon(newIsPinned);
+    setPinIcon(btn, newIsPinned);
     div.classList.remove('pin-flash');
     void div.offsetWidth;
     div.classList.add('pin-flash');

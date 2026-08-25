@@ -1195,6 +1195,33 @@ textarea:focus-visible,
   transition: fill 0.2s;
   transform: rotate(45deg);
 }
+.pin-icon {
+  display: grid;
+  width: var(--pin-size, 24px);
+  height: var(--pin-size, 24px);
+}
+.pin-icon.small {
+  --pin-size: 16px;
+}
+.pin-icon svg {
+  grid-area: 1 / 1;
+  width: var(--pin-size, 24px);
+  height: var(--pin-size, 24px);
+  transition:
+    opacity var(--motion-press) var(--motion-easing-standard),
+    transform var(--motion-shape) var(--motion-spring-spatial);
+}
+.pin-icon svg:last-child {
+  opacity: 0;
+  transform: scale(0.55) rotate(-24deg);
+}
+.pin-icon.pinned svg:first-child {
+  opacity: 0;
+}
+.pin-icon.pinned svg:last-child {
+  opacity: 1;
+  transform: none;
+}
 .pin-btn.pinned svg {
   fill: var(--primary);
 }

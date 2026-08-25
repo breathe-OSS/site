@@ -9,7 +9,7 @@ import {
   updateDetailView,
   updateChartTheme,
   renderSkeletonCard,
-  getPinIcon,
+  setPinIcon,
 } from './ui.js';
 import { Zone, AQIData, WeatherHistory } from './types.js';
 
@@ -593,13 +593,7 @@ function updateNavHighlight(viewName: string) {
 
     if (pinBtn && pinIcon && pinText) {
       const isPinned = pinnedZoneIds.includes(zoneId);
-      pinIcon.innerHTML = getPinIcon(isPinned);
-
-      const svg = pinIcon.querySelector('svg');
-      if (svg) {
-        svg.style.width = '16px';
-        svg.style.height = '16px';
-      }
+      setPinIcon(pinIcon, isPinned, true);
 
       if (isPinned) {
         pinBtn.classList.add('pinned');

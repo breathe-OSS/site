@@ -2,7 +2,7 @@ import { getZoneAQI } from './api.js';
 import { getAQIColor, getCurrentTheme, getAQIStandard, formatPollutantName } from './utils.js';
 import { Zone, AQIData } from './types.js';
 import { STORAGE_KEY_PINS } from './config.js';
-import { getPinIcon } from './ui.js';
+import { setPinIcon } from './ui.js';
 import * as Leaflet from 'leaflet';
 
 declare const L: typeof Leaflet;
@@ -130,14 +130,7 @@ function populateMapDetailSheet(zone: Zone, data: AQIData) {
   if (pinBtn && pinIcon && pinText) {
     const pinnedZoneIds: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_PINS) || '[]');
     const isPinned = pinnedZoneIds.includes(zone.id);
-    pinIcon.innerHTML = getPinIcon(isPinned);
-
-    // Resize the SVG if needed
-    const svg = pinIcon.querySelector('svg');
-    if (svg) {
-      svg.style.width = '16px';
-      svg.style.height = '16px';
-    }
+    setPinIcon(pinIcon, isPinned, true);
 
     if (isPinned) {
       pinBtn.classList.add('pinned');

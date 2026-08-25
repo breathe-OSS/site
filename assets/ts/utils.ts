@@ -153,6 +153,43 @@ export function animateCount(
 
 let themeChangeTimer = 0;
 
+let snackbarTimer = 0;
+
+export function showSnackbar(message: string, actionLabel?: string, onAction?: () => void): void {
+  const bar = document.getElementById('snackbar');
+  const messageEl = document.getElementById('snackbar-message');
+  const actionEl = document.getElementById('snackbar-action') as HTMLButtonElement | null;
+  if (!bar || !messageEl || !actionEl) {
+    return;
+  }
+
+  messageEl.textContent = message;
+
+  if (actionLabel && onAction) {
+    actionEl.textContent = actionLabel;
+    actionEl.hidden = false;
+    actionEl.onclick = () => {
+      hideSnackbar();
+      onAction();
+    };
+  } else {
+    actionEl.hidden = true;
+    actionEl.onclick = null;
+  }
+
+  bar.classList.add('up');
+  window.clearTimeout(snackbarTimer);
+  snackbarTimer = window.setTimeout(hideSnackbar, 5000);
+}
+
+export function hideSnackbar(): void {
+  const bar = document.getElementById('snackbar');
+  if (bar) {
+    bar.classList.remove('up');
+  }
+  window.clearTimeout(snackbarTimer);
+}
+
 // theme management
 export function initTheme(onChange: (theme: string) => void): void {
   const toggle = document.getElementById('theme-toggle') as HTMLInputElement;

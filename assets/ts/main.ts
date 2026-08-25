@@ -1,6 +1,12 @@
 import { STORAGE_KEY_PINS, API_URL } from './config.js';
 import { fetchZones, getZoneAQI } from './api.js';
-import { initTheme, initStandard, initKeyboardActivation, initSheetDragging } from './utils.js';
+import {
+  initTheme,
+  initStandard,
+  initKeyboardActivation,
+  initSheetDragging,
+  showSnackbar,
+} from './utils.js';
 import { initMotion, motionEnabled } from './motion.js';
 import { initMap, updateMapTiles, resizeMap, getCurrentMapZoneId } from './map.js';
 import {
@@ -214,14 +220,39 @@ function refreshExploreList(filter: string = '') {
   });
 }
 
-function togglePin(id: string) {
-  if (pinnedZoneIds.includes(id)) {
+// Keeps a cached explore card's pin button in step when the pin was changed
+// from somewhere else, such as the snackbar's undo.
+function syncExplorePin(id: string) {
+  const node = exploreNodes[id];
+  if (!node) return;
+
+  const btn = node.querySelector('.pin-btn') as HTMLElement | null;
+  if (!btn) return;
+
+  const pinned = pinnedZoneIds.includes(id);
+  btn.classList.toggle('pinned', pinned);
+  setPinIcon(btn, pinned);
+}
+
+function togglePin(id: string, announce: boolean = true) {
+  const wasPinned = pinnedZoneIds.includes(id);
+
+  if (wasPinned) {
     pinnedZoneIds = pinnedZoneIds.filter((zid) => zid !== id);
   } else {
     pinnedZoneIds.push(id);
   }
   localStorage.setItem(STORAGE_KEY_PINS, JSON.stringify(pinnedZoneIds));
+  syncExplorePin(id);
   refreshDashboard();
+
+  if (!announce) return;
+
+  const zone = allZones.find((z) => z.id === id);
+  const name = zone ? zone.name : 'zone';
+  showSnackbar(`${wasPinned ? 'Unpinned' : 'Pinned'} ${name}`, 'Undo', () => {
+    togglePin(id, false);
+  });
 }
 
 let currentZoneId: string | null = null;

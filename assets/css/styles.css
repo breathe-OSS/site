@@ -880,8 +880,34 @@ header {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   transition: transform var(--motion-duration-short3) var(--motion-easing-emphasized);
 }
+.dashboard-card:not(.no-entrance) .aqi-badge-small {
+  animation: badgeSettle var(--motion-shape) var(--motion-easing-emphasized-decelerate) backwards;
+  animation-delay: calc(var(--motion-list) / 6);
+}
+@keyframes badgeSettle {
+  from {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 .dashboard-card:hover .aqi-badge-small {
   transform: scale(1.08);
+}
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  transition:
+    opacity var(--motion-press) var(--motion-easing-standard),
+    height var(--motion-list) var(--motion-easing-emphasized-accelerate);
+}
+.skeleton-stack.leaving {
+  opacity: 0;
 }
 .skeleton-card {
   cursor: default;

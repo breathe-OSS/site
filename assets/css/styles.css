@@ -1475,6 +1475,47 @@ textarea:focus-visible,
 .btn-outlined:hover {
   background: var(--surface-variant);
 }
+.toggle-group .btn-outlined {
+  border-radius: var(--shape-corner-small);
+  transition:
+    border-radius var(--motion-shape) var(--motion-spring-spatial),
+    background-color var(--motion-press) var(--motion-easing-standard),
+    color var(--motion-press) var(--motion-easing-standard),
+    border-color var(--motion-press) var(--motion-easing-standard),
+    transform var(--motion-squish) var(--motion-spring-squish);
+}
+.toggle-group .btn-outlined:first-child {
+  border-radius: var(--shape-corner-full) var(--shape-corner-small) var(--shape-corner-small)
+    var(--shape-corner-full);
+}
+.toggle-group .btn-outlined:last-child {
+  border-radius: var(--shape-corner-small) var(--shape-corner-full) var(--shape-corner-full)
+    var(--shape-corner-small);
+}
+.toggle-group .btn-outlined::before {
+  content: '✓';
+  display: inline-block;
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  margin-right: 0;
+  vertical-align: -1px;
+  transition:
+    max-width var(--motion-shape) var(--motion-spring-spatial),
+    margin-right var(--motion-shape) var(--motion-spring-spatial),
+    opacity var(--motion-press) var(--motion-easing-standard);
+}
+.toggle-group .btn-outlined.active {
+  border-radius: var(--shape-corner-full);
+  background: var(--primary-container);
+  border-color: transparent;
+  color: var(--primary);
+}
+.toggle-group .btn-outlined.active::before {
+  max-width: 1.1em;
+  margin-right: 6px;
+  opacity: 1;
+}
 .btn-filled {
   background: var(--primary);
   border: none;

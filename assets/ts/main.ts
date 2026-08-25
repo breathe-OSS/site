@@ -551,10 +551,33 @@ function downloadHistoryCSV() {
 (window as any).openModal = (id: string) => document.getElementById(id)?.classList.remove('hidden');
 (window as any).closeModal = (id: string) => document.getElementById(id)?.classList.add('hidden');
 
+const VIEW_DEPTH: { [name: string]: number } = {
+  dashboard: 0,
+  map: 0,
+  explore: 0,
+  settings: 0,
+  details: 1,
+  history: 2,
+};
+
+let currentViewDepth = 0;
+
 function handleShowView(viewName: string) {
-  document.querySelectorAll('.view').forEach((el) => el.classList.remove('active-view'));
+  document.querySelectorAll('.view').forEach((el) => {
+    el.classList.remove('active-view', 'enter-forward', 'enter-back');
+  });
+
+  const nextDepth = VIEW_DEPTH[viewName] ?? 0;
   const view = document.getElementById(`view-${viewName}`);
-  if (view) view.classList.add('active-view');
+  if (view) {
+    if (nextDepth > currentViewDepth) {
+      view.classList.add('enter-forward');
+    } else if (nextDepth < currentViewDepth) {
+      view.classList.add('enter-back');
+    }
+    view.classList.add('active-view');
+  }
+  currentViewDepth = nextDepth;
 
   updateNavHighlight(viewName);
 

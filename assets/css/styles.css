@@ -150,7 +150,7 @@ body {
   min-width: 0;
   flex-direction: column;
   overflow: hidden;
-  animation: viewFadeIn var(--motion-duration-medium2) var(--motion-easing-emphasized-decelerate);
+  animation: viewFadeIn var(--motion-screen) var(--motion-easing-emphasized-decelerate);
   position: relative;
 }
 .view:not(#view-map):not(#view-settings)::before {
@@ -177,6 +177,32 @@ body {
 .view > * {
   position: relative;
   z-index: 1;
+}
+.view.enter-forward {
+  animation: viewInForward var(--motion-screen) var(--motion-easing-emphasized-decelerate);
+}
+.view.enter-back {
+  animation: viewInBack var(--motion-screen) var(--motion-easing-emphasized-decelerate);
+}
+@keyframes viewInForward {
+  from {
+    opacity: 0;
+    transform: translateX(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes viewInBack {
+  from {
+    opacity: 0;
+    transform: translateX(-26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 @keyframes viewFadeIn {
   from {

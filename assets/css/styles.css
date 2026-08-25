@@ -1036,6 +1036,27 @@ input:checked + .slider:before {
 .clickable {
   cursor: pointer;
 }
+.settings-row.clickable {
+  cursor: default;
+}
+.settings-item.clickable,
+.settings-row.clickable,
+.promo-card.clickable {
+  transition:
+    background-color var(--motion-duration-short3) var(--motion-easing-standard),
+    opacity var(--motion-duration-short3) var(--motion-easing-standard);
+}
+.settings-item.clickable:hover,
+.settings-row.clickable:hover,
+.promo-card.clickable:hover {
+  background-color: var(--surface-container-high);
+  opacity: 1;
+}
+.settings-item.clickable:active,
+.settings-row.clickable:active,
+.promo-card.clickable:active {
+  background-color: var(--surface-container-highest);
+}
 .section-header {
   color: var(--primary);
   font-weight: 500;

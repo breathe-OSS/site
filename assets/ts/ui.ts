@@ -230,6 +230,21 @@ function renderConcentrationsPreview(comps: Pollutants): string {
 }
 
 // main dashboard
+// A reading older than this is no longer live. AirGradient zones report every
+// fifteen minutes, and coverage across the network runs as low as 69%, so a
+// silent sensor is common enough to be worth showing.
+const STALE_AFTER_MINUTES = 30;
+
+export function minutesSince(timestampUnix: number): number {
+  return Math.floor(Date.now() / 1000 - timestampUnix) / 60;
+}
+
+export function markStale(el: HTMLElement, timestampUnix: number): boolean {
+  const stale = minutesSince(timestampUnix) > STALE_AFTER_MINUTES;
+  el.classList.toggle('stale', stale);
+  return stale;
+}
+
 export function renderDashboardCard(
   zone: Zone,
   data: AQIData,
@@ -250,6 +265,7 @@ export function renderDashboardCard(
     card.classList.add('no-entrance');
   }
   card.onclick = onClick;
+  markStale(card, data.timestamp_unix);
   makeActivatable(card);
   card.innerHTML = `
         <div>
@@ -387,6 +403,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   // Update main card with gradient background
   if (mainCard) {
     mainCard.style.setProperty('--aqi-color', colors.hex);
+    markStale(mainCard, data.timestamp_unix);
   }
 
   let warningEl = document.getElementById('detail-warning');
@@ -428,9 +445,9 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   }
 
   if (updatedEl) {
-    const now = Date.now() / 1000;
-    const diff = Math.floor((now - data.timestamp_unix) / 60);
+    const diff = Math.round(minutesSince(data.timestamp_unix));
     updatedEl.innerText = `${diff}m ago`;
+    updatedEl.classList.toggle('stale-label', diff > STALE_AFTER_MINUTES);
   }
 
   // Update AQI Bar

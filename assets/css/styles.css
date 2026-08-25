@@ -947,6 +947,22 @@ header {
 .dashboard-card:hover .aqi-badge-small {
   transform: scale(1.08);
 }
+.stale {
+  filter: saturate(0.28);
+  opacity: 0.72;
+  transition:
+    filter var(--motion-color) var(--motion-easing-standard),
+    opacity var(--motion-color) var(--motion-easing-standard);
+}
+.stale .live-dot,
+.stale .status-indicator {
+  animation: none;
+  background: var(--outline);
+}
+.stale-label {
+  color: var(--aqi-poor);
+  font-weight: 600;
+}
 .skeleton-stack {
   display: flex;
   flex-direction: column;

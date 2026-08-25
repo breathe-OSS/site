@@ -1,6 +1,7 @@
 import { STORAGE_KEY_PINS, API_URL } from './config.js';
 import { fetchZones, getZoneAQI } from './api.js';
 import { initTheme, initStandard } from './utils.js';
+import { initMotion } from './motion.js';
 import { initMap, updateMapTiles, resizeMap, getCurrentMapZoneId } from './map.js';
 import {
   renderDashboardCard,
@@ -17,6 +18,8 @@ let pinnedZoneIds: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_PINS) 
 
 // init
 document.addEventListener('DOMContentLoaded', async () => {
+  initMotion();
+
   initTheme((newTheme) => {
     updateMapTiles(newTheme);
     updateChartTheme();

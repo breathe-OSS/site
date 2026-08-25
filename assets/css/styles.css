@@ -44,6 +44,61 @@
   --shape-corner-large: 16px;
   --shape-corner-extra-large: 28px;
   --shape-corner-full: 9999px;
+  --motion-spring-squish: linear(
+    0, 0.0446, 0.1613, 0.324, 0.5087, 0.6946, 0.8656, 1.0103, 1.1221, 1.1987, 1.2413, 1.2538,
+    1.2418, 1.2117, 1.1702, 1.1232, 1.0761, 1.0329, 0.9964, 0.9683, 0.9491, 0.9385, 0.9356,
+    0.9388, 0.9465, 0.9572, 0.9691, 0.981, 0.992, 1.0012, 1.0082, 1.013, 1.0156, 1.0163,
+    1.0155, 1.0135, 1.0108, 1.0077, 1.0047, 1.002, 1
+  );
+  --motion-spring-spatial: linear(
+    0, 0.0128, 0.0469, 0.0969, 0.158, 0.2262, 0.2982, 0.3716, 0.4441, 0.5143, 0.5808, 0.6429,
+    0.7, 0.7518, 0.7983, 0.8394, 0.8754, 0.9064, 0.9329, 0.9552, 0.9736, 0.9886, 1.0006,
+    1.0099, 1.0169, 1.022, 1.0254, 1.0274, 1.0283, 1.0283, 1.0276, 1.0264, 1.0248, 1.0229,
+    1.0209, 1.0189, 1.0168, 1.0148, 1.0128, 1.011, 1
+  );
+  --motion-screen: var(--motion-duration-medium2);
+  --motion-color: var(--motion-duration-long2);
+  --motion-num: var(--motion-duration-long2);
+  --motion-press: var(--motion-duration-short3);
+  --motion-list: var(--motion-duration-medium3);
+  --motion-shape: var(--motion-duration-medium3);
+  --motion-squish: 625ms;
+  --list-stagger: 50ms;
+  --pulse-play: running;
+}
+:root[data-motion-off~='screenTransitions'] {
+  --motion-screen: 1ms;
+}
+:root[data-motion-off~='colorTransitions'] {
+  --motion-color: 1ms;
+}
+:root[data-motion-off~='numberAnimations'] {
+  --motion-num: 1ms;
+}
+:root[data-motion-off~='pressFeedback'] {
+  --motion-press: 1ms;
+  --motion-squish: 1ms;
+}
+:root[data-motion-off~='listAnimations'] {
+  --motion-list: 1ms;
+  --list-stagger: 0ms;
+}
+:root[data-motion-off~='shapeTransitions'] {
+  --motion-shape: 1ms;
+}
+:root[data-motion-off~='pulseEffects'] {
+  --pulse-play: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion-chosen]) {
+    --motion-color: 1ms;
+    --motion-num: 1ms;
+    --motion-list: 1ms;
+    --motion-shape: 1ms;
+    --motion-squish: 1ms;
+    --list-stagger: 0ms;
+    --pulse-play: paused;
+  }
 }
 [data-theme='light'] {
   --background: #f8fafc;
@@ -1013,6 +1068,24 @@ input:checked + .slider:before {
   align-items: center;
   padding: 16px 20px;
   position: relative;
+}
+.motion-presets {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.btn-small {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+.btn-outlined.active {
+  background: var(--primary-container);
+  border-color: transparent;
+  color: var(--primary);
+}
+#motion-advanced.disabled {
+  opacity: 0.4;
+  pointer-events: none;
 }
 .settings-chevron {
   fill: var(--on-surface-variant);

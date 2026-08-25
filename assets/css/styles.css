@@ -1004,6 +1004,8 @@ header {
   background: var(--surface-variant);
   border-radius: 4px;
   animation: skeleton-pulse 1.5s ease-in-out infinite;
+  animation-delay: calc(-1 * var(--pulse-epoch, 0s));
+  animation-play-state: var(--pulse-play);
   display: block;
 }
 .skeleton-badge {
@@ -1012,6 +1014,8 @@ header {
   border-radius: 14px;
   background: var(--surface-variant);
   animation: skeleton-pulse 1.5s ease-in-out infinite;
+  animation-delay: calc(-1 * var(--pulse-epoch, 0s));
+  animation-play-state: var(--pulse-play);
   display: block;
   flex-shrink: 0;
 }
@@ -1544,6 +1548,8 @@ textarea:focus-visible,
   border-radius: 50%;
   background: var(--aqi-good);
   animation: pulse 2s infinite;
+  animation-delay: calc(-1 * var(--pulse-epoch, 0s));
+  animation-play-state: var(--pulse-play);
 }
 .bottom-sheet-aqi-card {
   background: transparent;
@@ -2259,6 +2265,8 @@ textarea:focus-visible,
   border-radius: 50%;
   background: currentColor;
   animation: pulse 2s infinite;
+  animation-delay: calc(-1 * var(--pulse-epoch, 0s));
+  animation-play-state: var(--pulse-play);
 }
 @keyframes pulse {
   0%,

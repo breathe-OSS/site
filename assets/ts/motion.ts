@@ -155,6 +155,12 @@ export function initMotion(): void {
 
   applyMotionSettings();
   buildMotionControls();
+
+  // Every pulsing element started its own cycle when it mounted, so a list of
+  // them drifted into as many phases. One shared epoch, applied as a negative
+  // delay, starts them all mid-cycle on the same beat.
+  const epoch = (performance.now() % 2000) / 1000;
+  document.documentElement.style.setProperty('--pulse-epoch', `${epoch}s`);
 }
 
 function presetMatches(preset: MotionSettings): boolean {

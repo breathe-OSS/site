@@ -531,6 +531,23 @@ header {
   position: relative;
   z-index: 1;
 }
+.trend-badge {
+  transition: color var(--motion-color) var(--motion-easing-standard);
+  font-variant-numeric: tabular-nums;
+}
+.trend-arrow {
+  display: inline-block;
+  transition: transform var(--motion-shape) var(--motion-spring-spatial);
+}
+.trend-badge.improving .trend-arrow {
+  transform: rotate(180deg);
+}
+.trend-badge.flat .trend-arrow {
+  transform: rotate(90deg);
+}
+.trend-badge.flat {
+  color: var(--on-surface-variant);
+}
 .trend-badge.improving {
   color: var(--aqi-good);
 }

@@ -118,7 +118,11 @@ const countTimers = new WeakMap<HTMLElement, number>();
 // Rolls an element's number to a new value. Reads its duration from the motion
 // token, so switching numberAnimations off collapses it to a plain assignment
 // without this needing to know about the setting.
-export function animateCount(el: HTMLElement, to: number): void {
+export function animateCount(
+  el: HTMLElement,
+  to: number,
+  format: (n: number) => string = String
+): void {
   const previous = countTimers.get(el);
   if (previous) {
     cancelAnimationFrame(previous);
@@ -129,7 +133,7 @@ export function animateCount(el: HTMLElement, to: number): void {
   const from = parseInt(el.innerText, 10);
 
   if (!duration || duration < 20 || isNaN(from) || from === to) {
-    el.innerText = to.toString();
+    el.innerText = format(to);
     return;
   }
 
@@ -137,7 +141,7 @@ export function animateCount(el: HTMLElement, to: number): void {
   const step = (now: number) => {
     const t = Math.min(1, (now - start) / duration);
     const eased = 1 - Math.pow(1 - t, 3);
-    el.innerText = Math.round(from + (to - from) * eased).toString();
+    el.innerText = format(Math.round(from + (to - from) * eased));
     if (t < 1) {
       countTimers.set(el, requestAnimationFrame(step));
     } else {

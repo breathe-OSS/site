@@ -64,12 +64,57 @@ function getTrendHTML(currentAqi: number, currentTs: number, history: AQIHistory
   const pastVal = std === 'us' ? pastEntry.us_aqi || 0 : pastEntry.aqi;
   const diff = currentAqi - pastVal;
 
-  if (diff === 0) return '<span class="trend-badge">-- /hr</span>';
+  if (diff === 0) {
+    return (
+      '<span class="trend-badge flat"><span class="trend-arrow">↑</span>' +
+      '<span class="trend-delta">--</span> /hr</span>'
+    );
+  }
   const isRising = diff > 0;
   const sign = isRising ? '+' : '';
-  const arrow = isRising ? '↑' : '↓';
   const colorClass = isRising ? 'worsening' : 'improving';
-  return `<span class="trend-badge ${colorClass}">${arrow} ${sign}${diff} /hr</span>`;
+  return (
+    `<span class="trend-badge ${colorClass}"><span class="trend-arrow">↑</span>` +
+    `<span class="trend-delta">${sign}${diff}</span> /hr</span>`
+  );
+}
+
+// Reuses the badge so the arrow rotates between the three states and the
+// delta counts, rather than one glyph being swapped for another.
+export function updateTrendBadge(
+  host: HTMLElement,
+  currentAqi: number,
+  currentTs: number,
+  history: AQIHistory[]
+): void {
+  const markup = getTrendHTML(currentAqi, currentTs, history);
+  const existing = host.querySelector('.trend-badge') as HTMLElement | null;
+
+  if (!markup || !existing) {
+    host.innerHTML = markup;
+    return;
+  }
+
+  const parsed = document.createElement('div');
+  parsed.innerHTML = markup;
+  const next = parsed.firstElementChild as HTMLElement | null;
+  if (!next) {
+    host.innerHTML = markup;
+    return;
+  }
+
+  existing.className = next.className;
+
+  const currentDelta = existing.querySelector('.trend-delta') as HTMLElement | null;
+  const nextDelta = next.querySelector('.trend-delta');
+  const to = nextDelta ? parseInt(nextDelta.textContent || '', 10) : NaN;
+
+  if (!currentDelta || isNaN(to)) {
+    existing.innerHTML = next.innerHTML;
+    return;
+  }
+
+  animateCount(currentDelta, to, (n) => (n > 0 ? `+${n}` : String(n)));
 }
 
 // Render pinned location chips
@@ -441,7 +486,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   if (primaryEl) primaryEl.innerHTML = formatPollutantName(data.main_pollutant);
 
   if (trendEl) {
-    trendEl.innerHTML = getTrendHTML(displayAqi, data.timestamp_unix, data.history);
+    updateTrendBadge(trendEl, displayAqi, data.timestamp_unix, data.history);
   }
 
   if (updatedEl) {

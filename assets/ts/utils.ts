@@ -194,7 +194,47 @@ export function formatPollutantName(pollutant: string): string {
   return upper;
 }
 
+let standardChangeHandler: ((std: string) => void) | null = null;
+let standardSwapTimer = 0;
+
+// The two scales disagree by design: the same reading is 104 on EPA and 60 on
+// CPCB. Dipping every reading together and swapping at the trough makes that
+// read as one deliberate rescale rather than the page glitching.
+export function setAQIStandard(newStd: 'india' | 'us'): void {
+  const epaRadio = document.getElementById('toggle-epa') as HTMLInputElement | null;
+  const naqiRadio = document.getElementById('toggle-naqi') as HTMLInputElement | null;
+  if (epaRadio) {
+    epaRadio.checked = newStd === 'us';
+  }
+  if (naqiRadio) {
+    naqiRadio.checked = newStd === 'india';
+  }
+  localStorage.setItem(STORAGE_KEY_STANDARD, newStd);
+
+  const apply = () => {
+    if (standardChangeHandler) {
+      standardChangeHandler(newStd);
+    }
+  };
+
+  const dip = motionDuration('--motion-press');
+  if (dip < 20) {
+    apply();
+    return;
+  }
+
+  const root = document.documentElement;
+  root.classList.add('standard-swapping');
+  window.clearTimeout(standardSwapTimer);
+  standardSwapTimer = window.setTimeout(() => {
+    apply();
+    root.classList.remove('standard-swapping');
+  }, dip);
+}
+
 export function initStandard(onChange: (std: string) => void): void {
+  standardChangeHandler = onChange;
+
   const epaRadio = document.getElementById('toggle-epa') as HTMLInputElement | null;
   const naqiRadio = document.getElementById('toggle-naqi') as HTMLInputElement | null;
   const saved = getAQIStandard();
@@ -203,22 +243,15 @@ export function initStandard(onChange: (std: string) => void): void {
     epaRadio.checked = saved === 'us';
     naqiRadio.checked = saved === 'india';
 
-    const handleStandardChange = (newStd: 'india' | 'us') => {
-      epaRadio.checked = newStd === 'us';
-      naqiRadio.checked = newStd === 'india';
-      localStorage.setItem(STORAGE_KEY_STANDARD, newStd);
-      onChange(newStd);
-    };
-
     epaRadio.addEventListener('change', () => {
       if (epaRadio.checked) {
-        handleStandardChange('us');
+        setAQIStandard('us');
       }
     });
 
     naqiRadio.addEventListener('change', () => {
       if (naqiRadio.checked) {
-        handleStandardChange('india');
+        setAQIStandard('india');
       }
     });
   }

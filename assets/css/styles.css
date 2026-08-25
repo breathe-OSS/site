@@ -275,7 +275,11 @@ body {
 .active-view {
   display: flex;
 }
+:root.standard-swapping .view:not(#view-settings) .content-scroll {
+  opacity: 0.25;
+}
 .content-scroll {
+  transition: opacity var(--motion-press) var(--motion-easing-standard);
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -487,6 +491,9 @@ header {
   position: relative;
   z-index: 1;
   transition: transform var(--motion-duration-short3) var(--motion-easing-emphasized);
+}
+.naqi-chip {
+  cursor: pointer;
 }
 .naqi-chip:hover {
   transform: scale(1.05);

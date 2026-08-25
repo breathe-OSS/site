@@ -10,6 +10,7 @@ import {
   calculateUsAqiPm10,
   makeActivatable,
   animateCount,
+  setAQIStandard,
 } from './utils.js';
 import { Zone, AQIData, AQIHistory, Pollutants, NodeData, WeatherInfo } from './types.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
@@ -414,6 +415,10 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   if (chipEl) {
     chipEl.style.backgroundColor = colors.hex;
     chipEl.innerText = std === 'us' ? 'US AQI' : 'NAQI';
+    chipEl.setAttribute('role', 'button');
+    chipEl.setAttribute('tabindex', '0');
+    chipEl.setAttribute('title', 'Switch AQI standard');
+    chipEl.onclick = () => setAQIStandard(std === 'us' ? 'india' : 'us');
   }
 
   if (primaryEl) primaryEl.innerHTML = formatPollutantName(data.main_pollutant);

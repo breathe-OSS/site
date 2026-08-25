@@ -102,6 +102,51 @@ export function initSheetDragging(): void {
   document.querySelectorAll<HTMLElement>('.bottom-sheet').forEach(attachSheetDrag);
 }
 
+export function motionDuration(token: string): number {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+  if (raw.endsWith('ms')) {
+    return parseFloat(raw);
+  }
+  if (raw.endsWith('s')) {
+    return parseFloat(raw) * 1000;
+  }
+  return 0;
+}
+
+const countTimers = new WeakMap<HTMLElement, number>();
+
+// Rolls an element's number to a new value. Reads its duration from the motion
+// token, so switching numberAnimations off collapses it to a plain assignment
+// without this needing to know about the setting.
+export function animateCount(el: HTMLElement, to: number): void {
+  const previous = countTimers.get(el);
+  if (previous) {
+    cancelAnimationFrame(previous);
+    countTimers.delete(el);
+  }
+
+  const duration = motionDuration('--motion-num');
+  const from = parseInt(el.innerText, 10);
+
+  if (!duration || duration < 20 || isNaN(from) || from === to) {
+    el.innerText = to.toString();
+    return;
+  }
+
+  const start = performance.now();
+  const step = (now: number) => {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.innerText = Math.round(from + (to - from) * eased).toString();
+    if (t < 1) {
+      countTimers.set(el, requestAnimationFrame(step));
+    } else {
+      countTimers.delete(el);
+    }
+  };
+  countTimers.set(el, requestAnimationFrame(step));
+}
+
 // theme management
 export function initTheme(onChange: (theme: string) => void): void {
   const toggle = document.getElementById('theme-toggle') as HTMLInputElement;

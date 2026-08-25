@@ -9,6 +9,7 @@ import {
   calculateUsAqi,
   calculateUsAqiPm10,
   makeActivatable,
+  animateCount,
 } from './utils.js';
 import { Zone, AQIData, AQIHistory, Pollutants, NodeData, WeatherInfo } from './types.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
@@ -400,13 +401,13 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   }
 
   if (aqiEl) {
-    aqiEl.innerText = displayAqi.toString();
+    animateCount(aqiEl, displayAqi);
     aqiEl.style.color = colors.hex;
   }
 
   const headerAqiEl = document.getElementById('detail-header-aqi');
   if (headerAqiEl) {
-    headerAqiEl.innerText = displayAqi.toString();
+    animateCount(headerAqiEl, displayAqi);
     headerAqiEl.style.color = colors.hex;
   }
 

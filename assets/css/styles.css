@@ -459,6 +459,8 @@ header {
   margin-bottom: 8px;
   position: relative;
   z-index: 1;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--motion-color) var(--motion-easing-standard);
   animation: slideUp var(--motion-duration-medium4) var(--motion-easing-emphasized-decelerate);
 }
 .naqi-chip {

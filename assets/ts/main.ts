@@ -1,7 +1,7 @@
 import { STORAGE_KEY_PINS, API_URL } from './config.js';
 import { fetchZones, getZoneAQI } from './api.js';
 import { initTheme, initStandard, initKeyboardActivation } from './utils.js';
-import { initMotion } from './motion.js';
+import { initMotion, motionEnabled } from './motion.js';
 import { initMap, updateMapTiles, resizeMap, getCurrentMapZoneId } from './map.js';
 import {
   renderDashboardCard,
@@ -111,17 +111,63 @@ async function refreshDashboard() {
   container.append(...cards);
 }
 
+const exploreNodes: { [id: string]: HTMLElement } = {};
+
+function exploreNodeFor(zone: Zone): HTMLElement {
+  let node = exploreNodes[zone.id];
+  if (!node) {
+    node = renderExploreItem(zone, pinnedZoneIds.includes(zone.id), () => togglePin(zone.id));
+    node.dataset.zoneId = zone.id;
+    exploreNodes[zone.id] = node;
+  }
+  return node;
+}
+
+// Reuses the card elements across filters and moves the survivors, rather than
+// rebuilding the list, which made every remaining card replay its entrance
+// animation on every keystroke.
 function refreshExploreList(filter: string = '') {
   const container = document.getElementById('zone-list');
   if (!container) return;
-  container.innerHTML = '';
 
-  const filtered = allZones.filter((z) => z.name.toLowerCase().includes(filter.toLowerCase()));
+  const before: { [id: string]: number } = {};
+  Array.from(container.children).forEach((el) => {
+    const id = (el as HTMLElement).dataset.zoneId;
+    if (id) before[id] = el.getBoundingClientRect().top;
+  });
 
+  const needle = filter.toLowerCase();
+  const filtered = allZones.filter((z) => z.name.toLowerCase().includes(needle));
+
+  const fragment = document.createDocumentFragment();
   filtered.forEach((zone) => {
-    const isPinned = pinnedZoneIds.includes(zone.id);
-    const card = renderExploreItem(zone, isPinned, () => togglePin(zone.id));
-    container.appendChild(card);
+    const node = exploreNodeFor(zone);
+    node.style.transition = '';
+    node.style.transform = '';
+    node.classList.toggle('flip-settled', before[zone.id] !== undefined);
+    fragment.appendChild(node);
+  });
+
+  container.textContent = '';
+  container.appendChild(fragment);
+
+  if (!motionEnabled('listAnimations')) return;
+
+  Array.from(container.children).forEach((el) => {
+    const node = el as HTMLElement;
+    const id = node.dataset.zoneId;
+    if (!id || before[id] === undefined) return;
+
+    const delta = before[id] - node.getBoundingClientRect().top;
+    if (!delta) return;
+
+    node.style.transition = 'none';
+    node.style.transform = `translateY(${delta}px)`;
+    requestAnimationFrame(() => {
+      node.style.transition =
+        'transform var(--motion-list) var(--motion-easing-emphasized-decelerate)';
+      node.style.transform = '';
+    });
   });
 }
 

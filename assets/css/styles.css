@@ -1188,7 +1188,10 @@ textarea:focus-visible,
   border-radius: var(--shape-corner-extra-large);
   margin-bottom: 12px;
   box-sizing: border-box;
-  animation: slideUp var(--motion-duration-medium2) var(--motion-easing-emphasized-decelerate) both;
+  animation: slideUp var(--motion-list) var(--motion-easing-emphasized-decelerate) both;
+}
+.explore-card.flip-settled {
+  animation: none;
 }
 .explore-card-inner {
   display: flex;

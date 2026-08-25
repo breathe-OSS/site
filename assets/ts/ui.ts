@@ -232,7 +232,8 @@ export function renderDashboardCard(
   zone: Zone,
   data: AQIData,
   onClick: () => void,
-  index: number = 0
+  index: number = 0,
+  animate: boolean = true
 ): HTMLElement {
   const std = getAQIStandard();
   // Fallback to NAQI if us_aqi is missing (0)
@@ -241,7 +242,11 @@ export function renderDashboardCard(
 
   const card = document.createElement('div');
   card.className = 'dashboard-card';
-  card.style.animationDelay = `${index * 50}ms`;
+  if (animate) {
+    card.style.animationDelay = `calc(${Math.min(index, 7)} * var(--list-stagger))`;
+  } else {
+    card.classList.add('no-entrance');
+  }
   card.onclick = onClick;
   makeActivatable(card);
   card.innerHTML = `

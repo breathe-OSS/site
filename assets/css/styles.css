@@ -854,7 +854,11 @@ header {
   align-items: center;
   cursor: pointer;
   border: 1px solid transparent;
-  animation: slideUp var(--motion-duration-medium2) var(--motion-easing-emphasized-decelerate) both;
+  animation: slideUp var(--motion-list) var(--motion-easing-emphasized-decelerate) both;
+}
+.dashboard-card.no-entrance,
+.explore-card.no-entrance {
+  animation: none;
 }
 .dashboard-card:hover {
   transform: translateY(-4px);
@@ -1189,9 +1193,6 @@ textarea:focus-visible,
   margin-bottom: 12px;
   box-sizing: border-box;
   animation: slideUp var(--motion-list) var(--motion-easing-emphasized-decelerate) both;
-}
-.explore-card.flip-settled {
-  animation: none;
 }
 .explore-card-inner {
   display: flex;

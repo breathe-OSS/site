@@ -14,6 +14,7 @@ import {
 import { Zone, AQIData, WeatherHistory } from './types.js';
 
 let allZones: Zone[] = [];
+let dashboardHasRendered = false;
 let pinnedZoneIds: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_PINS) || '[]');
 
 // init
@@ -103,8 +104,15 @@ async function refreshDashboard() {
   const cards = results
     .filter((result): result is { zone: Zone; data: AQIData } => result !== null)
     .map((result, index) =>
-      renderDashboardCard(result.zone, result.data, () => openDetails(result.zone.id), index)
+      renderDashboardCard(
+        result.zone,
+        result.data,
+        () => openDetails(result.zone.id),
+        index,
+        !dashboardHasRendered
+      )
     );
+  dashboardHasRendered = true;
 
   // Replace all skeletons with actual cards in a single operation
   container.innerHTML = '';
@@ -144,7 +152,7 @@ function refreshExploreList(filter: string = '') {
     const node = exploreNodeFor(zone);
     node.style.transition = '';
     node.style.transform = '';
-    node.classList.toggle('flip-settled', before[zone.id] !== undefined);
+    node.classList.toggle('no-entrance', before[zone.id] !== undefined);
     fragment.appendChild(node);
   });
 

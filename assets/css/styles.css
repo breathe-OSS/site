@@ -882,15 +882,6 @@ header {
     opacity: 0.5;
   }
 }
-.btn-outlined {
-  background: transparent;
-  border: 1px solid var(--outline);
-  color: var(--primary);
-  padding: 10px 20px;
-  border-radius: 100px;
-  font-weight: 500;
-  cursor: pointer;
-}
 .icon-btn {
   background: transparent;
   border: none;

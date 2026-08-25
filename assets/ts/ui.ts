@@ -404,6 +404,12 @@ export function updateDetailView(zone: Zone, data: AQIData) {
     aqiEl.style.color = colors.hex;
   }
 
+  const headerAqiEl = document.getElementById('detail-header-aqi');
+  if (headerAqiEl) {
+    headerAqiEl.innerText = displayAqi.toString();
+    headerAqiEl.style.color = colors.hex;
+  }
+
   if (chipEl) {
     chipEl.style.backgroundColor = colors.hex;
     chipEl.innerText = std === 'us' ? 'US AQI' : 'NAQI';

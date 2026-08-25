@@ -66,7 +66,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       refreshExploreList(target.value);
     });
   }
+
+  watchDetailScroll();
 });
+
+// Reveals the reading in the title bar once the main card has scrolled away.
+// The two thresholds are deliberately apart so resting on the boundary does
+// not flicker the header.
+function watchDetailScroll() {
+  const view = document.getElementById('view-details');
+  const scroller = view ? view.querySelector('.content-scroll') : null;
+  if (!view || !scroller) return;
+
+  scroller.addEventListener('scroll', () => {
+    const scrolled = view.classList.contains('scrolled');
+    if (!scrolled && scroller.scrollTop > 96) {
+      view.classList.add('scrolled');
+    } else if (scrolled && scroller.scrollTop < 64) {
+      view.classList.remove('scrolled');
+    }
+  });
+}
 
 // controller actions
 

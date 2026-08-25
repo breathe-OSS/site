@@ -288,6 +288,23 @@ header {
   transition: background-color var(--motion-duration-medium2) var(--motion-easing-standard);
   flex-shrink: 0;
 }
+.header-aqi {
+  margin-left: auto;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transform: translateY(-6px) scale(0.9);
+  transition:
+    opacity var(--motion-press) var(--motion-easing-standard),
+    transform var(--motion-shape) var(--motion-spring-spatial),
+    color var(--motion-color) var(--motion-easing-standard);
+}
+.view.scrolled .header-aqi {
+  opacity: 1;
+  transform: none;
+}
 .header-title {
   display: flex;
   align-items: center;

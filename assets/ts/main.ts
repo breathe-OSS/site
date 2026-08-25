@@ -114,10 +114,7 @@ async function refreshDashboard() {
   const skeletons = Array.from({ length: Math.min(pinnedZoneIds.length, 4) }, () =>
     renderSkeletonCard()
   );
-  const skeletonStack = document.createElement('div');
-  skeletonStack.className = 'skeleton-stack';
-  skeletonStack.append(...skeletons);
-  container.appendChild(skeletonStack);
+  container.append(...skeletons);
 
   // Fetch all data in parallel
   const dataPromises = pinnedZoneIds.map(async (id) => {
@@ -144,20 +141,9 @@ async function refreshDashboard() {
     );
   dashboardHasRendered = true;
 
-  // Hand the skeletons over to the real cards rather than swapping them out in
-  // one frame, so the wait and the answer read as the same list resolving.
-  if (motionEnabled('listAnimations')) {
-    skeletonStack.style.height = `${skeletonStack.offsetHeight}px`;
-    container.append(...cards);
-    requestAnimationFrame(() => {
-      skeletonStack.classList.add('leaving');
-      skeletonStack.style.height = '0px';
-    });
-    window.setTimeout(() => skeletonStack.remove(), 600);
-  } else {
-    skeletonStack.remove();
-    container.append(...cards);
-  }
+  // Replace all skeletons with actual cards in a single operation
+  container.innerHTML = '';
+  container.append(...cards);
 }
 
 const exploreNodes: { [id: string]: HTMLElement } = {};

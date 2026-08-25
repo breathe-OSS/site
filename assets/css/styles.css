@@ -818,18 +818,11 @@ header {
   align-items: center;
   cursor: pointer;
   border: 1px solid transparent;
-  transition:
-    transform var(--motion-duration-short3) var(--motion-easing-emphasized),
-    box-shadow var(--motion-duration-medium1) var(--motion-easing-standard),
-    background var(--motion-duration-short4) var(--motion-easing-standard);
   animation: slideUp var(--motion-duration-medium2) var(--motion-easing-emphasized-decelerate) both;
 }
 .dashboard-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-.dashboard-card:active {
-  transform: scale(0.98);
 }
 [data-theme='light'] .dashboard-card:hover {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
@@ -985,9 +978,6 @@ input:checked + .slider:before {
     color var(--motion-duration-short3) var(--motion-easing-standard),
     background var(--motion-duration-short3) var(--motion-easing-standard),
     transform var(--motion-duration-short2) var(--motion-easing-emphasized);
-}
-.nav-item:active {
-  transform: scale(0.92);
 }
 .nav-item svg {
   width: 24px;
@@ -1194,15 +1184,9 @@ textarea:focus-visible,
   padding: 10px;
   cursor: pointer;
   border-radius: var(--shape-corner-full);
-  transition:
-    background var(--motion-duration-short3) var(--motion-easing-standard),
-    transform var(--motion-duration-short2) var(--motion-easing-emphasized);
 }
 .pin-btn:hover {
   background: var(--surface-container-highest);
-}
-.pin-btn:active {
-  transform: scale(0.9);
 }
 .pin-btn svg {
   width: 24px;
@@ -1444,6 +1428,40 @@ textarea:focus-visible,
   justify-content: flex-end;
   margin-top: 8px;
 }
+.btn-outlined,
+.btn-filled,
+.icon-btn,
+.add-btn,
+.pin-btn {
+  transition:
+    background var(--motion-press) var(--motion-easing-standard),
+    background-color var(--motion-press) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-medium1) var(--motion-easing-standard),
+    transform var(--motion-squish) var(--motion-spring-squish);
+}
+.nav-item,
+.dashboard-card,
+.explore-card {
+  transition:
+    background var(--motion-press) var(--motion-easing-standard),
+    background-color var(--motion-press) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-medium1) var(--motion-easing-standard),
+    transform var(--motion-shape) var(--motion-spring-spatial);
+}
+.btn-outlined:active,
+.btn-filled:active,
+.icon-btn:active,
+.add-btn:active,
+.pin-btn:active {
+  transform: scale(0.9);
+  transition: transform var(--motion-press) var(--motion-easing-standard);
+}
+.nav-item:active,
+.dashboard-card:active,
+.explore-card:active {
+  transform: scale(0.96);
+  transition: transform var(--motion-press) var(--motion-easing-standard);
+}
 .btn-outlined {
   background: transparent;
   border: 1px solid var(--outline);
@@ -1453,7 +1471,6 @@ textarea:focus-visible,
   font-weight: 500;
   cursor: pointer;
   font-size: 14px;
-  transition: background var(--motion-duration-short2) var(--motion-easing-standard);
 }
 .btn-outlined:hover {
   background: var(--surface-variant);
@@ -1467,7 +1484,6 @@ textarea:focus-visible,
   font-weight: 500;
   cursor: pointer;
   font-size: 14px;
-  transition: background var(--motion-duration-short2) var(--motion-easing-standard);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 .btn-filled:hover {

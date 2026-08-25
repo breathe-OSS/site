@@ -857,6 +857,15 @@ export function renderDotsHistory(history: AQIHistory[]) {
 
 let chartPagerInit = false;
 
+function setArrowAvailable(arrow: HTMLElement | null, available: boolean) {
+  if (!arrow) {
+    return;
+  }
+  arrow.classList.toggle('unavailable', !available);
+  arrow.tabIndex = available ? 0 : -1;
+  arrow.setAttribute('aria-hidden', available ? 'false' : 'true');
+}
+
 export function setupChartPager() {
   if (chartPagerInit) return;
   const pager = document.getElementById('dashboard-chart-pager');
@@ -877,8 +886,8 @@ export function setupChartPager() {
   const update = () => {
     const page = Math.round(pager.scrollLeft / Math.max(pager.clientWidth, 1));
     dots.forEach((d, i) => d.classList.toggle('active', i === page));
-    if (prev) prev.style.visibility = page <= 0 ? 'hidden' : 'visible';
-    if (next) next.style.visibility = page >= dots.length - 1 ? 'hidden' : 'visible';
+    setArrowAvailable(prev, page > 0);
+    setArrowAvailable(next, page < dots.length - 1);
     if (hint) hint.textContent = page === 0 ? 'Swipe for Dots History' : 'Swipe for Trend Graph';
   };
   pager.addEventListener('scroll', update);
@@ -1241,8 +1250,8 @@ export function setupExtendedPager() {
   const update = () => {
     const page = Math.round(pager.scrollLeft / Math.max(pager.clientWidth, 1));
     dots.forEach((d, i) => d.classList.toggle('active', i === page));
-    if (prev) prev.style.visibility = page <= 0 ? 'hidden' : 'visible';
-    if (next) next.style.visibility = page >= dots.length - 1 ? 'hidden' : 'visible';
+    setArrowAvailable(prev, page > 0);
+    setArrowAvailable(next, page < dots.length - 1);
     if (hint) hint.textContent = page === 0 ? 'Swipe for Dots History' : 'Swipe for Trend Graph';
   };
   pager.addEventListener('scroll', update);

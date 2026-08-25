@@ -575,6 +575,16 @@ header {
   align-items: center;
   justify-content: center;
 }
+.chart-pager-arrow {
+  transition:
+    opacity var(--motion-press) var(--motion-easing-standard),
+    transform var(--motion-shape) var(--motion-spring-spatial);
+}
+.chart-pager-arrow.unavailable {
+  opacity: 0;
+  transform: scale(0.7);
+  pointer-events: none;
+}
 .chart-pager-arrow.left {
   left: -8px;
 }

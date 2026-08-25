@@ -706,7 +706,22 @@ header {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   pointer-events: none;
   white-space: nowrap;
-  display: none;
+  opacity: 0;
+  transform: translate(-50%, calc(-100% + 5px)) scale(0.9);
+  transition:
+    opacity var(--motion-press) var(--motion-easing-standard),
+    transform var(--motion-shape) var(--motion-spring-spatial);
+}
+.dot-tooltip.travelling {
+  transition:
+    opacity var(--motion-press) var(--motion-easing-standard),
+    transform var(--motion-shape) var(--motion-spring-spatial),
+    left var(--motion-shape) var(--motion-easing-emphasized),
+    top var(--motion-shape) var(--motion-easing-emphasized);
+}
+.dot-tooltip.visible {
+  opacity: 1;
+  transform: translate(-50%, -100%) scale(1);
 }
 .ext-dots-slide {
   height: 350px;

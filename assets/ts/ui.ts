@@ -775,15 +775,20 @@ function showDotTooltip(cell: HTMLElement, text: string) {
     dotTooltipEl.className = 'dot-tooltip';
     document.body.appendChild(dotTooltipEl);
   }
+  // Only glide between positions if it is already on screen, otherwise it
+  // would fly in from wherever the last hovered cell happened to be.
+  const wasVisible = dotTooltipEl.classList.contains('visible');
+  dotTooltipEl.classList.toggle('travelling', wasVisible);
+
   dotTooltipEl.textContent = text;
-  dotTooltipEl.style.display = 'block';
   const r = cell.getBoundingClientRect();
   dotTooltipEl.style.left = `${r.left + r.width / 2}px`;
   dotTooltipEl.style.top = `${r.top - 6}px`;
+  dotTooltipEl.classList.add('visible');
 }
 
 function hideDotTooltip() {
-  if (dotTooltipEl) dotTooltipEl.style.display = 'none';
+  if (dotTooltipEl) dotTooltipEl.classList.remove('visible', 'travelling');
 }
 
 export function renderDotsHistory(history: AQIHistory[]) {

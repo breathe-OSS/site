@@ -1,6 +1,28 @@
 import { AQIColorResult } from './types.js';
 import { STORAGE_KEY_THEME, STORAGE_KEY_STANDARD } from './config.js';
 
+export function makeActivatable(el: HTMLElement): void {
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+}
+
+export function initKeyboardActivation(): void {
+  const selector = '.settings-item.clickable, .promo-card.clickable';
+  document.querySelectorAll<HTMLElement>(selector).forEach((el) => makeActivatable(el));
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== ' ') {
+      return;
+    }
+    const target = e.target as HTMLElement | null;
+    if (!target || !target.matches('.clickable, .dashboard-card, .explore-card')) {
+      return;
+    }
+    e.preventDefault();
+    target.click();
+  });
+}
+
 // theme management
 export function initTheme(onChange: (theme: string) => void): void {
   const toggle = document.getElementById('theme-toggle') as HTMLInputElement;

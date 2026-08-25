@@ -8,6 +8,7 @@ import {
   formatPollutantName,
   calculateUsAqi,
   calculateUsAqiPm10,
+  makeActivatable,
 } from './utils.js';
 import { Zone, AQIData, AQIHistory, Pollutants, NodeData, WeatherInfo } from './types.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
@@ -226,6 +227,7 @@ export function renderDashboardCard(
   card.className = 'dashboard-card';
   card.style.animationDelay = `${index * 50}ms`;
   card.onclick = onClick;
+  makeActivatable(card);
   card.innerHTML = `
         <div>
             <h3 style="margin:0; font-size:18px; font-weight: 600;">${zone.name}</h3>
@@ -296,6 +298,7 @@ export function renderExploreItem(
   div.addEventListener('click', handlePin);
   div.addEventListener('animationend', () => div.classList.remove('pin-flash'));
   div.style.cursor = 'pointer';
+  makeActivatable(div);
   return div;
 }
 

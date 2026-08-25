@@ -1,6 +1,6 @@
 import { STORAGE_KEY_PINS, API_URL } from './config.js';
 import { fetchZones, getZoneAQI } from './api.js';
-import { initTheme, initStandard, initKeyboardActivation } from './utils.js';
+import { initTheme, initStandard, initKeyboardActivation, initSheetDragging } from './utils.js';
 import { initMotion, motionEnabled } from './motion.js';
 import { initMap, updateMapTiles, resizeMap, getCurrentMapZoneId } from './map.js';
 import {
@@ -21,6 +21,7 @@ let pinnedZoneIds: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_PINS) 
 document.addEventListener('DOMContentLoaded', async () => {
   initMotion();
   initKeyboardActivation();
+  initSheetDragging();
 
   initTheme((newTheme) => {
     updateMapTiles(newTheme);

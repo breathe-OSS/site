@@ -23,6 +23,85 @@ export function initKeyboardActivation(): void {
   });
 }
 
+function closeSheet(overlay: HTMLElement): void {
+  const name = overlay.dataset.closeFn;
+  const closer = name ? (window as any)[name] : null;
+  if (typeof closer === 'function') {
+    closer();
+    return;
+  }
+  overlay.classList.add('hidden');
+}
+
+function attachSheetDrag(sheet: HTMLElement): void {
+  const overlay = sheet.closest('.bottom-sheet-overlay') as HTMLElement | null;
+  if (!overlay) {
+    return;
+  }
+
+  let startY = 0;
+  let lastY = 0;
+  let lastTime = 0;
+  let velocity = 0;
+  let dragging = false;
+
+  sheet.addEventListener('pointerdown', (e: PointerEvent) => {
+    if (window.innerWidth >= 768) {
+      return;
+    }
+    if (sheet.scrollTop > 0) {
+      return;
+    }
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, select, textarea')) {
+      return;
+    }
+
+    dragging = true;
+    startY = e.clientY;
+    lastY = e.clientY;
+    lastTime = performance.now();
+    velocity = 0;
+    sheet.classList.add('dragging');
+    sheet.setPointerCapture(e.pointerId);
+  });
+
+  sheet.addEventListener('pointermove', (e: PointerEvent) => {
+    if (!dragging) {
+      return;
+    }
+    const now = performance.now();
+    if (now > lastTime) {
+      velocity = (e.clientY - lastY) / (now - lastTime);
+    }
+    lastY = e.clientY;
+    lastTime = now;
+    sheet.style.transform = `translateY(${Math.max(0, e.clientY - startY)}px)`;
+  });
+
+  const endDrag = (e: PointerEvent) => {
+    if (!dragging) {
+      return;
+    }
+    dragging = false;
+    sheet.classList.remove('dragging');
+
+    const travelled = Math.max(0, e.clientY - startY);
+    sheet.style.transform = '';
+
+    if (travelled > sheet.offsetHeight * 0.45 || velocity > 0.5) {
+      closeSheet(overlay);
+    }
+  };
+
+  sheet.addEventListener('pointerup', endDrag);
+  sheet.addEventListener('pointercancel', endDrag);
+}
+
+export function initSheetDragging(): void {
+  document.querySelectorAll<HTMLElement>('.bottom-sheet').forEach(attachSheetDrag);
+}
+
 // theme management
 export function initTheme(onChange: (theme: string) => void): void {
   const toggle = document.getElementById('theme-toggle') as HTMLInputElement;

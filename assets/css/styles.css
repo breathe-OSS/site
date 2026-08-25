@@ -1409,6 +1409,22 @@ textarea:focus-visible,
     animation: scaleOut var(--motion-duration-short4) var(--motion-easing-emphasized-accelerate);
   }
 }
+.bottom-sheet {
+  touch-action: pan-y;
+  transition: transform var(--motion-screen) var(--motion-easing-emphasized-decelerate);
+}
+.bottom-sheet.dragging {
+  transition: none;
+}
+@media (max-width: 767px) {
+  .bottom-sheet-handle {
+    cursor: grab;
+  }
+  .bottom-sheet.dragging,
+  .bottom-sheet.dragging .bottom-sheet-handle {
+    cursor: grabbing;
+  }
+}
 .bottom-sheet-handle {
   width: 32px;
   height: 4px;

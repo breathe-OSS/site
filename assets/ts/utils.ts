@@ -147,6 +147,8 @@ export function animateCount(el: HTMLElement, to: number): void {
   countTimers.set(el, requestAnimationFrame(step));
 }
 
+let themeChangeTimer = 0;
+
 // theme management
 export function initTheme(onChange: (theme: string) => void): void {
   const toggle = document.getElementById('theme-toggle') as HTMLInputElement;
@@ -158,7 +160,18 @@ export function initTheme(onChange: (theme: string) => void): void {
     toggle.addEventListener('change', (e: Event) => {
       const target = e.target as HTMLInputElement;
       const newTheme = target.checked ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', newTheme);
+
+      // Only carry the blanket transition for the length of the flip, so
+      // ordinary repaints never pay for it.
+      const root = document.documentElement;
+      root.classList.add('theme-changing');
+      window.clearTimeout(themeChangeTimer);
+      themeChangeTimer = window.setTimeout(
+        () => root.classList.remove('theme-changing'),
+        motionDuration('--motion-color') + 50
+      );
+
+      root.setAttribute('data-theme', newTheme);
       localStorage.setItem(STORAGE_KEY_THEME, newTheme);
       onChange(newTheme);
     });

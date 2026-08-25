@@ -131,8 +131,17 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
+    background-color var(--motion-color) var(--motion-easing-standard),
+    color var(--motion-color) var(--motion-easing-standard);
+}
+:root.theme-changing *,
+:root.theme-changing *::before,
+:root.theme-changing *::after {
+  transition:
+    background-color var(--motion-color) var(--motion-easing-standard),
+    border-color var(--motion-color) var(--motion-easing-standard),
+    color var(--motion-color) var(--motion-easing-standard),
+    fill var(--motion-color) var(--motion-easing-standard) !important;
 }
 .main-content {
   flex: 1;

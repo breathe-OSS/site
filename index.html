@@ -610,7 +610,18 @@
                 <button class="btn-outlined btn-small" id="motion-preset-off">Off</button>
               </div>
             </div>
-            <div id="motion-advanced"></div>
+            <details class="settings-accordion" id="motion-details">
+              <summary class="settings-item clickable">
+                <div>
+                  <div class="settings-title">Advanced</div>
+                  <div class="settings-subtitle">Customise individual animations</div>
+                </div>
+                <svg class="settings-chevron" viewBox="0 0 24 24">
+                  <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                </svg>
+              </summary>
+              <div id="motion-advanced" class="settings-accordion-body"></div>
+            </details>
           </div>
 
           <div class="settings-section-title">General</div>

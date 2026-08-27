@@ -194,6 +194,11 @@ function renderMotionControls(): void {
     advanced.classList.toggle('disabled', !current.animationsEnabled);
   }
 
+  const details = document.getElementById('motion-details');
+  if (details) {
+    details.classList.toggle('disabled', !current.animationsEnabled);
+  }
+
   const presets: { id: string; value: MotionSettings }[] = [
     { id: 'motion-preset-full', value: MOTION_FULL },
     { id: 'motion-preset-reduced', value: MOTION_REDUCED },

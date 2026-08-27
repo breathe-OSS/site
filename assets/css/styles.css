@@ -1365,6 +1365,33 @@ textarea:focus-visible,
   border-color: transparent;
   color: var(--primary);
 }
+.settings-accordion {
+  border: none;
+}
+.settings-accordion summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+.settings-accordion summary::-webkit-details-marker {
+  display: none;
+}
+.settings-accordion summary .settings-chevron {
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+.settings-accordion[open] > summary .settings-chevron {
+  transform: rotate(90deg);
+}
+.settings-accordion[open] > summary::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background-color: var(--outline-variant);
+}
+.settings-accordion.disabled summary,
 #motion-advanced.disabled {
   opacity: 0.4;
   pointer-events: none;

@@ -1946,6 +1946,24 @@ textarea:focus-visible,
   font-weight: 600;
   color: var(--on-surface);
 }
+
+.node-sheet-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--surface-variant);
+  border-radius: var(--shape-corner-medium);
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--on-surface-variant);
+}
+
+.node-sheet-notice svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  fill: var(--primary);
+}
 @keyframes slideDownToBottom {
   from {
     transform: translateY(0);

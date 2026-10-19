@@ -287,10 +287,15 @@ function startCardDrag(card: HTMLElement, container: HTMLElement, e: PointerEven
   const startY = e.clientY;
   let tx = 0;
   let ty = 0;
+  const columns = getComputedStyle(container).gridTemplateColumns.split(' ').length;
+  const isHorizontal = columns > 1;
 
   const onMove = (ev: PointerEvent) => {
+    const current = card.getBoundingClientRect();
+    const probeX = isHorizontal ? ev.clientX : current.left - tx + current.width / 2;
+    const probeY = isHorizontal ? current.top - ty + current.height / 2 : ev.clientY;
     const over = document
-      .elementsFromPoint(ev.clientX, ev.clientY)
+      .elementsFromPoint(probeX, probeY)
       .map((el) => (el as HTMLElement).closest('.dashboard-card') as HTMLElement | null)
       .find(
         (el) =>
@@ -316,8 +321,13 @@ function startCardDrag(card: HTMLElement, container: HTMLElement, e: PointerEven
     const rect = card.getBoundingClientRect();
     const layoutLeft = rect.left - tx;
     const layoutTop = rect.top - ty;
-    tx = startRect.left + (ev.clientX - startX) - layoutLeft;
-    ty = startRect.top + (ev.clientY - startY) - layoutTop;
+    if (isHorizontal) {
+      tx = startRect.left + (ev.clientX - startX) - layoutLeft;
+      ty = 0;
+    } else {
+      tx = 0;
+      ty = startRect.top + (ev.clientY - startY) - layoutTop;
+    }
     card.style.transform = `translate(${tx}px, ${ty}px)`;
   };
 

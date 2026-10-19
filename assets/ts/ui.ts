@@ -368,9 +368,6 @@ export function renderExploreItem(
   const btn = div.querySelector('.pin-btn') as HTMLButtonElement;
   const handlePin = () => {
     onPinClick();
-    btn.classList.toggle('pinned');
-    const newIsPinned = btn.classList.contains('pinned');
-    setPinIcon(btn, newIsPinned);
     div.classList.remove('pin-flash');
     void div.offsetWidth;
     div.classList.add('pin-flash');

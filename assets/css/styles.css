@@ -1011,16 +1011,152 @@ header {
 }
 #empty-state {
   position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--on-surface-variant);
+  z-index: 1;
+}
+#empty-state.hidden {
+  display: none;
+}
+#view-dashboard.is-empty::before {
+  display: none;
+}
+.empty-hints {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--on-surface-variant);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.7;
+}
+.empty-hints path {
+  stroke-dasharray: var(--path-length);
+  stroke-dashoffset: var(--path-length);
+  animation: draw-hint calc(var(--motion-list) * 2) var(--motion-easing-emphasized) 200ms forwards;
+}
+@keyframes draw-hint {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.hand-note {
+  font-family: 'Caveat', cursive;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--on-surface-variant);
+  margin: 0;
+}
+.hint-explore,
+.hint-add {
+  position: absolute;
+  display: none;
+  opacity: 0;
+  animation: fade-hint var(--motion-list) var(--motion-easing-standard) 500ms forwards;
+}
+@keyframes fade-hint {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 0.85;
+    transform: none;
+  }
+}
+.welcome-center {
+  position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  width: min(440px, calc(100% - 48px));
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   text-align: center;
-  color: var(--on-surface-variant);
-  z-index: 1;
+  pointer-events: auto;
+  animation: welcome-in var(--motion-screen) var(--motion-easing-emphasized-decelerate);
+}
+@keyframes welcome-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 16px)) scale(0.96);
+  }
+}
+.welcome-logo {
+  height: 72px;
+}
+.welcome-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+.welcome-note {
+  font-size: 22px;
+  opacity: 0.85;
+}
+@media (min-width: 768px) {
+  .hint-explore,
+  .hint-add {
+    display: block;
+  }
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.reorder-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+}
+.reorder-arrow,
+.reorder-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--shape-corner-full);
+  background: transparent;
+  cursor: pointer;
+}
+.reorder-arrow:hover {
+  background: var(--surface-variant);
+}
+.reorder-handle {
+  cursor: grab;
+  touch-action: none;
+}
+.reorder-arrow svg,
+.reorder-handle svg {
+  width: 22px;
+  height: 22px;
+  fill: var(--on-surface-variant);
+}
+.home-list.reordering .dashboard-card {
+  cursor: default;
+  animation: none;
+}
+.home-list.reordering .aqi-badge-small {
+  display: none;
+}
+.dashboard-card.dragging {
+  z-index: 2;
+  cursor: grabbing;
+  transition: none;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
 .dashboard-card {
   background: var(--surface);

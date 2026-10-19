@@ -22,6 +22,7 @@ import { Zone, AQIData, WeatherHistory } from './types.js';
 let allZones: Zone[] = [];
 let dashboardHasRendered = false;
 let pinnedZoneIds: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_PINS) || '[]');
+let isReordering = false;
 
 // init
 document.addEventListener('DOMContentLoaded', async () => {
@@ -104,8 +105,18 @@ async function refreshDashboard() {
 
   container.innerHTML = '';
 
+  if (pinnedZoneIds.length < 2) {
+    isReordering = false;
+  }
+  updateReorderButton();
+
+  document
+    .getElementById('view-dashboard')
+    ?.classList.toggle('is-empty', pinnedZoneIds.length === 0);
+
   if (pinnedZoneIds.length === 0) {
     emptyState.classList.remove('hidden');
+    requestAnimationFrame(drawEmptyHints);
     return;
   }
   emptyState.classList.add('hidden');
@@ -130,20 +141,259 @@ async function refreshDashboard() {
   // Create all cards in memory first (no DOM operations yet)
   const cards = results
     .filter((result): result is { zone: Zone; data: AQIData } => result !== null)
-    .map((result, index) =>
-      renderDashboardCard(
+    .map((result, index) => {
+      const card = renderDashboardCard(
         result.zone,
         result.data,
-        () => openDetails(result.zone.id),
+        () => {
+          if (!isReordering) {
+            openDetails(result.zone.id);
+          }
+        },
         index,
         !dashboardHasRendered
-      )
-    );
+      );
+      card.dataset.zoneId = result.zone.id;
+      return card;
+    });
   dashboardHasRendered = true;
 
   // Replace all skeletons with actual cards in a single operation
   container.innerHTML = '';
   container.append(...cards);
+  applyReorderMode();
+}
+
+// reordering
+
+function updateReorderButton() {
+  const btn = document.getElementById('reorder-btn');
+  if (!btn) return;
+
+  btn.classList.toggle('hidden', pinnedZoneIds.length < 2);
+  btn.classList.toggle('active', isReordering);
+  btn.textContent = isReordering ? 'Done' : 'Reorder';
+}
+
+function toggleReorder() {
+  isReordering = !isReordering;
+  updateReorderButton();
+  applyReorderMode();
+}
+
+function applyReorderMode() {
+  const container = document.getElementById('pinned-container');
+  if (!container) return;
+
+  container.classList.toggle('reordering', isReordering);
+  Array.from(container.children).forEach((el) => {
+    const card = el as HTMLElement;
+    card.querySelector('.reorder-controls')?.remove();
+    if (isReordering && card.dataset.zoneId) {
+      card.append(renderReorderControls(card, container));
+    }
+  });
+}
+
+function savePinOrderFromDom(container: HTMLElement) {
+  const domOrder = Array.from(container.children)
+    .map((el) => (el as HTMLElement).dataset.zoneId)
+    .filter((id): id is string => !!id);
+  const rest = pinnedZoneIds.filter((id) => !domOrder.includes(id));
+
+  pinnedZoneIds = [...domOrder, ...rest];
+  localStorage.setItem(STORAGE_KEY_PINS, JSON.stringify(pinnedZoneIds));
+}
+
+const flippingCards = new WeakSet<HTMLElement>();
+
+// Slides the other cards from where they were to where they are now, so a
+// reorder reads as movement instead of a jump.
+function moveCardWithFlip(container: HTMLElement, move: () => void, skip?: HTMLElement) {
+  const siblings = Array.from(container.children) as HTMLElement[];
+  const before = new Map(siblings.map((el) => [el, el.getBoundingClientRect()]));
+
+  move();
+
+  const listMotionOff = (document.documentElement.getAttribute('data-motion-off') || '')
+    .split(' ')
+    .includes('listAnimations');
+  if (listMotionOff) return;
+
+  siblings.forEach((el) => {
+    if (el === skip) return;
+    const from = before.get(el);
+    if (!from) return;
+    const to = el.getBoundingClientRect();
+    const dx = from.left - to.left;
+    const dy = from.top - to.top;
+    if (dx === 0 && dy === 0) return;
+
+    flippingCards.add(el);
+    const animation = el.animate(
+      [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
+      {
+        duration: 260,
+        easing: 'cubic-bezier(0.2, 0, 0, 1)',
+      }
+    );
+    animation.onfinish = () => flippingCards.delete(el);
+    animation.oncancel = () => flippingCards.delete(el);
+  });
+}
+
+function renderReorderControls(card: HTMLElement, container: HTMLElement): HTMLElement {
+  const controls = document.createElement('div');
+  controls.className = 'reorder-controls';
+  controls.onclick = (e) => e.stopPropagation();
+  controls.innerHTML = `
+        <button class="reorder-arrow" aria-label="Move earlier">
+            <svg viewBox="0 0 24 24"><path d="M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z" /></svg>
+        </button>
+        <button class="reorder-arrow" aria-label="Move later">
+            <svg viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z" /></svg>
+        </button>
+        <span class="reorder-handle" aria-label="Drag to reorder">
+            <svg viewBox="0 0 24 24"><path d="M20 9H4v2h16V9zM4 15h16v-2H4v2z" /></svg>
+        </span>
+    `;
+
+  const [earlier, later] = Array.from(controls.querySelectorAll('button'));
+  earlier.onclick = () => {
+    const prev = card.previousElementSibling;
+    if (!prev) return;
+    moveCardWithFlip(container, () => prev.before(card));
+    savePinOrderFromDom(container);
+  };
+  later.onclick = () => {
+    const next = card.nextElementSibling;
+    if (!next) return;
+    moveCardWithFlip(container, () => next.after(card));
+    savePinOrderFromDom(container);
+  };
+
+  const handle = controls.querySelector('.reorder-handle') as HTMLElement;
+  handle.addEventListener('pointerdown', (e) => startCardDrag(card, container, e));
+
+  return controls;
+}
+
+function startCardDrag(card: HTMLElement, container: HTMLElement, e: PointerEvent) {
+  e.preventDefault();
+  card.classList.add('dragging');
+
+  const startRect = card.getBoundingClientRect();
+  const startX = e.clientX;
+  const startY = e.clientY;
+  let tx = 0;
+  let ty = 0;
+
+  const onMove = (ev: PointerEvent) => {
+    const over = document
+      .elementsFromPoint(ev.clientX, ev.clientY)
+      .map((el) => (el as HTMLElement).closest('.dashboard-card') as HTMLElement | null)
+      .find(
+        (el) =>
+          el !== null && el !== card && el.parentElement === container && !flippingCards.has(el)
+      );
+
+    if (over) {
+      const children = Array.from(container.children);
+      const movingLater = children.indexOf(over) > children.indexOf(card);
+      moveCardWithFlip(
+        container,
+        () => {
+          if (movingLater) {
+            over.after(card);
+          } else {
+            over.before(card);
+          }
+        },
+        card
+      );
+    }
+
+    const rect = card.getBoundingClientRect();
+    const layoutLeft = rect.left - tx;
+    const layoutTop = rect.top - ty;
+    tx = startRect.left + (ev.clientX - startX) - layoutLeft;
+    ty = startRect.top + (ev.clientY - startY) - layoutTop;
+    card.style.transform = `translate(${tx}px, ${ty}px)`;
+  };
+
+  const onUp = () => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
+    card.classList.remove('dragging');
+    card.style.transform = '';
+    savePinOrderFromDom(container);
+  };
+
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
+}
+
+// empty dashboard hints
+
+function handDrawnArrow(
+  fromX: number,
+  fromY: number,
+  controlX: number,
+  controlY: number,
+  toX: number,
+  toY: number
+) {
+  const angle = Math.atan2(toY - controlY, toX - controlX);
+  const head = 12;
+  const spread = 0.5;
+  const leftX = toX - head * Math.cos(angle - spread);
+  const leftY = toY - head * Math.sin(angle - spread);
+  const rightX = toX - head * Math.cos(angle + spread);
+  const rightY = toY - head * Math.sin(angle + spread);
+
+  return `
+        <path d="M ${fromX} ${fromY} Q ${controlX} ${controlY} ${toX} ${toY}" />
+        <path d="M ${leftX} ${leftY} L ${toX} ${toY} L ${rightX} ${rightY}" />
+    `;
+}
+
+function drawEmptyHints() {
+  const state = document.getElementById('empty-state');
+  const svg = document.getElementById('empty-hints');
+  const exploreNote = state?.querySelector('.hint-explore') as HTMLElement | null;
+  const addNote = state?.querySelector('.hint-add') as HTMLElement | null;
+  const exploreTarget = document.getElementById('side-explore');
+  const addTarget = document.querySelector('#view-dashboard .add-btn');
+  if (!state || !svg || !exploreNote || !addNote || !exploreTarget || !addTarget) return;
+
+  svg.innerHTML = '';
+  if (state.classList.contains('hidden') || window.innerWidth < 768) return;
+
+  const base = state.getBoundingClientRect();
+  if (base.width === 0) return;
+
+  const explore = exploreTarget.getBoundingClientRect();
+  const exploreY = explore.top + explore.height / 2 - base.top;
+  exploreNote.style.left = '72px';
+  exploreNote.style.top = `${exploreY + 48}px`;
+
+  const add = addTarget.getBoundingClientRect();
+  const addX = add.left + add.width / 2 - base.left;
+  const addY = add.bottom - base.top;
+  addNote.style.left = 'auto';
+  addNote.style.right = `${base.right - add.left + 24}px`;
+  addNote.style.top = `${addY + 72}px`;
+
+  svg.innerHTML =
+    handDrawnArrow(66, exploreY + 60, 52, exploreY + 2, 14, exploreY) +
+    handDrawnArrow(addX - 40, addY + 84, addX, addY + 70, addX, addY + 10);
+
+  svg.querySelectorAll('path').forEach((path) => {
+    const length = (path as SVGPathElement).getTotalLength();
+    path.style.setProperty('--path-length', `${length}`);
+  });
 }
 
 const exploreNodes: { [id: string]: HTMLElement } = {};
@@ -644,6 +894,8 @@ function downloadHistoryCSV() {
 // navigation logic
 
 (window as any).showView = handleShowView;
+(window as any).toggleReorder = toggleReorder;
+window.addEventListener('resize', drawEmptyHints);
 (window as any).openDetails = openDetails;
 (window as any).openNodeDetails = openNodeDetails;
 (window as any).openHistoryView = openHistoryView;
@@ -686,6 +938,10 @@ function handleShowView(viewName: string) {
   currentViewDepth = nextDepth;
 
   updateNavHighlight(viewName);
+
+  if (viewName === 'dashboard') {
+    requestAnimationFrame(drawEmptyHints);
+  }
 
   if (viewName === 'map') {
     initMap(allZones);

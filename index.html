@@ -34,7 +34,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Roboto:wght@300;400;500;700&display=swap"
       rel="stylesheet" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="assets/css/styles.css" />
@@ -103,17 +103,32 @@
             </h1>
           </div>
 
-          <button class="add-btn" onclick="showView('explore')">
-            <span class="desktop-text">Add Location</span>
-            <span class="mobile-icon">+</span>
-          </button>
+          <div class="header-actions">
+            <button id="reorder-btn" class="btn-outlined hidden" onclick="toggleReorder()">
+              Reorder
+            </button>
+            <button class="add-btn" onclick="showView('explore')">
+              <span class="desktop-text">Add Location</span>
+              <span class="mobile-icon">+</span>
+            </button>
+          </div>
         </header>
 
         <div id="pinned-container" class="content-scroll home-list"></div>
 
         <div id="empty-state" class="empty-state hidden">
-          <p>No zones pinned yet.</p>
-          <button class="btn-outlined" onclick="showView('explore')">Explore Locations</button>
+          <svg id="empty-hints" class="empty-hints" aria-hidden="true"></svg>
+          <p class="hand-note hint-explore" aria-hidden="true">Find a place to pin</p>
+          <p class="hand-note hint-add" aria-hidden="true">or add one straight away</p>
+
+          <div class="welcome-center">
+            <img src="assets/images/logo.png" alt="" class="welcome-logo" />
+            <h2 class="welcome-title">Breathe</h2>
+            <p class="hand-note welcome-note">
+              Your pinned places live here.<br />
+              They stay saved right here in this browser.
+            </p>
+          </div>
         </div>
       </div>
 

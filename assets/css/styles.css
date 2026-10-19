@@ -1152,7 +1152,7 @@ header {
 .home-list.reordering .aqi-badge-small {
   display: none;
 }
-.dashboard-card.dragging {
+.home-list.reordering .dashboard-card.dragging {
   z-index: 2;
   cursor: grabbing;
   transition: none;
@@ -2840,4 +2840,14 @@ textarea:focus-visible,
 
 .dark-map-tiles {
   filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+@media (min-width: 768px) {
+  .reorder-arrow svg {
+    transform: rotate(-90deg);
+  }
+}
+.home-list.reordering .dashboard-card:hover,
+.home-list.reordering .dashboard-card:active {
+  transform: none;
+  box-shadow: none;
 }

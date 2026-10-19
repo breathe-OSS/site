@@ -205,13 +205,17 @@ function savePinOrderFromDom(container: HTMLElement) {
   localStorage.setItem(STORAGE_KEY_PINS, JSON.stringify(pinnedZoneIds));
 }
 
-const flippingCards = new WeakSet<HTMLElement>();
+const flipAnimations = new WeakMap<HTMLElement, Animation>();
 
 // Slides the other cards from where they were to where they are now, so a
 // reorder reads as movement instead of a jump.
 function moveCardWithFlip(container: HTMLElement, move: () => void, skip?: HTMLElement) {
   const siblings = Array.from(container.children) as HTMLElement[];
   const before = new Map(siblings.map((el) => [el, el.getBoundingClientRect()]));
+
+  siblings.forEach((el) => {
+    flipAnimations.get(el)?.cancel();
+  });
 
   move();
 
@@ -229,16 +233,22 @@ function moveCardWithFlip(container: HTMLElement, move: () => void, skip?: HTMLE
     const dy = from.top - to.top;
     if (dx === 0 && dy === 0) return;
 
-    flippingCards.add(el);
     const animation = el.animate(
       [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
       {
-        duration: 260,
-        easing: 'cubic-bezier(0.2, 0, 0, 1)',
+        duration: 320,
+        easing: 'cubic-bezier(0.05, 0.7, 0.1, 1)',
       }
     );
-    animation.onfinish = () => flippingCards.delete(el);
-    animation.oncancel = () => flippingCards.delete(el);
+    flipAnimations.set(el, animation);
+
+    const clear = () => {
+      if (flipAnimations.get(el) === animation) {
+        flipAnimations.delete(el);
+      }
+    };
+    animation.onfinish = clear;
+    animation.oncancel = clear;
   });
 }
 
@@ -299,7 +309,7 @@ function startCardDrag(card: HTMLElement, container: HTMLElement, e: PointerEven
       .map((el) => (el as HTMLElement).closest('.dashboard-card') as HTMLElement | null)
       .find(
         (el) =>
-          el !== null && el !== card && el.parentElement === container && !flippingCards.has(el)
+          el !== null && el !== card && el.parentElement === container && !flipAnimations.has(el)
       );
 
     if (over) {

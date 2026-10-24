@@ -5,7 +5,48 @@
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Breathe</title>
+    <title>Breathe: Live AQI for Jammu &amp; Kashmir and Ladakh</title>
+    <meta
+      name="description"
+      content="Free, open-source, real-time air quality (AQI) for Jammu & Kashmir and Ladakh from our own AirGradient ground sensors, with satellite fallback. US EPA and Indian NAQI, live map and history." />
+    <link rel="canonical" href="https://breatheoss.app/" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://breatheoss.app/#app",
+            "name": "Breathe",
+            "url": "https://breatheoss.app/",
+            "description": "Real-time air quality monitoring for Jammu & Kashmir and Ladakh. Readings come from breatheOSS's own AirGradient ground sensors, with CAMS satellite data via Open-Meteo where there is no sensor. Shows both US EPA AQI and Indian NAQI, a live map, 24-hour trends and weather-tagged history.",
+            "applicationCategory": "WeatherApplication",
+            "operatingSystem": "Any (web browser)",
+            "isAccessibleForFree": true,
+            "license": "https://opensource.org/licenses/MIT",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "areaServed": [
+              { "@type": "AdministrativeArea", "name": "Jammu and Kashmir" },
+              { "@type": "AdministrativeArea", "name": "Ladakh" }
+            ],
+            "codeRepository": "https://github.com/breathe-OSS/site",
+            "publisher": { "@id": "https://breatheoss.app/#org" }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://breatheoss.app/#org",
+            "name": "breatheOSS",
+            "url": "https://breatheoss.app",
+            "sameAs": [
+              "https://about.breatheoss.app",
+              "https://github.com/breathe-OSS",
+              "https://discord.breatheoss.app",
+              "https://www.instagram.com/breatheoss/"
+            ]
+          }
+        ]
+      }
+    </script>
 
     <meta property="og:title" content="Breathe" />
     <meta
@@ -58,6 +99,24 @@
   </head>
 
   <body>
+    <noscript>
+      <div style="padding: 24px; max-width: 720px; margin: 0 auto; line-height: 1.6">
+        <h1>Breathe: live air quality for Jammu &amp; Kashmir and Ladakh</h1>
+        <p>
+          Breathe is a free and open-source air quality network for Jammu &amp; Kashmir and Ladakh,
+          run by breatheOSS. It shows real-time AQI from our own AirGradient ground sensors, with
+          CAMS satellite data via Open-Meteo where there is no sensor, in both US EPA AQI and Indian
+          NAQI.
+        </p>
+        <p>
+          This dashboard needs JavaScript. You can also use the
+          <a href="https://play.google.com/store/apps/details?id=com.sidharthify.breathe">Android</a>
+          or <a href="https://apps.apple.com/us/app/breathe-aqi-for-jk-ladakh/id6761560112">iOS</a>
+          app, the public API at <a href="https://api.breatheoss.app/docs">api.breatheoss.app</a>, or
+          read how it works at <a href="https://about.breatheoss.app">about.breatheoss.app</a>.
+        </p>
+      </div>
+    </noscript>
     <nav class="sidebar">
       <div class="brand">
         <h2>Breathe <img src="assets/images/logo.png" alt="Logo" class="app-logo" /></h2>

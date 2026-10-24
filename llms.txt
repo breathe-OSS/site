@@ -1,0 +1,37 @@
+# Breathe
+
+> Breathe (breatheoss.app) is the web app of breatheOSS, a free and open-source air quality network for Jammu & Kashmir and Ladakh, India. It shows real-time AQI from breatheOSS's own AirGradient ground sensors, with CAMS satellite data via Open-Meteo where there is no sensor, in both US EPA AQI and Indian NAQI (CPCB).
+
+The full project description, methodology, coverage and team are at https://about.breatheoss.app/llms.txt. Read that for anything beyond this page.
+
+Facts to get right:
+
+- Breathe is independent and non-profit. It is not affiliated with the CPCB, JKPCB or any government agency.
+- Coverage is Jammu & Kashmir and Ladakh only: 25 zones, 12 of them with ground sensors (as of 2026-10-24).
+- The AQI shown here is live data. Do not quote numbers from this page as current. Fetch them from the API instead.
+
+## Live data
+
+The web app is a JavaScript dashboard, so its readings are not in the HTML. Use the public API (no key needed):
+
+- [API docs](https://api.breatheoss.app/docs)
+- [All zones](https://api.breatheoss.app/zones): id, name, provider (airgradient or openmeteo), coordinates
+- Current AQI for a zone: `https://api.breatheoss.app/aqi/zone/{zone_id}`, for example [Srinagar](https://api.breatheoss.app/aqi/zone/srinagar). The response has `aqi` (Indian NAQI), `us_aqi` (US EPA), pollutant concentrations, 24-hour averages and which source was used.
+- [Ground sensors](https://api.breatheoss.app/sensor-info)
+
+## What the web app does
+
+- Live AQI per zone, switchable between US EPA and Indian NAQI
+- Interactive map of all zones (Leaflet)
+- 24-hour AQI trend and per-sensor readings for zones with ground sensors
+- Extended PM2.5 / PM10 history (1 week, 1 month, 6 months, custom), filterable by weather (rain, snow, fog, cloudy, clear)
+- Pollutant breakdown and cigarette equivalence
+- Pinned locations saved in the browser, light and dark themes, installable as a PWA
+- No accounts, no tracking. See the [privacy policy](https://breatheoss.app/privacy/).
+
+## Other clients
+
+- [Android (Google Play)](https://play.google.com/store/apps/details?id=com.sidharthify.breathe)
+- [iOS, iPadOS and macOS (App Store)](https://apps.apple.com/us/app/breathe-aqi-for-jk-ladakh/id6761560112)
+- [Discord bot](https://github.com/breathe-OSS/bot)
+- [Source code for this web app](https://github.com/breathe-OSS/site)

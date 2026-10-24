@@ -35,3 +35,7 @@ The web app is a JavaScript dashboard, so its readings are not in the HTML. Use 
 - [iOS, iPadOS and macOS (App Store)](https://apps.apple.com/us/app/breathe-aqi-for-jk-ladakh/id6761560112)
 - [Discord bot](https://github.com/breathe-OSS/bot)
 - [Source code for this web app](https://github.com/breathe-OSS/site)
+
+## Blog
+
+- [BreatheOSS blog](https://blogs.breatheoss.app): long-form posts from the team, built on our own sensor data. Its [llms.txt](https://blogs.breatheoss.app/llms.txt) lists every post.

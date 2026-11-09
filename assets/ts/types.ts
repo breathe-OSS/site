@@ -17,14 +17,28 @@ export interface Pollutants {
   [key: string]: number;
 }
 
+// every reading comes back null while the sensor is offline
 export interface NodeData {
-  pm2_5: number;
-  pm10: number;
-  temp: number;
-  humidity: number;
-  aqi: number;
-  us_aqi: number;
+  pm2_5: number | null;
+  pm10: number | null;
+  temp: number | null;
+  humidity: number | null;
+  aqi: number | null;
+  us_aqi: number | null;
   history?: AQIHistory[];
+}
+
+// zone is the zone name, not its id, and name matches the key in AQIData.nodes
+export interface SensorInfo {
+  name: string;
+  zone: string;
+  location_id: number;
+  provider: string;
+  model: string;
+  is_kit: boolean;
+  latitude?: number;
+  longitude?: number;
+  installation_date: string;
 }
 
 export interface WeatherInfo {

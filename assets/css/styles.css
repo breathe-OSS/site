@@ -1,5 +1,7 @@
 :root {
   --background: #0f1216;
+  --error-container: #93000a;
+  --on-error-container: #ffdad6;
   --surface: #1a1c22;
   --surface-variant: #252830;
   --surface-container: #1e2024;
@@ -175,6 +177,8 @@
   }
 }
 [data-theme='light'] {
+  --error-container: #ffdad6;
+  --on-error-container: #410002;
   --background: #f8fafc;
   --surface: #ffffff;
   --surface-variant: #e2e8f0;
@@ -2099,6 +2103,38 @@ textarea:focus-visible,
   flex-shrink: 0;
   margin-top: 1px;
   fill: var(--primary);
+}
+
+/* an offline sensor keeps its hardware details, this explains the missing readings */
+.node-sheet-offline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--error-container);
+  color: var(--on-error-container);
+  border-radius: var(--shape-corner-medium);
+  padding: 16px;
+}
+
+.node-sheet-offline svg {
+  flex-shrink: 0;
+  fill: currentColor;
+}
+
+.node-sheet-offline strong {
+  display: block;
+  font-size: 14px;
+}
+
+.node-sheet-offline span {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.node-sheet-readings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 @keyframes slideDownToBottom {
   from {

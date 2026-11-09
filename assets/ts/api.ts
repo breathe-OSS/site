@@ -1,5 +1,5 @@
 import { API_URL } from './config.js';
-import { Zone, AQIData, WeatherHistory } from './types.js';
+import { Zone, AQIData, WeatherHistory, SensorInfo } from './types.js';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -77,9 +77,9 @@ export async function getZoneAQI(zoneId: string): Promise<AQIData | null> {
   }
 }
 
-export async function getSensorInfoList(): Promise<any[] | null> {
+export async function getSensorInfoList(): Promise<SensorInfo[] | null> {
   const cacheKey = `breathe_sensor_info`;
-  const cached = getCachedData<any[]>(cacheKey);
+  const cached = getCachedData<SensorInfo[]>(cacheKey);
 
   if (cached) {
     return cached;

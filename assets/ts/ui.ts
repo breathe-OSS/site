@@ -551,7 +551,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   renderWeatherCard(data.weather);
 
   renderPollutantGrid(data.concentrations_us_units || {});
-  renderNodeReadings(data.nodes || {});
+  renderNodeReadings(data.nodes || {}, data.zone_name);
 
   const chartSelect = document.getElementById('chart-node-select') as HTMLSelectElement;
   const chartLocationName = document.getElementById('chart-location-name');
@@ -608,7 +608,22 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   setupChartPager();
 }
 
-function renderNodeReadings(nodes: { [name: string]: NodeData }) {
+// the node detail sheet reads its numbers back from here instead of having
+// them all stuffed into the inline onclick
+let renderedNodes: { [name: string]: NodeData } = {};
+let renderedZoneName: string | null = null;
+
+export function getRenderedNode(name: string): NodeData | null {
+  return renderedNodes[name] ?? null;
+}
+
+export function getRenderedZoneName(): string | null {
+  return renderedZoneName;
+}
+
+function renderNodeReadings(nodes: { [name: string]: NodeData }, zoneName: string) {
+  renderedNodes = nodes;
+  renderedZoneName = zoneName;
   const container = document.getElementById('node-readings-container');
   if (!container) return;
 
@@ -628,30 +643,32 @@ function renderNodeReadings(nodes: { [name: string]: NodeData }) {
       ${nodeNames
         .map((name) => {
           const node = nodes[name];
-          const displayAqi = std === 'us' ? node.us_aqi || 0 : node.aqi;
+          const isOffline = node.pm2_5 === null || node.pm2_5 === undefined;
+          const displayAqi = std === 'us' ? (node.us_aqi ?? node.aqi ?? 0) : (node.aqi ?? 0);
           const colors = getAQIColor(displayAqi, std);
+          const aqiColor = isOffline ? 'var(--on-surface-variant)' : colors.hex;
 
           return `
           <div class="node-card">
             <div class="node-header">
               <span class="node-name">${name}</span>
-              <button class="icon-btn-compact" onclick="openNodeDetails('${name}', '${getAQIStandard()}', ${displayAqi}, ${node.temp}, ${node.humidity}, ${node.pm2_5}, ${node.pm10})" style="color: var(--on-surface-variant); position: absolute; right: -8px; top: -8px;">
+              <button class="icon-btn-compact" onclick="openNodeDetails('${encodeURIComponent(name).replace(/'/g, '%27')}')" style="color: var(--on-surface-variant); position: absolute; right: -8px; top: -8px;">
                 <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/></svg>
               </button>
             </div>
             <div class="node-aqi-section">
-              <div class="node-aqi-value" style="color: ${colors.hex}">${displayAqi}</div>
+              <div class="node-aqi-value" style="color: ${aqiColor}">${isOffline ? 'N/A' : displayAqi}</div>
               <div class="node-aqi-label">${std === 'us' ? 'US AQI' : 'NAQI'}</div>
             </div>
             <div class="node-separator"></div>
             <div class="node-pollutants">
               <div class="node-pollutant">
                 <span class="node-pollutant-label">PM2.5</span>
-                <span class="node-pollutant-value">${node.pm2_5}</span>
+                <span class="node-pollutant-value">${node.pm2_5 ?? 'N/A'}</span>
               </div>
               <div class="node-pollutant">
                 <span class="node-pollutant-label">PM10</span>
-                <span class="node-pollutant-value">${node.pm10}</span>
+                <span class="node-pollutant-value">${node.pm10 ?? 'N/A'}</span>
               </div>
             </div>
           </div>

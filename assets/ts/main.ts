@@ -9,6 +9,7 @@ import {
 } from './utils.js';
 import { initMotion, motionEnabled } from './motion.js';
 import { initMap, updateMapTiles, resizeMap, getCurrentMapZoneId } from './map.js';
+import { showNodeSheet } from './sensors.js';
 import {
   renderDashboardCard,
   renderExploreItem,
@@ -16,6 +17,8 @@ import {
   updateChartTheme,
   renderSkeletonCard,
   setPinIcon,
+  getRenderedNode,
+  getRenderedZoneName,
 } from './ui.js';
 import { Zone, AQIData, WeatherHistory } from './types.js';
 import {
@@ -536,58 +539,13 @@ async function openDetails(zoneId: string) {
   }
 }
 
-import { getSensorInfoList } from './api.js';
-
-async function openNodeDetails(
-  nodeName: string,
-  std: string,
-  displayAqi: number,
-  temp: number,
-  humidity: number,
-  pm25: number,
-  pm10: number
-) {
-  const sheet = document.getElementById('node-detail-sheet');
-  const title = document.getElementById('node-sheet-title');
-  const aqiEl = document.getElementById('node-sheet-aqi');
-  const stdEl = document.getElementById('node-sheet-std');
-  const pm25El = document.getElementById('node-sheet-pm25');
-  const pm10El = document.getElementById('node-sheet-pm10');
-  const tempEl = document.getElementById('node-sheet-temp');
-  const humidEl = document.getElementById('node-sheet-humid');
-  const providerEl = document.getElementById('node-sheet-provider');
-  const modelEl = document.getElementById('node-sheet-model');
-  const locidEl = document.getElementById('node-sheet-locid');
-  const installEl = document.getElementById('node-sheet-install');
-
-  if (!sheet || !title) return;
-
-  title.innerText = nodeName;
-
-  if (aqiEl) aqiEl.innerText = displayAqi.toString();
-  if (stdEl) stdEl.innerText = std === 'us' ? 'US AQI' : 'NAQI';
-
-  if (pm25El) pm25El.innerText = `${pm25} µg/m³`;
-  if (pm10El) pm10El.innerText = `${pm10} µg/m³`;
-  if (tempEl) tempEl.innerText = `${temp} °C`;
-  if (humidEl) humidEl.innerText = `${humidity}%`;
-
-  const sensors = await getSensorInfoList();
-  const info = sensors ? sensors.find((s: any) => s.name === nodeName) : null;
-
-  if (info) {
-    if (providerEl) providerEl.innerText = info.provider || '--';
-    if (modelEl) modelEl.innerText = info.model || '--';
-    if (locidEl) locidEl.innerText = info.location_id?.toString() || '--';
-    if (installEl) installEl.innerText = info.installation_date || '--';
-  } else {
-    if (providerEl) providerEl.innerText = '--';
-    if (modelEl) modelEl.innerText = '--';
-    if (locidEl) locidEl.innerText = '--';
-    if (installEl) installEl.innerText = '--';
-  }
-
-  sheet.classList.remove('hidden');
+// the node cards pass the name url encoded so names with quotes survive the
+// inline onclick
+function openNodeDetails(encodedName: string) {
+  const name = decodeURIComponent(encodedName);
+  const node = getRenderedNode(name);
+  if (!node) return;
+  showNodeSheet(name, node, getRenderedZoneName() ?? undefined);
 }
 
 let currentHistoryZoneId: string | null = null;

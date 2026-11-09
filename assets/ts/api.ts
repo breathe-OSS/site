@@ -77,6 +77,53 @@ export async function getZoneAQI(zoneId: string): Promise<AQIData | null> {
   }
 }
 
+// one /aqi/zones request for whatever isn't cached yet. backends without it
+// 404, and then it goes back to asking zone by zone. a zone that fails comes
+// back as null, same as getZoneAQI
+export async function getZonesAQI(zoneIds: string[]): Promise<{ [id: string]: AQIData | null }> {
+  const result: { [id: string]: AQIData | null } = {};
+  const missing: string[] = [];
+
+  zoneIds.forEach((id) => {
+    const cached = getCachedData<AQIData>(`breathe_aqi_${id}`);
+    if (cached) {
+      result[id] = cached;
+    } else {
+      missing.push(id);
+    }
+  });
+
+  if (missing.length === 0) {
+    return result;
+  }
+
+  try {
+    const res = await fetch(
+      `${API_URL}/aqi/zones?ids=${missing.map(encodeURIComponent).join(',')}`
+    );
+    if (res.ok) {
+      const data: { zones: AQIData[] } = await res.json();
+      data.zones.forEach((zone) => setCachedData(`breathe_aqi_${zone.zone_id}`, zone));
+      const byId: { [id: string]: AQIData } = {};
+      data.zones.forEach((zone) => {
+        byId[zone.zone_id] = zone;
+      });
+      missing.forEach((id) => {
+        result[id] = byId[id] ?? null;
+      });
+      return result;
+    }
+  } catch (e) {
+    console.warn('Bulk AQI fetch failed, falling back to per zone', e);
+  }
+
+  const fetched = await Promise.all(missing.map((id) => getZoneAQI(id)));
+  missing.forEach((id, i) => {
+    result[id] = fetched[i];
+  });
+  return result;
+}
+
 export async function getSensorInfoList(): Promise<SensorInfo[] | null> {
   const cacheKey = `breathe_sensor_info`;
   const cached = getCachedData<SensorInfo[]>(cacheKey);

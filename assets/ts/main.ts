@@ -1,5 +1,5 @@
 import { STORAGE_KEY_PINS, API_URL } from './config.js';
-import { fetchZones, getZoneAQI } from './api.js';
+import { fetchZones, getZoneAQI, getZonesAQI } from './api.js';
 import {
   initTheme,
   initStandard,
@@ -141,16 +141,13 @@ async function refreshDashboard() {
   );
   container.append(...skeletons);
 
-  // Fetch all data in parallel
-  const dataPromises = pinnedZoneIds.map(async (id) => {
+  const aqiById = await getZonesAQI(pinnedZoneIds);
+  const results = pinnedZoneIds.map((id) => {
     const zone = allZones.find((z) => z.id === id);
-    if (!zone) return null;
-    const data = await getZoneAQI(id);
-    if (!data) return null;
+    const data = aqiById[id];
+    if (!zone || !data) return null;
     return { zone, data };
   });
-
-  const results = await Promise.all(dataPromises);
 
   // Create all cards in memory first (no DOM operations yet)
   const cards = results

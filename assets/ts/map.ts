@@ -1,4 +1,4 @@
-import { getZoneAQI, getSensorInfoList } from './api.js';
+import { getZonesAQI, getSensorInfoList } from './api.js';
 import { getAQIColor, getCurrentTheme, getAQIStandard, formatPollutantName } from './utils.js';
 import { Zone, AQIData, SensorInfo } from './types.js';
 import { showNodeSheet } from './sensors.js';
@@ -87,7 +87,9 @@ async function populateMapMarkers(allZones: Zone[]) {
   mapInstance.on('zoomend', renderMapMarkers);
 
   const [zoneData, sensors] = await Promise.all([
-    Promise.all(allZones.map(async (zone) => ({ zone, data: await getZoneAQI(zone.id) }))),
+    getZonesAQI(allZones.map((zone) => zone.id)).then((byId) =>
+      allZones.map((zone) => ({ zone, data: byId[zone.id] ?? null }))
+    ),
     getSensorInfoList(),
   ]);
   loadedZones = zoneData;

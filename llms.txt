@@ -22,7 +22,7 @@ The web app is a JavaScript dashboard, so its readings are not in the HTML. Use 
 ## What the web app does
 
 - Live AQI per zone, switchable between US EPA and Indian NAQI
-- Interactive map of all zones (Leaflet)
+- Interactive map (Leaflet) with every ground sensor at its own location, or one bubble per zone
 - 24-hour AQI trend and per-sensor readings for zones with ground sensors
 - Extended PM2.5 / PM10 history (1 week, 1 month, 6 months, custom), filterable by weather (rain, snow, fog, cloudy, clear)
 - Pollutant breakdown and cigarette equivalence

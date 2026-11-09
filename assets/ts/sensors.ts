@@ -6,7 +6,13 @@ import { getAQIStandard } from './utils.js';
 
 // an offline sensor (no pm2.5) still shows which box it is, with a banner on
 // top explaining why its readings are missing
-export async function showNodeSheet(nodeName: string, node: NodeData, zoneName?: string) {
+// onOpenZone adds a button through to the whole zone, the map passes it
+export async function showNodeSheet(
+  nodeName: string,
+  node: NodeData,
+  zoneName?: string,
+  onOpenZone?: () => void
+) {
   const sheet = document.getElementById('node-detail-sheet');
   const title = document.getElementById('node-sheet-title');
   if (!sheet || !title) return;
@@ -42,6 +48,16 @@ export async function showNodeSheet(nodeName: string, node: NodeData, zoneName?:
   setText('node-sheet-model', info?.model || '--');
   setText('node-sheet-locid', info?.location_id?.toString() || '--');
   setText('node-sheet-install', info?.installation_date || '--');
+
+  const openZoneBtn = document.getElementById('node-sheet-open-zone');
+  if (openZoneBtn) {
+    openZoneBtn.classList.toggle('hidden', !onOpenZone);
+    openZoneBtn.innerText = `Open ${zoneName ?? 'zone'}`;
+    openZoneBtn.onclick = () => {
+      sheet.classList.add('hidden');
+      onOpenZone?.();
+    };
+  }
 
   sheet.classList.remove('hidden');
 }

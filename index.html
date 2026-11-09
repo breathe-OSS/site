@@ -740,6 +740,17 @@
 
       <div id="view-map" class="view">
         <div id="map-container"></div>
+        <div class="toggle-group map-layer-toggle">
+          <button
+            class="btn-outlined active"
+            id="map-layer-sensors"
+            onclick="setMapLayer('sensors')">
+            Sensors
+          </button>
+          <button class="btn-outlined" id="map-layer-districts" onclick="setMapLayer('districts')">
+            Districts
+          </button>
+        </div>
       </div>
 
       <div id="view-explore" class="view">
@@ -1189,6 +1200,7 @@
             <div class="node-sheet-label">Install Date</div>
             <div class="node-sheet-value" id="node-sheet-install">--</div>
           </div>
+          <button id="node-sheet-open-zone" class="btn-outlined hidden"></button>
         </div>
       </div>
     </div>

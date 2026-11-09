@@ -1,6 +1,7 @@
-import { getZoneAQI } from './api.js';
+import { getZoneAQI, getSensorInfoList } from './api.js';
 import { getAQIColor, getCurrentTheme, getAQIStandard, formatPollutantName } from './utils.js';
-import { Zone, AQIData } from './types.js';
+import { Zone, AQIData, SensorInfo } from './types.js';
+import { showNodeSheet } from './sensors.js';
 import { STORAGE_KEY_PINS } from './config.js';
 import { setPinIcon } from './ui.js';
 import * as Leaflet from 'leaflet';
@@ -20,6 +21,7 @@ export function initMap(allZones: Zone[]): void {
   if (mapInstance) {
     mapInstance.remove();
     mapInstance = null;
+    markersLayer = null;
   }
 
   // Define bounds for J&K region
@@ -60,50 +62,192 @@ export function resizeMap(): void {
   setTimeout(() => mapInstance?.invalidateSize(), 100);
 }
 
-function populateMapMarkers(allZones: Zone[]) {
+type MapLayerName = 'sensors' | 'districts';
+
+// one bubble on the map, either a whole zone or a single sensor
+interface MapBubble {
+  latLng: Leaflet.LatLng;
+  aqi: number | null;
+  isLive: boolean;
+  // modelled zones get a dashed ring when they sit among real sensors
+  isModelled: boolean;
+  count: number;
+  onClick: () => void;
+}
+
+let markersLayer: Leaflet.LayerGroup | null = null;
+let mapLayer: MapLayerName = 'sensors';
+let loadedZones: { zone: Zone; data: AQIData | null }[] = [];
+let loadedSensors: SensorInfo[] = [];
+
+async function populateMapMarkers(allZones: Zone[]) {
   if (!mapInstance) return;
 
+  markersLayer = L.layerGroup().addTo(mapInstance);
+  mapInstance.on('zoomend', renderMapMarkers);
+
+  const [zoneData, sensors] = await Promise.all([
+    Promise.all(allZones.map(async (zone) => ({ zone, data: await getZoneAQI(zone.id) }))),
+    getSensorInfoList(),
+  ]);
+  loadedZones = zoneData;
+  loadedSensors = sensors || [];
+  renderMapMarkers();
+}
+
+function displayAqiOf(us: number | null | undefined, naqi: number | null | undefined) {
+  if (getAQIStandard() === 'us') {
+    return us ?? naqi ?? null;
+  }
+  return naqi ?? null;
+}
+
+// in the sensor layer a zone with live sensors is replaced by them, zones that
+// only have modelled data keep their one bubble
+function collectBubbles(): MapBubble[] {
+  const bubbles: MapBubble[] = [];
+  const zonesWithSensors = new Set<string>();
+
+  if (mapLayer === 'sensors') {
+    loadedZones.forEach(({ zone, data }) => {
+      if (!data || !data.nodes) return;
+      const nodes = data.nodes;
+      Object.keys(nodes).forEach((name) => {
+        const node = nodes[name];
+        // names only have to be unique inside a zone, so match the zone name too
+        const info = loadedSensors.find((s) => s.name === name && s.zone === data.zone_name);
+        if (!info || info.latitude == null || info.longitude == null) return;
+        zonesWithSensors.add(zone.id);
+        const isOffline = node.pm2_5 === null || node.pm2_5 === undefined;
+        bubbles.push({
+          latLng: L.latLng(info.latitude, info.longitude),
+          aqi: isOffline ? null : displayAqiOf(node.us_aqi, node.aqi),
+          isLive: true,
+          isModelled: false,
+          count: 1,
+          onClick: () =>
+            showNodeSheet(name, node, data.zone_name, () =>
+              openMapDetailSheet(zone.id, zone, data)
+            ),
+        });
+      });
+    });
+  }
+
+  loadedZones.forEach(({ zone, data }) => {
+    if (!zone.lat || !zone.lon || !data || zonesWithSensors.has(zone.id)) return;
+    const isLive = zone.provider === 'airgradient';
+    bubbles.push({
+      latLng: L.latLng(zone.lat, zone.lon),
+      aqi: displayAqiOf(data.us_aqi, data.aqi),
+      isLive,
+      isModelled: mapLayer === 'sensors' && !isLive,
+      count: 1,
+      onClick: () => openMapDetailSheet(zone.id, zone, data),
+    });
+  });
+
+  return bubbles;
+}
+
+// zoomed out, a dozen Srinagar and Jammu sensors land in the same few pixels
+// and turn into a pile of half hidden numbers. walking from the worst reading
+// down, each bubble joins the first group whose seed is closer than
+// minDistance on screen, or starts its own. a group shows its worst reading
+// with a count badge and zooms in to split up when tapped
+function clusterBubbles(bubbles: MapBubble[], minDistance = 32): MapBubble[] {
+  if (!mapInstance) return bubbles;
+  const map = mapInstance;
+  const zoom = map.getZoom();
+
+  const seeds: Leaflet.Point[] = [];
+  const groups: MapBubble[][] = [];
+  [...bubbles]
+    .sort((a, b) => (b.aqi ?? -1) - (a.aqi ?? -1))
+    .forEach((bubble) => {
+      const p = map.project(bubble.latLng, zoom);
+      const index = seeds.findIndex((seed) => seed.distanceTo(p) < minDistance);
+      if (index >= 0) {
+        groups[index].push(bubble);
+      } else {
+        seeds.push(p);
+        groups.push([bubble]);
+      }
+    });
+
+  return groups.map((members) => {
+    if (members.length === 1) {
+      return members[0];
+    }
+    const bounds = L.latLngBounds(members.map((m) => m.latLng));
+    const aqis = members.map((m) => m.aqi).filter((a): a is number => a !== null);
+    return {
+      latLng: bounds.getCenter(),
+      aqi: aqis.length > 0 ? Math.max(...aqis) : null,
+      isLive: members.some((m) => m.isLive),
+      isModelled: members.every((m) => m.isModelled),
+      count: members.length,
+      onClick: () => map.fitBounds(bounds, { padding: [80, 80], maxZoom: map.getMaxZoom() }),
+    };
+  });
+}
+
+// dark text on the greens and yellows, white from orange up
+function bubbleTextColor(aqi: number) {
+  if (getAQIStandard() === 'us') {
+    return aqi <= 100 ? '#000' : '#fff';
+  }
+  return aqi <= 200 ? '#000' : '#fff';
+}
+
+function renderMapMarkers() {
+  if (!mapInstance || !markersLayer) return;
+  markersLayer.clearLayers();
+
   const std = getAQIStandard();
+  const bubbles = clusterBubbles(collectBubbles());
 
-  allZones.forEach(async (z) => {
-    if (!z.lat || !z.lon) return;
-
-    const data = await getZoneAQI(z.id);
-    if (!data) return;
-
-    const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
-    const colors = getAQIColor(displayAqi, std);
-    const isLive = z.provider === 'airgradient';
-    const liveBadge = isLive ? '<div class="live-badge"></div>' : '';
-    const markerHtml = `
+  // later markers sit on top, so the worst air wins wherever bubbles still touch
+  bubbles
+    .sort((a, b) => (a.aqi ?? -1) - (b.aqi ?? -1))
+    .forEach((bubble) => {
+      const fill = bubble.aqi !== null ? getAQIColor(bubble.aqi, std).hex : '#9e9e9e';
+      const text = bubble.aqi !== null ? bubbleTextColor(bubble.aqi) : '#000';
+      const size = bubble.count > 1 ? 28 : 24;
+      const liveBadge = bubble.isLive ? '<div class="live-badge"></div>' : '';
+      const countBadge =
+        bubble.count > 1 ? `<div class="map-count-badge">${bubble.count}</div>` : '';
+      const markerHtml = `
             <div style="position: relative;">
-              <div style="
-                  background-color: ${colors.hex};
-                  width: 24px; height: 24px;
-                  border-radius: 50%;
-                  border: 2px solid #fff;
-                  display: flex; align-items: center; justify-content: center;
-                  color: #000; font-weight: bold; font-size: 10px;
-                  box-shadow: 0 0 10px rgba(0,0,0,0.5);
-              ">${displayAqi}</div>
+              <div class="map-bubble${bubble.isModelled ? ' modelled' : ''}" style="
+                  background-color: ${fill};
+                  width: ${size}px; height: ${size}px;
+                  color: ${text};
+              ">${bubble.aqi ?? ''}</div>
               ${liveBadge}
+              ${countBadge}
             </div>
         `;
 
-    const icon = L.divIcon({
-      html: markerHtml,
-      className: 'custom-pin',
-      iconSize: [30, 30],
-      iconAnchor: [15, 15],
-    });
-
-    L.marker([z.lat, z.lon], { icon: icon })
-      .addTo(mapInstance!)
-      .on('click', () => {
-        openMapDetailSheet(z.id, z, data);
+      const icon = L.divIcon({
+        html: markerHtml,
+        className: 'custom-pin',
+        iconSize: [size + 6, size + 6],
+        iconAnchor: [(size + 6) / 2, (size + 6) / 2],
       });
-  });
+
+      L.marker(bubble.latLng, { icon: icon }).addTo(markersLayer!).on('click', bubble.onClick);
+    });
 }
+
+function setMapLayer(layer: MapLayerName) {
+  mapLayer = layer;
+  document.getElementById('map-layer-sensors')?.classList.toggle('active', layer === 'sensors');
+  document.getElementById('map-layer-districts')?.classList.toggle('active', layer === 'districts');
+  renderMapMarkers();
+}
+
+(window as any).setMapLayer = setMapLayer;
 
 export function openMapDetailSheet(zoneId: string, zone: Zone, data: AQIData) {
   currentMapZoneId = zoneId;

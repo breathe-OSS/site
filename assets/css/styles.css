@@ -2650,6 +2650,58 @@ textarea:focus-visible,
     opacity: 0.5;
   }
 }
+/* map bubbles. modelled zones get a dashed ring so they don't pass for a sensor */
+.map-bubble {
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+.map-bubble.modelled {
+  border-style: dashed;
+}
+.map-count-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -6px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  border-radius: 7px;
+  background: #fff;
+  color: #000;
+  font-size: 9px;
+  font-weight: bold;
+  line-height: 14px;
+  text-align: center;
+}
+.map-layer-toggle {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  gap: 2px;
+}
+.map-layer-toggle .btn-outlined {
+  background: var(--surface-container-high);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.map-layer-toggle .btn-outlined.active {
+  background:
+    linear-gradient(var(--primary-container), var(--primary-container)),
+    var(--surface-container-high);
+}
+#node-sheet-open-zone {
+  align-self: stretch;
+}
 .live-badge {
   position: absolute;
   top: -2px;

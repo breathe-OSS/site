@@ -392,6 +392,7 @@
               </div>
 
               <div
+                id="hist-range-buttons"
                 class="toggle-group"
                 style="
                   display: flex;
@@ -409,9 +410,108 @@
                 <button class="btn-outlined" id="hist-6mo" onclick="setHistoryRange('6mo')">
                   6 Months
                 </button>
+                <button class="btn-outlined" id="hist-date-btn" onclick="toggleDateRange()">
+                  By Date
+                </button>
                 <button class="btn-outlined" id="hist-custom-btn" onclick="toggleCustomRange()">
                   Custom...
                 </button>
+              </div>
+
+              <div
+                id="hist-date-inputs"
+                style="
+                  display: none;
+                  flex-direction: column;
+                  gap: 12px;
+                  align-items: center;
+                  margin-bottom: 16px;
+                  background: var(--surface-variant);
+                  padding: 12px;
+                  border-radius: 8px;
+                ">
+                <div
+                  class="toggle-group"
+                  style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px">
+                  <button
+                    class="btn-outlined"
+                    id="hist-period-month"
+                    onclick="setHistoryPeriodMode('month')">
+                    Month
+                  </button>
+                  <button
+                    class="btn-outlined"
+                    id="hist-period-week"
+                    onclick="setHistoryPeriodMode('week')">
+                    Week
+                  </button>
+                  <button
+                    class="btn-outlined"
+                    id="hist-period-days"
+                    onclick="setHistoryPeriodMode('days')">
+                    Days
+                  </button>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    align-items: flex-end;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                  ">
+                  <label style="display: flex; flex-direction: column; gap: 4px; font-size: 11px">
+                    <span id="hist-date-start-label">Month containing</span>
+                    <input
+                      type="date"
+                      id="hist-date-start"
+                      onchange="onHistoryDateChange()"
+                      style="
+                        padding: 6px;
+                        border-radius: 4px;
+                        border: 1px solid var(--outline);
+                        background: var(--surface);
+                        color: var(--on-surface);
+                      " />
+                  </label>
+                  <label
+                    id="hist-date-end-field"
+                    style="display: none; flex-direction: column; gap: 4px; font-size: 11px">
+                    <span>To</span>
+                    <input
+                      type="date"
+                      id="hist-date-end"
+                      onchange="onHistoryDateChange()"
+                      style="
+                        padding: 6px;
+                        border-radius: 4px;
+                        border: 1px solid var(--outline);
+                        background: var(--surface);
+                        color: var(--on-surface);
+                      " />
+                  </label>
+                </div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px">
+                  <button
+                    class="icon-btn"
+                    id="hist-date-prev"
+                    aria-label="Previous period"
+                    onclick="stepHistoryPeriod(-1)">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                    </svg>
+                  </button>
+                  <div id="hist-date-label" style="font-size: 13px; font-weight: 500"></div>
+                  <button
+                    class="icon-btn"
+                    id="hist-date-next"
+                    aria-label="Next period"
+                    onclick="stepHistoryPeriod(1)">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               <div style="margin-bottom: 16px">
@@ -573,6 +673,18 @@
                     --
                   </div>
                 </div>
+              </div>
+
+              <div
+                id="hist-empty"
+                style="
+                  display: none;
+                  font-size: 13px;
+                  color: var(--on-surface-variant);
+                  text-align: center;
+                  margin-bottom: 16px;
+                ">
+                No readings for this selection.
               </div>
 
               <div class="chart-pager-viewport">

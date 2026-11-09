@@ -18,6 +18,17 @@ import {
   setPinIcon,
 } from './ui.js';
 import { Zone, AQIData, WeatherHistory } from './types.js';
+import {
+  HistoryPeriod,
+  HistoryPeriodMode,
+  formatCalendarDate,
+  historyPeriodContaining,
+  historyPeriodInterval,
+  historyPeriodLabel,
+  historyPeriodToken,
+  parseCalendarDate,
+  shiftHistoryPeriod,
+} from './utils.js';
 
 let allZones: Zone[] = [];
 let dashboardHasRendered = false;
@@ -588,6 +599,10 @@ import { renderExtendedHistoryChart, renderExtendedDotsGrid, setupExtendedPager 
 let currentHistoryData: any = null;
 let currentWeatherData: WeatherHistory | null = null;
 let currentWeatherFilter: string = 'all';
+let historyPeriodMode: HistoryPeriodMode = 'month';
+let historyPeriod: HistoryPeriod | null = null;
+let historyPeriodActive: boolean = false;
+let historyRequestId: number = 0;
 
 async function openHistoryView() {
   if (!currentZoneId) return;
@@ -612,6 +627,7 @@ async function openHistoryView() {
   handleShowView('history');
   currentHistoryData = null;
   currentWeatherData = null;
+  historyPeriod = null;
   setWeatherFilter('all');
   setHistoryRange('1w');
 }
@@ -669,6 +685,8 @@ function renderFilteredHistory() {
 
   renderExtendedHistoryChart(points, showPm25, showPm10);
   renderExtendedDotsGrid(points, showPm25, showPm10);
+  const emptyEl = document.getElementById('hist-empty');
+  if (emptyEl) emptyEl.style.display = points.length === 0 ? 'block' : 'none';
   renderWeatherImpact();
 }
 
@@ -787,24 +805,154 @@ function renderWeatherImpact() {
   `;
 }
 
-function setHistoryRange(range: string) {
+function clearHistoryRangeSelection() {
   document
-    .querySelectorAll('#view-history .btn-outlined')
+    .querySelectorAll('#hist-range-buttons .btn-outlined')
     .forEach((btn) => btn.classList.remove('active'));
-  const btn = document.getElementById(`hist-${range}`);
-  if (btn) btn.classList.add('active');
 
   const customInputs = document.getElementById('hist-custom-inputs');
   if (customInputs) customInputs.style.display = 'none';
+
+  const dateInputs = document.getElementById('hist-date-inputs');
+  if (dateInputs) dateInputs.style.display = 'none';
+
+  historyPeriodActive = false;
+}
+
+function setHistoryRange(range: string) {
+  clearHistoryRangeSelection();
+  const btn = document.getElementById(`hist-${range}`);
+  if (btn) btn.classList.add('active');
 
   currentHistoryRange = range;
   loadCustomHistory();
 }
 
+function todayCalendarDate(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function renderHistoryPeriod() {
+  if (!historyPeriod) return;
+
+  ['month', 'week', 'days'].forEach((mode) => {
+    const btn = document.getElementById(`hist-period-${mode}`);
+    if (btn) btn.classList.toggle('active', mode === historyPeriodMode);
+  });
+
+  const today = formatCalendarDate(todayCalendarDate());
+  const startInput = document.getElementById('hist-date-start') as HTMLInputElement;
+  const endInput = document.getElementById('hist-date-end') as HTMLInputElement;
+  const endField = document.getElementById('hist-date-end-field');
+  const startLabel = document.getElementById('hist-date-start-label');
+  const label = document.getElementById('hist-date-label');
+  const nextBtn = document.getElementById('hist-date-next') as HTMLButtonElement;
+
+  if (startInput) {
+    startInput.max = today;
+    startInput.value = formatCalendarDate(historyPeriod.start);
+  }
+  if (endInput) {
+    endInput.max = today;
+    endInput.value = formatCalendarDate(historyPeriod.end);
+  }
+  if (endField) endField.style.display = historyPeriodMode === 'days' ? 'flex' : 'none';
+  if (startLabel) {
+    if (historyPeriodMode === 'days') startLabel.innerText = 'From';
+    else if (historyPeriodMode === 'week') startLabel.innerText = 'Week containing';
+    else startLabel.innerText = 'Month containing';
+  }
+  if (label) label.innerText = historyPeriodLabel(historyPeriodMode, historyPeriod);
+  if (nextBtn) {
+    const next = shiftHistoryPeriod(historyPeriodMode, historyPeriod, 1);
+    nextBtn.disabled = formatCalendarDate(next.start) > today;
+  }
+}
+
+function applyHistoryPeriod() {
+  if (!historyPeriod) return;
+  renderHistoryPeriod();
+  currentHistoryRange = historyPeriodToken(historyPeriod);
+  loadCustomHistory();
+}
+
+function toggleDateRange() {
+  clearHistoryRangeSelection();
+  const btn = document.getElementById('hist-date-btn');
+  if (btn) btn.classList.add('active');
+
+  const dateInputs = document.getElementById('hist-date-inputs');
+  if (dateInputs) dateInputs.style.display = 'flex';
+
+  historyPeriodActive = true;
+  if (!historyPeriod) {
+    historyPeriod = historyPeriodContaining(historyPeriodMode, todayCalendarDate());
+  }
+  applyHistoryPeriod();
+}
+
+function setHistoryPeriodMode(mode: HistoryPeriodMode) {
+  const today = todayCalendarDate();
+  let anchor = historyPeriod ? historyPeriod.end : today;
+  if (anchor > today) {
+    anchor = today;
+  }
+  historyPeriodMode = mode;
+  historyPeriod = historyPeriodContaining(mode, anchor);
+  applyHistoryPeriod();
+}
+
+function stepHistoryPeriod(direction: number) {
+  if (!historyPeriod) return;
+  historyPeriod = shiftHistoryPeriod(historyPeriodMode, historyPeriod, direction);
+  applyHistoryPeriod();
+}
+
+function onHistoryDateChange() {
+  const startInput = document.getElementById('hist-date-start') as HTMLInputElement;
+  const endInput = document.getElementById('hist-date-end') as HTMLInputElement;
+  const start = startInput ? parseCalendarDate(startInput.value) : null;
+  if (!start) {
+    renderHistoryPeriod();
+    return;
+  }
+
+  if (historyPeriodMode !== 'days') {
+    historyPeriod = historyPeriodContaining(historyPeriodMode, start);
+    applyHistoryPeriod();
+    return;
+  }
+
+  const end = endInput ? parseCalendarDate(endInput.value) : null;
+  if (!end) {
+    renderHistoryPeriod();
+    return;
+  }
+  historyPeriod = start <= end ? { start, end } : { start: end, end: start };
+  applyHistoryPeriod();
+}
+
+function historyInterval(): string {
+  if (historyPeriodActive && historyPeriod) {
+    return historyPeriodInterval(historyPeriod);
+  }
+
+  const customInputs = document.getElementById('hist-custom-inputs');
+  let interval = '1h';
+  if (customInputs && customInputs.style.display === 'flex') {
+    const intInput = document.getElementById('custom-interval') as HTMLInputElement;
+    if (intInput && intInput.value) interval = intInput.value;
+  } else {
+    if (currentHistoryRange === '1w') interval = '1h';
+    else if (currentHistoryRange === '1mo') interval = '4h';
+    else if (currentHistoryRange === '6mo') interval = '1d';
+  }
+  return interval;
+}
+
 function toggleCustomRange() {
-  document
-    .querySelectorAll('#view-history .btn-outlined')
-    .forEach((btn) => btn.classList.remove('active'));
+  clearHistoryRangeSelection();
   const btn = document.getElementById('hist-custom-btn');
   if (btn) btn.classList.add('active');
 
@@ -830,16 +978,7 @@ async function loadCustomHistory() {
       : `${currentHistoryZoneId}_${sensorSelect.value}`
     : currentHistoryZoneId;
 
-  const customInputs = document.getElementById('hist-custom-inputs');
-  let interval = '1h';
-  if (customInputs && customInputs.style.display === 'flex') {
-    const intInput = document.getElementById('custom-interval') as HTMLInputElement;
-    if (intInput && intInput.value) interval = intInput.value;
-  } else {
-    if (currentHistoryRange === '1w') interval = '1h';
-    else if (currentHistoryRange === '1mo') interval = '4h';
-    else if (currentHistoryRange === '6mo') interval = '1d';
-  }
+  const interval = historyInterval();
 
   const pm25Cb = document.getElementById('hist-pm25') as HTMLInputElement;
   const pm10Cb = document.getElementById('hist-pm10') as HTMLInputElement;
@@ -852,12 +991,18 @@ async function loadCustomHistory() {
   if (showPm10) metrics.push('pm10');
   if (metrics.length === 0) metrics = ['pm2.5', 'pm10'];
 
+  historyRequestId += 1;
+  const requestId = historyRequestId;
+
   const [data, weather] = await Promise.all([
     fetchHistoricalData(location, currentHistoryRange, interval, metrics.join(',')),
     currentHistoryZoneId
       ? fetchWeatherHistory(currentHistoryZoneId, currentHistoryRange, interval)
       : Promise.resolve(null),
   ]);
+  if (requestId !== historyRequestId) {
+    return;
+  }
   currentHistoryData = data;
   currentWeatherData = weather;
 
@@ -896,16 +1041,7 @@ function downloadHistoryCSV() {
       : `${currentHistoryZoneId}_${sensorSelect.value}`
     : currentHistoryZoneId;
 
-  const customInputs = document.getElementById('hist-custom-inputs');
-  let interval = '1h';
-  if (customInputs && customInputs.style.display === 'flex') {
-    const intInput = document.getElementById('custom-interval') as HTMLInputElement;
-    if (intInput && intInput.value) interval = intInput.value;
-  } else {
-    if (currentHistoryRange === '1w') interval = '1h';
-    else if (currentHistoryRange === '1mo') interval = '4h';
-    else if (currentHistoryRange === '6mo') interval = '1d';
-  }
+  const interval = historyInterval();
 
   window.open(
     `${API_URL}/historical-data/${location}/${currentHistoryRange}/${interval}/pm2.5,pm10?format=csv`
@@ -923,6 +1059,10 @@ window.addEventListener('resize', drawEmptyHints);
 (window as any).setHistoryRange = setHistoryRange;
 (window as any).setWeatherFilter = setWeatherFilter;
 (window as any).toggleCustomRange = toggleCustomRange;
+(window as any).toggleDateRange = toggleDateRange;
+(window as any).setHistoryPeriodMode = setHistoryPeriodMode;
+(window as any).stepHistoryPeriod = stepHistoryPeriod;
+(window as any).onHistoryDateChange = onHistoryDateChange;
 (window as any).applyCustomHistory = applyCustomHistory;
 (window as any).loadCustomHistory = loadCustomHistory;
 (window as any).updateHistoryStatsUI = updateHistoryStatsUI;

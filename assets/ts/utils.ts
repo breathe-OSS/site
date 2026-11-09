@@ -404,3 +404,99 @@ export function calculateUsAqiPm10(pm10: number): number {
   if (c <= 504) return usAqiInterp(c, 425, 504, 301, 400);
   return usAqiInterp(c, 505, 604, 401, 500);
 }
+
+export type HistoryPeriodMode = 'month' | 'week' | 'days';
+
+export interface HistoryPeriod {
+  start: Date;
+  end: Date;
+}
+
+function calendarDay(year: number, month: number, day: number): Date {
+  return new Date(year, month, day);
+}
+
+function addDays(date: Date, days: number): Date {
+  return calendarDay(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+function daysBetween(start: Date, end: Date): number {
+  return Math.round((end.getTime() - start.getTime()) / 86400000);
+}
+
+export function historyPeriodContaining(mode: HistoryPeriodMode, date: Date): HistoryPeriod {
+  if (mode === 'month') {
+    return {
+      start: calendarDay(date.getFullYear(), date.getMonth(), 1),
+      end: calendarDay(date.getFullYear(), date.getMonth() + 1, 0),
+    };
+  }
+
+  if (mode === 'week') {
+    const start = addDays(date, -((date.getDay() + 6) % 7));
+    return { start, end: addDays(start, 6) };
+  }
+
+  return { start: date, end: date };
+}
+
+export function shiftHistoryPeriod(
+  mode: HistoryPeriodMode,
+  period: HistoryPeriod,
+  direction: number
+): HistoryPeriod {
+  if (mode === 'month') {
+    const target = calendarDay(period.start.getFullYear(), period.start.getMonth() + direction, 1);
+    return historyPeriodContaining('month', target);
+  }
+
+  const length = daysBetween(period.start, period.end) + 1;
+  return {
+    start: addDays(period.start, direction * length),
+    end: addDays(period.end, direction * length),
+  };
+}
+
+export function parseCalendarDate(value: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return null;
+  }
+  return calendarDay(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
+export function formatCalendarDate(date: Date): string {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const monthText = month < 10 ? `0${month}` : `${month}`;
+  const dayText = day < 10 ? `0${day}` : `${day}`;
+  return `${date.getFullYear()}-${monthText}-${dayText}`;
+}
+
+export function historyPeriodToken(period: HistoryPeriod): string {
+  return `${formatCalendarDate(period.start)}_${formatCalendarDate(period.end)}`;
+}
+
+export function historyPeriodInterval(period: HistoryPeriod): string {
+  const days = daysBetween(period.start, period.end) + 1;
+  if (days <= 14) {
+    return '1h';
+  }
+  if (days <= 62) {
+    return '4h';
+  }
+  return '1d';
+}
+
+export function historyPeriodLabel(mode: HistoryPeriodMode, period: HistoryPeriod): string {
+  if (mode === 'month') {
+    return period.start.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  }
+
+  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+  const start = period.start.toLocaleDateString(undefined, options);
+  if (daysBetween(period.start, period.end) === 0) {
+    return start;
+  }
+  return `${start} to ${period.end.toLocaleDateString(undefined, options)}`;
+}

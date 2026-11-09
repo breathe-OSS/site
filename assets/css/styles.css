@@ -2851,3 +2851,10 @@ textarea:focus-visible,
   transform: none;
   box-shadow: none;
 }
+
+#hist-date-inputs input[type='date'] {
+  color-scheme: dark;
+}
+[data-theme='light'] #hist-date-inputs input[type='date'] {
+  color-scheme: light;
+}

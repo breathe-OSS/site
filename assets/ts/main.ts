@@ -877,13 +877,13 @@ function updateHistoryStatsUI() {
   const minPm10El = document.getElementById('stat-min-pm10');
   const avgPm10El = document.getElementById('stat-avg-pm10');
 
-  if (maxPm25El) maxPm25El.innerText = stats.max_pm2_5 !== null ? stats.max_pm2_5 : '--';
-  if (minPm25El) minPm25El.innerText = stats.min_pm2_5 !== null ? stats.min_pm2_5 : '--';
-  if (avgPm25El) avgPm25El.innerText = stats.avg_pm2_5 !== null ? stats.avg_pm2_5 : '--';
+  if (maxPm25El) maxPm25El.innerText = stats.max_pm2_5 ?? '--';
+  if (minPm25El) minPm25El.innerText = stats.min_pm2_5 ?? '--';
+  if (avgPm25El) avgPm25El.innerText = stats.avg_pm2_5 ?? '--';
 
-  if (maxPm10El) maxPm10El.innerText = stats.max_pm10 !== null ? stats.max_pm10 : '--';
-  if (minPm10El) minPm10El.innerText = stats.min_pm10 !== null ? stats.min_pm10 : '--';
-  if (avgPm10El) avgPm10El.innerText = stats.avg_pm10 !== null ? stats.avg_pm10 : '--';
+  if (maxPm10El) maxPm10El.innerText = stats.max_pm10 ?? '--';
+  if (minPm10El) minPm10El.innerText = stats.min_pm10 ?? '--';
+  if (avgPm10El) avgPm10El.innerText = stats.avg_pm10 ?? '--';
 }
 
 function downloadHistoryCSV() {

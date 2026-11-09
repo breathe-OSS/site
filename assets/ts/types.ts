@@ -59,6 +59,7 @@ export interface WeatherHistoryPoint {
 
 export interface WeatherHistory {
   interval: number;
+  anchor?: number;
   points: WeatherHistoryPoint[];
   zone_id?: string;
 }

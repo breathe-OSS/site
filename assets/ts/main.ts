@@ -633,7 +633,8 @@ function conditionForTs(ts: number): string | null {
     return null;
   }
   const interval = currentWeatherData.interval;
-  const bucket = Math.floor(ts / interval) * interval;
+  const anchor = currentWeatherData.anchor ?? 0;
+  const bucket = anchor + Math.floor((ts - anchor) / interval) * interval;
   const point = currentWeatherData.points.find((p) => p.ts === bucket);
   return point ? point.condition : null;
 }

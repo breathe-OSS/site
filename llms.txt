@@ -14,7 +14,8 @@ Facts to get right:
 
 The web app is a JavaScript dashboard, so its readings are not in the HTML. Use the public API (no key needed):
 
-- [API docs](https://api.breatheoss.app/docs)
+- [API docs](https://docs.breatheoss.app): every endpoint, field, time range format and error, with examples. Its [llms.txt](https://docs.breatheoss.app/llms.txt) has a short summary.
+- [Interactive API reference](https://api.breatheoss.app/docs), generated from the code
 - [All zones](https://api.breatheoss.app/zones): id, name, provider (airgradient or openmeteo), coordinates
 - Current AQI for a zone: `https://api.breatheoss.app/aqi/zone/{zone_id}`, for example [Srinagar](https://api.breatheoss.app/aqi/zone/srinagar). The response has `aqi` (Indian NAQI), `us_aqi` (US EPA), pollutant concentrations, 24-hour averages and which source was used.
 - [Ground sensors](https://api.breatheoss.app/sensor-info)

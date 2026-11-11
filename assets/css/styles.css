@@ -8,6 +8,7 @@
   --surface-container-high: #282a2f;
   --surface-container-highest: #333538;
   --primary: #a8c7fa;
+  --on-primary: #062e6f;
   --primary-container: rgba(168, 199, 250, 0.12);
   --secondary: #c3c7cf;
   --tertiary: #e8b9d5;
@@ -186,6 +187,7 @@
   --surface-container-high: #e2e8f0;
   --surface-container-highest: #cbd5e1;
   --primary: #1d4ed8;
+  --on-primary: #ffffff;
   --primary-container: rgba(29, 78, 216, 0.12);
   --secondary: #475569;
   --tertiary: #7c3aed;
@@ -435,16 +437,13 @@ header {
 }
 .add-btn {
   background: var(--primary);
-  color: #0f1216;
+  color: var(--on-primary);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 500;
-}
-[data-theme='light'] .add-btn {
-  color: #fff;
 }
 .mobile-icon {
   display: block;

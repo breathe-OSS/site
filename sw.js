@@ -1,4 +1,4 @@
-const CACHE_NAME = 'breathe-cache-v4';
+const CACHE_NAME = 'breathe-cache-v5';
 
 const PRECACHE_ASSETS = [
   './',
@@ -9,6 +9,8 @@ const PRECACHE_ASSETS = [
   './assets/js/api.js',
   './assets/js/config.js',
   './assets/js/map.js',
+  './assets/js/motion.js',
+  './assets/js/panel.js',
   './assets/js/sensors.js',
   './assets/js/ui.js',
   './assets/js/utils.js',

@@ -11,6 +11,7 @@ import {
   makeActivatable,
   animateCount,
   setAQIStandard,
+  aqiTextColor,
 } from './utils.js';
 import { Zone, AQIData, AQIHistory, Pollutants, NodeData, WeatherInfo } from './types.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
@@ -319,7 +320,7 @@ export function renderDashboardCard(
                 ${formatPollutantName(data.main_pollutant)}
             </p>
         </div>
-        <div class="aqi-badge-small" style="background-color: ${colors.hex};">
+        <div class="aqi-badge-small" style="background-color: ${colors.hex}; color: ${aqiTextColor(displayAqi, std)};">
             ${displayAqi}
         </div>
     `;
@@ -473,6 +474,7 @@ export function updateDetailView(zone: Zone, data: AQIData) {
 
   if (chipEl) {
     chipEl.style.backgroundColor = colors.hex;
+    chipEl.style.color = aqiTextColor(displayAqi, std);
     chipEl.innerText = std === 'us' ? 'US AQI' : 'NAQI';
     chipEl.setAttribute('role', 'button');
     chipEl.setAttribute('tabindex', '0');

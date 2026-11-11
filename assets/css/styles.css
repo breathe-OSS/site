@@ -24,6 +24,12 @@
   --aqi-poor: #fb923c;
   --aqi-very-poor: #f87171;
   --aqi-severe: #dc2626;
+  --us-aqi-good: #5ccf6b;
+  --us-aqi-moderate: #f2d23c;
+  --us-aqi-sensitive: #ff9640;
+  --us-aqi-unhealthy: #f05a5a;
+  --us-aqi-very-unhealthy: #b072c8;
+  --us-aqi-hazardous: #b03a5b;
   --nav-height: 80px;
   --sidebar-width: 260px;
   --motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
@@ -197,6 +203,12 @@
   --outline-variant: #94a3b880;
   --nav-active-bg: rgba(29, 78, 216, 0.12);
   --scrim: rgba(0, 0, 0, 0.32);
+  --us-aqi-good: #2f9e4a;
+  --us-aqi-moderate: #e0b400;
+  --us-aqi-sensitive: #ea7a1c;
+  --us-aqi-unhealthy: #dc3b3b;
+  --us-aqi-very-unhealthy: #8e4fae;
+  --us-aqi-hazardous: #8a1f3d;
 }
 * {
   scrollbar-width: thin;
@@ -2595,18 +2607,18 @@ textarea:focus-visible,
 .aqi-bar-us .aqi-bar-gradient {
   background: linear-gradient(
     to right,
-    #00e400 0%,
-    #00e400 10%,
-    #ffff00 10%,
-    #ffff00 20%,
-    #ff7e00 20%,
-    #ff7e00 30%,
-    #ff0000 30%,
-    #ff0000 40%,
-    #8f3f97 40%,
-    #8f3f97 60%,
-    #7e0023 60%,
-    #7e0023 100%
+    var(--us-aqi-good) 0%,
+    var(--us-aqi-good) 10%,
+    var(--us-aqi-moderate) 10%,
+    var(--us-aqi-moderate) 20%,
+    var(--us-aqi-sensitive) 20%,
+    var(--us-aqi-sensitive) 30%,
+    var(--us-aqi-unhealthy) 30%,
+    var(--us-aqi-unhealthy) 40%,
+    var(--us-aqi-very-unhealthy) 40%,
+    var(--us-aqi-very-unhealthy) 60%,
+    var(--us-aqi-hazardous) 60%,
+    var(--us-aqi-hazardous) 100%
   );
 }
 .now-viewing {

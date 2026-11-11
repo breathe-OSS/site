@@ -1,5 +1,11 @@
 import { getZonesAQI, getSensorInfoList } from './api.js';
-import { getAQIColor, getCurrentTheme, getAQIStandard, formatPollutantName } from './utils.js';
+import {
+  getAQIColor,
+  getCurrentTheme,
+  getAQIStandard,
+  formatPollutantName,
+  aqiTextColor,
+} from './utils.js';
 import { Zone, AQIData, SensorInfo } from './types.js';
 import { showNodeSheet } from './sensors.js';
 import { STORAGE_KEY_PINS } from './config.js';
@@ -204,14 +210,6 @@ function clusterBubbles(bubbles: MapBubble[], minDistance = 32): MapBubble[] {
   });
 }
 
-// dark text on the greens and yellows, white from orange up
-function bubbleTextColor(aqi: number) {
-  if (getAQIStandard() === 'us') {
-    return aqi <= 100 ? '#000' : '#fff';
-  }
-  return aqi <= 200 ? '#000' : '#fff';
-}
-
 function renderMapMarkers() {
   if (!mapInstance || !markersLayer) return;
   markersLayer.clearLayers();
@@ -224,7 +222,7 @@ function renderMapMarkers() {
     .sort((a, b) => (a.aqi ?? -1) - (b.aqi ?? -1))
     .forEach((bubble) => {
       const fill = bubble.aqi !== null ? getAQIColor(bubble.aqi, std).hex : '#9e9e9e';
-      const text = bubble.aqi !== null ? bubbleTextColor(bubble.aqi) : '#000';
+      const text = bubble.aqi !== null ? aqiTextColor(bubble.aqi, std) : '#000';
       const size = bubble.count > 1 ? 28 : 24;
       const liveBadge = bubble.isLive ? '<div class="live-badge"></div>' : '';
       const countBadge =
@@ -324,7 +322,7 @@ function populateMapDetailSheet(zone: Zone, data: AQIData) {
   if (aqiBadgeEl) {
     aqiBadgeEl.textContent = std === 'us' ? 'US AQI' : 'NAQI';
     aqiBadgeEl.style.background = colors.hex;
-    aqiBadgeEl.style.color = '#000';
+    aqiBadgeEl.style.color = aqiTextColor(displayAqi, std);
   }
 
   const cardEl = document.getElementById('map-sheet-aqi-card');

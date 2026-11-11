@@ -47,25 +47,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTheme((newTheme) => {
     updateMapTiles(newTheme);
     updateChartTheme();
+    repaintAqiColours();
   });
 
-  initStandard((newStd) => {
-    // Redraw current view on standard change
-    refreshDashboard();
-
-    // If in detail view, refresh it
-    const detailView = document.getElementById('view-details');
-    if (detailView && detailView.classList.contains('active-view')) {
-      // Find which zone is currently open from DOM or state
-      const title = document.getElementById('detail-title-header')?.innerText;
-      const zone = allZones.find((z) => z.name === title);
-      if (zone) openDetails(zone.id);
-    }
-
-    // If in map view, refresh markers
-    if (document.getElementById('view-map')?.classList.contains('active-view')) {
-      initMap(allZones);
-    }
+  initStandard(() => {
+    repaintAqiColours();
   });
 
   allZones = await fetchZones();
@@ -91,6 +77,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   watchDetailScroll();
 });
+
+function repaintAqiColours() {
+  refreshDashboard();
+
+  const detailView = document.getElementById('view-details');
+  if (detailView && detailView.classList.contains('active-view') && currentZoneId) {
+    openDetails(currentZoneId);
+  }
+
+  if (document.getElementById('view-map')?.classList.contains('active-view')) {
+    initMap(allZones);
+  }
+}
 
 // Reveals the reading in the title bar once the main card has scrolled away.
 // The two thresholds are deliberately apart so resting on the boundary does

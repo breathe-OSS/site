@@ -344,39 +344,50 @@ export function getAQIBarPosition(aqi: number, standard: 'india' | 'us' = 'us'):
   return Math.min(70 + ((aqi - 400) / 100) * 30, 100);
 }
 
-// aqi colors
-export function getAQIColor(aqi: number, standard: 'india' | 'us' = 'us'): AQIColorResult {
-  const style = getComputedStyle(document.documentElement);
+let tokenCache: { theme: string; values: { [name: string]: string } } | null = null;
 
+function themeToken(name: string): string {
+  const theme = getCurrentTheme();
+  if (!tokenCache || tokenCache.theme !== theme) {
+    tokenCache = { theme, values: {} };
+  }
+  let value = tokenCache.values[name];
+  if (value === undefined) {
+    value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    tokenCache.values[name] = value;
+  }
+  return value;
+}
+
+export function getAQIColor(aqi: number, standard: 'india' | 'us' = 'us'): AQIColorResult {
   if (standard === 'us') {
-    // US EPA Colors
-    if (aqi <= 50) return { bg: 'bg-good', hex: '#00E400' };
-    if (aqi <= 100) return { bg: 'bg-moderate', hex: '#FFFF00' };
-    if (aqi <= 150) return { bg: 'bg-poor', hex: '#FF7E00' };
-    if (aqi <= 200) return { bg: 'bg-poor', hex: '#FF0000' };
-    if (aqi <= 300) return { bg: 'bg-very-poor', hex: '#8F3F97' };
-    return { bg: 'bg-severe', hex: '#7E0023' };
+    if (aqi <= 50) return { bg: 'bg-good', hex: themeToken('--us-aqi-good') };
+    if (aqi <= 100) return { bg: 'bg-moderate', hex: themeToken('--us-aqi-moderate') };
+    if (aqi <= 150) return { bg: 'bg-poor', hex: themeToken('--us-aqi-sensitive') };
+    if (aqi <= 200) return { bg: 'bg-poor', hex: themeToken('--us-aqi-unhealthy') };
+    if (aqi <= 300) return { bg: 'bg-very-poor', hex: themeToken('--us-aqi-very-unhealthy') };
+    return { bg: 'bg-severe', hex: themeToken('--us-aqi-hazardous') };
   }
 
-  // NAQI Colors
-  if (aqi <= 50) return { bg: 'bg-good', hex: style.getPropertyValue('--aqi-good').trim() };
-  if (aqi <= 100)
-    return {
-      bg: 'bg-satisfactory',
-      hex: style.getPropertyValue('--aqi-satisfactory').trim(),
-    };
-  if (aqi <= 200)
-    return {
-      bg: 'bg-moderate',
-      hex: style.getPropertyValue('--aqi-moderate').trim(),
-    };
-  if (aqi <= 300) return { bg: 'bg-poor', hex: style.getPropertyValue('--aqi-poor').trim() };
-  if (aqi <= 400)
-    return {
-      bg: 'bg-very-poor',
-      hex: style.getPropertyValue('--aqi-very-poor').trim(),
-    };
-  return { bg: 'bg-severe', hex: style.getPropertyValue('--aqi-severe').trim() };
+  if (aqi <= 50) return { bg: 'bg-good', hex: themeToken('--aqi-good') };
+  if (aqi <= 100) return { bg: 'bg-satisfactory', hex: themeToken('--aqi-satisfactory') };
+  if (aqi <= 200) return { bg: 'bg-moderate', hex: themeToken('--aqi-moderate') };
+  if (aqi <= 300) return { bg: 'bg-poor', hex: themeToken('--aqi-poor') };
+  if (aqi <= 400) return { bg: 'bg-very-poor', hex: themeToken('--aqi-very-poor') };
+  return { bg: 'bg-severe', hex: themeToken('--aqi-severe') };
+}
+
+export function aqiTextColor(aqi: number, standard: 'india' | 'us' = 'us'): string {
+  if (standard === 'us') {
+    if (aqi <= 150) {
+      return '#1a1c22';
+    }
+    return '#ffffff';
+  }
+  if (aqi <= 400) {
+    return '#1a1c22';
+  }
+  return '#ffffff';
 }
 
 function usAqiInterp(c: number, cLow: number, cHigh: number, iLow: number, iHigh: number): number {

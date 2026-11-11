@@ -2133,7 +2133,7 @@ textarea:focus-visible,
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 .btn-filled:hover {
-  background: var(--primary-container);
+  background: color-mix(in srgb, var(--primary) 88%, var(--on-primary));
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 @keyframes slideUpFromBottom {

@@ -2082,6 +2082,7 @@ textarea:focus-visible,
   margin-bottom: 16px;
 }
 .toggle-group .btn-outlined {
+  --pill: 20.5px;
   border-radius: var(--shape-corner-small);
   transition:
     border-radius var(--motion-shape) var(--motion-spring-spatial),
@@ -2091,12 +2092,10 @@ textarea:focus-visible,
     transform var(--motion-squish) var(--motion-spring-squish);
 }
 .toggle-group .btn-outlined:first-child {
-  border-radius: var(--shape-corner-full) var(--shape-corner-small) var(--shape-corner-small)
-    var(--shape-corner-full);
+  border-radius: var(--pill) var(--shape-corner-small) var(--shape-corner-small) var(--pill);
 }
 .toggle-group .btn-outlined:last-child {
-  border-radius: var(--shape-corner-small) var(--shape-corner-full) var(--shape-corner-full)
-    var(--shape-corner-small);
+  border-radius: var(--shape-corner-small) var(--pill) var(--pill) var(--shape-corner-small);
 }
 .toggle-group .btn-outlined::before {
   content: '✓';
@@ -2112,7 +2111,7 @@ textarea:focus-visible,
     opacity var(--motion-press) var(--motion-easing-standard);
 }
 .toggle-group .btn-outlined.active {
-  border-radius: var(--shape-corner-full);
+  border-radius: var(--pill);
   background: var(--primary-container);
   border-color: transparent;
   color: var(--primary);

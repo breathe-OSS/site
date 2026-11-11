@@ -651,7 +651,7 @@ function renderNodeReadings(nodes: { [name: string]: NodeData }, zoneName: strin
           return `
           <div class="node-card">
             <div class="node-header">
-              <span class="node-name">${name}</span>
+              <span class="node-name" title="${name}">${name}</span>
               <button class="icon-btn-compact" onclick="openNodeDetails('${encodeURIComponent(name).replace(/'/g, '%27')}')" style="color: var(--on-surface-variant); position: absolute; right: -8px; top: -8px;">
                 <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/></svg>
               </button>

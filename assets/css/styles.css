@@ -2863,12 +2863,18 @@ textarea:focus-visible,
   align-items: center;
   position: relative;
   width: 100%;
+  padding: 0 24px;
+  box-sizing: border-box;
 }
 .node-name {
   font-size: 15px;
   font-weight: 500;
   color: var(--on-surface-variant);
   letter-spacing: 0.2px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .node-aqi-section {
   text-align: center;

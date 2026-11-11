@@ -216,16 +216,16 @@ function buildMotionControls(): void {
   const container = document.getElementById('motion-advanced');
   if (container && container.childElementCount === 0) {
     for (const key of MOTION_KEYS) {
-      const row = document.createElement('div');
-      row.className = 'settings-row';
+      const row = document.createElement('label');
+      row.className = 'settings-row clickable';
       row.innerHTML = `
         <div>
           <div class="settings-title">${MOTION_LABELS[key]}</div>
         </div>
-        <label class="switch">
+        <span class="switch">
           <input type="checkbox" id="motion-${key}" />
           <span class="slider round"></span>
-        </label>
+        </span>
       `;
       container.appendChild(row);
 

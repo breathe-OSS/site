@@ -763,30 +763,30 @@
         <div class="content-scroll settings-content">
           <div class="settings-section-title">Appearance</div>
           <div class="settings-card">
-            <div class="settings-row">
+            <label class="settings-row clickable">
               <div>
                 <div class="settings-title">Theme</div>
                 <div class="settings-subtitle">Toggle light/dark mode</div>
               </div>
-              <label class="switch">
+              <span class="switch">
                 <input type="checkbox" id="theme-toggle" checked />
                 <span class="slider round"></span>
-              </label>
-            </div>
+              </span>
+            </label>
           </div>
 
           <div class="settings-section-title">Motion</div>
           <div class="settings-card">
-            <div class="settings-row">
+            <label class="settings-row clickable">
               <div>
                 <div class="settings-title">Animations</div>
                 <div class="settings-subtitle">Movement and transitions across the app</div>
               </div>
-              <label class="switch">
+              <span class="switch">
                 <input type="checkbox" id="motion-master" checked />
                 <span class="slider round"></span>
-              </label>
-            </div>
+              </span>
+            </label>
             <div class="settings-row settings-row-presets">
               <div>
                 <div class="settings-title">Preset</div>
@@ -814,32 +814,28 @@
 
           <div class="settings-section-title">General</div>
           <div class="settings-card">
-            <div
-              class="settings-row clickable"
-              onclick="document.getElementById('toggle-epa').click()">
+            <label class="settings-row clickable">
               <div>
                 <div class="settings-title">US AQI Standard</div>
                 <div class="settings-subtitle">Use United States EPA calculation</div>
               </div>
 
-              <label class="switch" onclick="event.stopPropagation()">
+              <span class="switch">
                 <input type="radio" name="aqi-toggle-group" id="toggle-epa" value="us" checked />
                 <span class="slider round"></span>
-              </label>
-            </div>
+              </span>
+            </label>
 
-            <div
-              class="settings-row clickable"
-              onclick="document.getElementById('toggle-naqi').click()">
+            <label class="settings-row clickable">
               <div>
                 <div class="settings-title">NAQI Standard</div>
                 <div class="settings-subtitle">Use National Air Quality Index calculation</div>
               </div>
-              <label class="switch" onclick="event.stopPropagation()">
+              <span class="switch">
                 <input type="radio" name="aqi-toggle-group" id="toggle-naqi" value="india" />
                 <span class="slider round"></span>
-              </label>
-            </div>
+              </span>
+            </label>
 
             <div class="settings-item clickable" onclick="openModal('data-source-modal')">
               <div>

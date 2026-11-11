@@ -1314,12 +1314,14 @@ input:checked + .slider:before {
   height: 24px;
   background-color: var(--on-primary);
 }
-.switch:active .slider:before {
+.switch:active .slider:before,
+.settings-row.clickable:active .slider:before {
   left: 0;
   width: 28px;
   height: 28px;
 }
-.switch:active input:checked + .slider:before {
+.switch:active input:checked + .slider:before,
+.settings-row.clickable:active input:checked + .slider:before {
   left: 20px;
 }
 #map-container {

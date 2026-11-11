@@ -1495,9 +1495,8 @@ textarea:focus-visible,
   flex-wrap: wrap;
   gap: 12px;
 }
-.motion-presets {
-  display: flex;
-  gap: 6px;
+.settings-row-presets .motion-presets {
+  flex-wrap: nowrap;
   flex-shrink: 0;
 }
 .btn-small {
@@ -1517,12 +1516,14 @@ textarea:focus-visible,
   }
   .settings-row-presets .motion-presets {
     width: 100%;
-    gap: 8px;
   }
   .settings-row-presets .motion-presets .btn-small {
     flex: 1;
     text-align: center;
     justify-content: center;
+    white-space: nowrap;
+    padding-left: 8px;
+    padding-right: 8px;
   }
 }
 .settings-accordion {

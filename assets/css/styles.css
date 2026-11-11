@@ -1469,12 +1469,13 @@ input:checked + .slider:before {
   overflow: hidden;
   margin-bottom: 24px;
 }
-.settings-item {
-  padding: 16px 20px;
+.settings-item,
+.settings-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  opacity: 0.9;
+  gap: 16px;
+  padding: 16px 20px;
   position: relative;
 }
 .settings-item:not(:last-child)::after,
@@ -1486,13 +1487,6 @@ input:checked + .slider:before {
   right: 20px;
   height: 1px;
   background-color: var(--outline-variant);
-}
-.settings-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  position: relative;
 }
 a:focus-visible,
 button:focus-visible,
@@ -1594,21 +1588,15 @@ textarea:focus-visible,
 .clickable {
   cursor: pointer;
 }
-.settings-row.clickable {
-  cursor: default;
-}
 .settings-item.clickable,
 .settings-row.clickable,
 .promo-card.clickable {
-  transition:
-    background-color var(--motion-duration-short3) var(--motion-easing-standard),
-    opacity var(--motion-duration-short3) var(--motion-easing-standard);
+  transition: background-color var(--motion-press) var(--motion-easing-standard);
 }
 .settings-item.clickable:hover,
 .settings-row.clickable:hover,
 .promo-card.clickable:hover {
   background-color: var(--surface-container-high);
-  opacity: 1;
 }
 .settings-item.clickable:active,
 .settings-row.clickable:active,

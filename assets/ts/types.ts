@@ -11,6 +11,8 @@ export interface AQIHistory {
   ts: number;
   aqi: number;
   us_aqi?: number;
+  pm2_5?: number | null;
+  pm10?: number | null;
 }
 
 export interface Pollutants {

@@ -11,7 +11,8 @@ import {
   aqiTextColor,
 } from './utils.js';
 import { initMotion, motionEnabled } from './motion.js';
-import { initMap, updateMapTiles, resizeMap, getCurrentMapZoneId } from './map.js';
+import { initMap, updateMapTiles, resizeMap, openMapZoneById } from './map.js';
+import { getPanelZoneId, setPanelPinned, closeZonePanel, refreshZonePanel } from './panel.js';
 import { showNodeSheet } from './sensors.js';
 import {
   renderDashboardCard,
@@ -68,6 +69,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.addEventListener('popstate', () => {
     applyRoute(parseRoute(location.pathname));
   });
+  window.addEventListener('zonepanel', () => {
+    if (applyingRoute || !document.getElementById('view-map')?.classList.contains('active-view')) {
+      return;
+    }
+    const path = routePath('map');
+    if (path !== location.pathname) {
+      history.replaceState(history.state, '', path);
+    }
+    document.title = getPanelZoneId()
+      ? `${allZones.find((z) => z.id === getPanelZoneId())?.name ?? 'Zone'} on the map | Breathe`
+      : routeTitle('map');
+  });
 
   // Listen for custom event from map detail sheet
   window.addEventListener('openDetails', (e: Event) => {
@@ -105,6 +118,7 @@ function repaintAqiColours() {
 
   if (document.getElementById('view-map')?.classList.contains('active-view')) {
     initMap(allZones);
+    refreshZonePanel();
   }
 }
 
@@ -660,6 +674,9 @@ function togglePin(id: string, announce: boolean = true) {
   }
   localStorage.setItem(STORAGE_KEY_PINS, JSON.stringify(pinnedZoneIds));
   syncExplorePin(id);
+  if (getPanelZoneId() === id) {
+    setPanelPinned(pinnedZoneIds.includes(id));
+  }
   refreshDashboard();
 
   if (!announce) return;
@@ -1232,6 +1249,8 @@ function handleShowView(viewName: string) {
   if (viewName === 'map') {
     initMap(allZones);
     resizeMap();
+  } else {
+    closeZonePanel(false);
   }
   if (viewName === 'explore') {
     const searchInput = document.getElementById('zone-search') as HTMLInputElement;
@@ -1266,6 +1285,9 @@ function parseRoute(pathname: string): Route {
 }
 
 function routePath(viewName: string): string {
+  if (viewName === 'map' && getPanelZoneId()) {
+    return `/map/${encodeURIComponent(getPanelZoneId()!)}`;
+  }
   if (viewName === 'details' && currentZoneId) {
     return `/zone/${encodeURIComponent(currentZoneId)}`;
   }
@@ -1332,6 +1354,15 @@ function applyRoute(route: Route) {
     } else if (route.view === 'details' || route.view === 'history') {
       handleShowView('dashboard');
       history.replaceState(history.state, '', '/');
+    } else if (route.view === 'map') {
+      if (!document.getElementById('view-map')?.classList.contains('active-view')) {
+        handleShowView('map');
+      }
+      if (route.zoneId && allZones.some((z) => z.id === route.zoneId)) {
+        openMapZoneById(route.zoneId, allZones);
+      } else {
+        closeZonePanel(false);
+      }
     } else {
       handleShowView(route.view);
     }
@@ -1375,35 +1406,9 @@ function updateNavHighlight(viewName: string) {
 }
 
 (window as any).toggleMapSheetPin = () => {
-  const zoneId = getCurrentMapZoneId();
+  const zoneId = getPanelZoneId();
   if (zoneId) {
     togglePin(zoneId);
-
-    // update button UI
-    const pinBtn = document.getElementById('map-sheet-pin-btn');
-    const pinIcon = document.getElementById('map-sheet-pin-icon');
-    const pinText = document.getElementById('map-sheet-pin-text');
-
-    if (pinBtn && pinIcon && pinText) {
-      const isPinned = pinnedZoneIds.includes(zoneId);
-      setPinIcon(pinIcon, isPinned, true);
-
-      if (isPinned) {
-        pinBtn.classList.add('pinned');
-        pinText.textContent = 'Pinned';
-        pinBtn.style.color = 'var(--primary)';
-        pinBtn.style.borderColor = 'var(--primary)';
-      } else {
-        pinBtn.classList.remove('pinned');
-        pinText.textContent = 'Pin to Home';
-        pinBtn.style.color = 'var(--on-surface-variant)';
-        pinBtn.style.borderColor = 'var(--outline)';
-      }
-
-      pinBtn.classList.remove('pin-flash');
-      void pinBtn.offsetWidth;
-      pinBtn.classList.add('pin-flash');
-    }
   }
 };
 

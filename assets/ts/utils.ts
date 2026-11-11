@@ -449,6 +449,23 @@ export function calculateUsAqi(pm25: number): number {
   return usAqiInterp(c, 325.5, 500.4, 401, 500);
 }
 
+export function calculateNaqiPm25(pm25: number): number {
+  const c = Math.round(pm25);
+  if (c <= 30) return usAqiInterp(c, 0, 30, 0, 50);
+  if (c <= 60) return usAqiInterp(c, 31, 60, 51, 100);
+  if (c <= 90) return usAqiInterp(c, 61, 90, 101, 200);
+  if (c <= 120) return usAqiInterp(c, 91, 120, 201, 300);
+  if (c <= 250) return usAqiInterp(c, 121, 250, 301, 400);
+  return Math.min(usAqiInterp(c, 251, 380, 401, 500), 500);
+}
+
+export function pm25ToAqi(pm25: number, standard: 'india' | 'us'): number {
+  if (standard === 'us') {
+    return calculateUsAqi(pm25);
+  }
+  return calculateNaqiPm25(pm25);
+}
+
 export function calculateUsAqiPm10(pm10: number): number {
   const c = Math.floor(pm10);
   if (c <= 54) return usAqiInterp(c, 0, 54, 0, 50);

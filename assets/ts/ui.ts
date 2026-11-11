@@ -1303,9 +1303,16 @@ interface ExtDay {
   c10: number[];
 }
 
-export function renderExtendedDotsGrid(history: any[], showPm25: boolean, showPm10: boolean) {
-  const container = document.getElementById('extended-dots-grid');
-  const subtitle = document.getElementById('extended-dots-subtitle');
+export function renderExtendedDotsGrid(
+  history: any[],
+  showPm25: boolean,
+  showPm10: boolean,
+  target?: HTMLElement,
+  subtitleTarget?: HTMLElement | null
+) {
+  const container = target ?? document.getElementById('extended-dots-grid');
+  const subtitle =
+    subtitleTarget !== undefined ? subtitleTarget : document.getElementById('extended-dots-subtitle');
   if (!container) return;
   container.innerHTML = '';
   extDotSelected = null;

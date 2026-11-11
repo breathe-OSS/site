@@ -5,6 +5,8 @@ import {
   getAQIStandard,
   formatPollutantName,
   aqiTextColor,
+  getAQICategory,
+  showSnackbar,
 } from './utils.js';
 import { Zone, AQIData, SensorInfo } from './types.js';
 import { showNodeSheet } from './sensors.js';
@@ -60,7 +62,63 @@ export function initMap(allZones: Zone[]): void {
 
   updateMapTiles(getCurrentTheme());
   populateMapMarkers(allZones);
+  renderMapLegend();
 }
+
+function renderMapLegend() {
+  const legend = document.getElementById('map-legend');
+  if (!legend) {
+    return;
+  }
+  const std = getAQIStandard();
+  const samples = std === 'us' ? [25, 75, 125, 175, 250, 400] : [25, 75, 150, 250, 350, 450];
+  const ticks = std === 'us' ? [0, 50, 100, 150, 200, 300, '300+'] : [0, 50, 100, 200, 300, 400, '400+'];
+  legend.innerHTML = `
+    <div class="map-legend-title">${std === 'us' ? 'US AQI' : 'NAQI'}</div>
+    <div class="map-legend-bar">
+      ${samples
+        .map((v) => `<span style="background: ${getAQIColor(v, std).hex};" title="${getAQICategory(v, std)}"></span>`)
+        .join('')}
+    </div>
+    <div class="map-legend-ticks">${ticks.map((t) => `<span>${t}</span>`).join('')}</div>
+    <div class="map-legend-ends"><span>Good</span><span>${std === 'us' ? 'Hazardous' : 'Severe'}</span></div>
+  `;
+}
+
+let youMarker: Leaflet.Marker | null = null;
+
+function locateOnMap() {
+  const button = document.getElementById('map-locate');
+  if (!navigator.geolocation || !mapInstance) {
+    showSnackbar("This browser can't share its location");
+    return;
+  }
+  button?.classList.add('busy');
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      button?.classList.remove('busy');
+      if (!mapInstance) {
+        return;
+      }
+      const here = L.latLng(position.coords.latitude, position.coords.longitude);
+      youMarker?.remove();
+      youMarker = L.marker(here, {
+        icon: L.divIcon({ html: '<div class="map-you"></div>', className: '', iconSize: [16, 16] }),
+        interactive: false,
+        zIndexOffset: -100,
+      }).addTo(mapInstance);
+      userMovedMap = true;
+      mapInstance.flyTo(here, Math.max(mapInstance.getZoom(), 10), { duration: 0.8 });
+    },
+    () => {
+      button?.classList.remove('busy');
+      showSnackbar("Couldn't get your location");
+    },
+    { maximumAge: 600000, timeout: 10000 }
+  );
+}
+
+(window as any).locateOnMap = locateOnMap;
 
 let regionBounds: Leaflet.LatLngBounds | null = null;
 let userMovedMap = false;

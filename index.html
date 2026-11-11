@@ -363,49 +363,23 @@
               style="margin-top: 16px; padding: 24px 16px; cursor: default">
               <h3 style="margin-bottom: 16px; text-align: center">Extended History</h3>
 
-              <div
-                class="history-controls"
-                style="
-                  display: flex;
-                  flex-wrap: wrap;
-                  gap: 12px;
-                  margin-bottom: 16px;
-                  align-items: center;
-                  justify-content: center;
-                ">
-                <select
-                  id="hist-sensor-select"
-                  class="dropdown"
-                  onchange="loadCustomHistory()"
-                  style="
-                    padding: 6px;
-                    border-radius: 4px;
-                    border: 1px solid var(--outline);
-                    background: var(--surface);
-                    color: var(--on-surface);
-                  ">
-                  <option value="zone">Zone Average</option>
-                </select>
+              <div class="history-controls">
+                <label class="m3-field">
+                  <span class="m3-field-label">Location</span>
+                  <select id="hist-sensor-select" class="m3-select" onchange="loadCustomHistory()">
+                    <option value="zone">Zone Average</option>
+                  </select>
+                </label>
 
-                <div class="checkbox-group" style="display: flex; gap: 8px; align-items: center">
-                  <label
-                    ><input
-                      type="checkbox"
-                      id="hist-pm25"
-                      value="pm2.5"
-                      checked
-                      onchange="loadCustomHistory()" />
-                    PM2.5</label
-                  >
-                  <label
-                    ><input
-                      type="checkbox"
-                      id="hist-pm10"
-                      value="pm10"
-                      checked
-                      onchange="loadCustomHistory()" />
-                    PM10</label
-                  >
+                <div class="chip-set" role="group" aria-label="Pollutants">
+                  <label class="filter-chip">
+                    <input type="checkbox" id="hist-pm25" value="pm2.5" checked onchange="loadCustomHistory()" />
+                    <span>PM2.5</span>
+                  </label>
+                  <label class="filter-chip">
+                    <input type="checkbox" id="hist-pm10" value="pm10" checked onchange="loadCustomHistory()" />
+                    <span>PM10</span>
+                  </label>
                 </div>
               </div>
 
@@ -469,35 +443,21 @@
                     flex-wrap: wrap;
                     gap: 8px;
                   ">
-                  <label style="display: flex; flex-direction: column; gap: 4px; font-size: 11px">
-                    <span id="hist-date-start-label">Month containing</span>
+                  <label class="m3-field">
+                    <span class="m3-field-label" id="hist-date-start-label">Month containing</span>
                     <input
                       type="date"
                       id="hist-date-start"
                       onchange="onHistoryDateChange()"
-                      style="
-                        padding: 6px;
-                        border-radius: 4px;
-                        border: 1px solid var(--outline);
-                        background: var(--surface);
-                        color: var(--on-surface);
-                      " />
+                      class="m3-input" />
                   </label>
-                  <label
-                    id="hist-date-end-field"
-                    style="display: none; flex-direction: column; gap: 4px; font-size: 11px">
-                    <span>To</span>
+                  <label id="hist-date-end-field" class="m3-field" style="display: none">
+                    <span class="m3-field-label">To</span>
                     <input
                       type="date"
                       id="hist-date-end"
                       onchange="onHistoryDateChange()"
-                      style="
-                        padding: 6px;
-                        border-radius: 4px;
-                        border: 1px solid var(--outline);
-                        background: var(--surface);
-                        color: var(--on-surface);
-                      " />
+                      class="m3-input" />
                   </label>
                 </div>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 8px">
@@ -577,28 +537,14 @@
                   id="custom-range"
                   placeholder="Range (e.g. 14d)"
                   value="14d"
-                  style="
-                    width: 120px;
-                    padding: 6px;
-                    border-radius: 4px;
-                    border: 1px solid var(--outline);
-                    background: var(--surface);
-                    color: var(--on-surface);
-                  " />
+                  class="m3-input" />
                 <input
                   type="text"
                   id="custom-interval"
                   placeholder="Interval (e.g. 1h)"
                   value="1h"
-                  style="
-                    width: 120px;
-                    padding: 6px;
-                    border-radius: 4px;
-                    border: 1px solid var(--outline);
-                    background: var(--surface);
-                    color: var(--on-surface);
-                  " />
-                <button class="btn" style="padding: 6px 12px" onclick="applyCustomHistory()">
+                  class="m3-input" />
+                <button class="btn-filled" onclick="applyCustomHistory()">
                   Apply
                 </button>
               </div>

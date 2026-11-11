@@ -558,8 +558,28 @@ function togglePin(id: string, announce: boolean = true) {
 
 let currentZoneId: string | null = null;
 
+let lastDetailZoneId: string | null = null;
+
+function resetDetailReadings() {
+  ['detail-aqi', 'detail-header-aqi'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.innerText = '0';
+    }
+  });
+  const indicator = document.getElementById('aqi-bar-indicator');
+  if (indicator) {
+    indicator.style.left = '0%';
+    void indicator.offsetWidth;
+  }
+}
+
 async function openDetails(zoneId: string) {
   currentZoneId = zoneId;
+  if (lastDetailZoneId !== zoneId) {
+    resetDetailReadings();
+    lastDetailZoneId = zoneId;
+  }
   handleShowView('details');
   const zone = allZones.find((z) => z.id === zoneId);
   if (!zone) return;

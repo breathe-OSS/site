@@ -2687,7 +2687,7 @@ textarea:focus-visible,
   box-shadow:
     0 3px 12px rgba(0, 0, 0, 0.4),
     0 1px 4px rgba(0, 0, 0, 0.3);
-  transition: left var(--motion-duration-medium3) var(--motion-easing-emphasized);
+  transition: left var(--motion-num) var(--motion-spring-spatial);
 }
 .aqi-bar-us .aqi-bar-gradient {
   background: linear-gradient(

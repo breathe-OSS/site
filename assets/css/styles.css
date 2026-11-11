@@ -734,14 +734,6 @@ header {
   border-radius: var(--shape-corner-medium);
   overflow: hidden;
 }
-.chart-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--on-surface-variant);
-  margin-top: 8px;
-  padding: 0 10px;
-}
 .chart-pager-viewport {
   position: relative;
 }

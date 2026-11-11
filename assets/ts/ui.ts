@@ -813,18 +813,22 @@ function renderChart(history: AQIHistory[]) {
   const sorted = history.sort((a, b) => a.ts - b.ts);
   const labels = sorted.map((h) => {
     const d = new Date(h.ts * 1000);
-    return `${d.getHours()}:00`;
+    const hour = d.getHours() < 10 ? `0${d.getHours()}` : `${d.getHours()}`;
+    return `${hour}:00`;
   });
 
-  // Choose correct dataset based on standard
   const values = sorted.map((h) => (std === 'us' ? h.us_aqi || 0 : h.aqi));
+  const peak = values.length > 0 ? Math.max(...values) : 0;
+  const breakpoints = aqiBreakpoints(std);
+  const topBand = Math.max(Math.ceil((peak * 1.15) / 10) * 10, 60);
 
   const isDark = getCurrentTheme() === 'dark';
-  const lineColor = '#a8c7fa';
+  const tickColor = isDark ? '#9aa0aa' : '#64748b';
+  const peakColor = getAQIColor(peak, std).hex;
 
-  const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-  gradient.addColorStop(0, isDark ? 'rgba(168, 199, 250, 0.4)' : 'rgba(65, 105, 225, 0.4)');
-  gradient.addColorStop(1, isDark ? 'rgba(168, 199, 250, 0.0)' : 'rgba(65, 105, 225, 0.0)');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+  gradient.addColorStop(0, hexToRgba(peakColor, 0.28));
+  gradient.addColorStop(1, hexToRgba(peakColor, 0));
 
   const config: ChartConfiguration<'line', number[], string> = {
     type: 'line',
@@ -833,13 +837,17 @@ function renderChart(history: AQIHistory[]) {
       datasets: [
         {
           data: values,
-          borderColor: lineColor,
+          borderColor: peakColor,
           backgroundColor: gradient,
-          borderWidth: 2,
+          borderWidth: 2.5,
           tension: 0.4,
           pointRadius: 0,
           pointHoverRadius: 6,
+          pointHoverBackgroundColor: (c) => getAQIColor(Number(c.raw) || 0, std).hex,
           fill: true,
+          segment: {
+            borderColor: (c) => getAQIColor(Math.max(c.p0.parsed.y ?? 0, c.p1.parsed.y ?? 0), std).hex,
+          },
         },
       ],
     },
@@ -847,13 +855,67 @@ function renderChart(history: AQIHistory[]) {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false }, tooltip: { enabled: true } },
-      scales: { x: { display: false }, y: { display: false, min: 0 } },
-      layout: { padding: 0 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          displayColors: false,
+          callbacks: {
+            label: (c) => {
+              const value = Number(c.raw) || 0;
+              return `AQI ${value}  ·  ${getAQICategory(value, std)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          display: true,
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: tickColor, maxTicksLimit: 6, maxRotation: 0, font: { size: 11 } },
+        },
+        y: {
+          display: true,
+          min: 0,
+          max: topBand,
+          position: 'right',
+          border: { display: false, dash: [3, 4] },
+          grid: {
+            color: (c) => hexToRgba(getAQIColor(c.tick.value, std).hex, 0.35),
+            drawTicks: false,
+          },
+          ticks: { color: tickColor, padding: 6, font: { size: 11 } },
+          afterBuildTicks: (axis) => {
+            axis.ticks = breakpoints
+              .filter((b) => b <= topBand)
+              .map((b) => ({ value: b }));
+          },
+        },
+      },
+      layout: { padding: { top: 4 } },
     },
   };
 
   detailChart = new Chart(ctx, config);
+}
+
+export function aqiBreakpoints(std: 'india' | 'us'): number[] {
+  if (std === 'us') {
+    return [50, 100, 150, 200, 300, 500];
+  }
+  return [50, 100, 200, 300, 400, 500];
+}
+
+export function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '');
+  if (clean.length !== 6) {
+    return hex;
+  }
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 let dotTooltipEl: HTMLElement | null = null;

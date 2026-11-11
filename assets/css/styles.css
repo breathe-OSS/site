@@ -1996,6 +1996,15 @@ textarea:focus-visible,
 .btn-outlined:hover {
   background: var(--surface-variant);
 }
+.toggle-group {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 2px;
+}
+.history-range-group {
+  margin-bottom: 16px;
+}
 .toggle-group .btn-outlined {
   border-radius: var(--shape-corner-small);
   transition:
@@ -2686,8 +2695,7 @@ textarea:focus-visible,
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  display: flex;
-  gap: 2px;
+  flex-wrap: nowrap;
 }
 .map-layer-toggle .btn-outlined {
   background: var(--surface-container-high);

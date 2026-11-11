@@ -393,14 +393,7 @@
 
               <div
                 id="hist-range-buttons"
-                class="toggle-group"
-                style="
-                  display: flex;
-                  justify-content: center;
-                  flex-wrap: wrap;
-                  gap: 8px;
-                  margin-bottom: 16px;
-                ">
+                class="toggle-group history-range-group">
                 <button class="btn-outlined active" id="hist-1w" onclick="setHistoryRange('1w')">
                   1 Week
                 </button>
@@ -430,9 +423,7 @@
                   padding: 12px;
                   border-radius: 8px;
                 ">
-                <div
-                  class="toggle-group"
-                  style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px">
+                <div class="toggle-group">
                   <button
                     class="btn-outlined"
                     id="hist-period-month"
@@ -526,8 +517,7 @@
                 </div>
                 <div
                   id="weather-filter-chips"
-                  class="toggle-group"
-                  style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px">
+                  class="toggle-group">
                   <button class="btn-outlined active" id="wf-all" onclick="setWeatherFilter('all')">
                     All Weather
                   </button>

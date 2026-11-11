@@ -19,6 +19,7 @@ import {
   setPinIcon,
   getRenderedNode,
   getRenderedZoneName,
+  setExploreAqi,
 } from './ui.js';
 import { Zone, AQIData, WeatherHistory } from './types.js';
 import {
@@ -80,6 +81,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function repaintAqiColours() {
   refreshDashboard();
+
+  const loaded = exploreAqi;
+  if (loaded) {
+    Object.keys(exploreNodes).forEach((id) => {
+      setExploreAqi(exploreNodes[id], loaded[id] ?? null);
+    });
+  }
 
   const detailView = document.getElementById('view-details');
   if (detailView && detailView.classList.contains('active-view') && currentZoneId) {
@@ -427,15 +435,38 @@ function drawEmptyHints() {
 }
 
 const exploreNodes: { [id: string]: HTMLElement } = {};
+let exploreAqi: { [id: string]: AQIData | null } | null = null;
+let exploreAqiLoading = false;
 
 function exploreNodeFor(zone: Zone): HTMLElement {
   let node = exploreNodes[zone.id];
   if (!node) {
-    node = renderExploreItem(zone, pinnedZoneIds.includes(zone.id), () => togglePin(zone.id));
+    node = renderExploreItem(
+      zone,
+      pinnedZoneIds.includes(zone.id),
+      () => togglePin(zone.id),
+      () => openDetails(zone.id)
+    );
     node.dataset.zoneId = zone.id;
     exploreNodes[zone.id] = node;
+    if (exploreAqi) {
+      setExploreAqi(node, exploreAqi[zone.id] ?? null);
+    }
   }
   return node;
+}
+
+async function loadExploreAqi() {
+  if (exploreAqiLoading) {
+    return;
+  }
+  exploreAqiLoading = true;
+  const byId = await getZonesAQI(allZones.map((z) => z.id));
+  exploreAqiLoading = false;
+  exploreAqi = byId;
+  Object.keys(exploreNodes).forEach((id) => {
+    setExploreAqi(exploreNodes[id], byId[id] ?? null);
+  });
 }
 
 // Reuses the card elements across filters and moves the survivors, rather than
@@ -498,6 +529,10 @@ function syncExplorePin(id: string) {
   const pinned = pinnedZoneIds.includes(id);
   btn.classList.toggle('pinned', pinned);
   setPinIcon(btn, pinned);
+  const zone = allZones.find((z) => z.id === id);
+  if (zone) {
+    btn.setAttribute('aria-label', `${pinned ? 'Unpin' : 'Pin'} ${zone.name}`);
+  }
 }
 
 function togglePin(id: string, announce: boolean = true) {
@@ -1065,6 +1100,7 @@ function handleShowView(viewName: string) {
   if (viewName === 'explore') {
     const searchInput = document.getElementById('zone-search') as HTMLInputElement;
     refreshExploreList(searchInput ? searchInput.value : '');
+    loadExploreAqi();
   }
 }
 

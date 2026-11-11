@@ -393,10 +393,12 @@ export function renderSkeletonCard(): HTMLElement {
 export function renderExploreItem(
   zone: Zone,
   isPinned: boolean,
-  onPinClick: () => void
+  onPinClick: () => void,
+  onOpen: () => void
 ): HTMLElement {
   const div = document.createElement('div');
   div.className = 'explore-card';
+  div.setAttribute('aria-label', `Open ${zone.name}`);
   const provider = zone.provider;
 
   const providerText =
@@ -406,11 +408,12 @@ export function renderExploreItem(
 
   div.innerHTML = `
     <div class="explore-card-inner">
-        <div>
+        <div class="explore-text">
             <div style="font-weight:500; font-size:16px; margin-bottom:4px;">${zone.name}</div>
             <div style="font-size:12px; color:var(--on-surface-variant);">${providerText}</div>
         </div>
-        <button class="pin-btn ${isPinned ? 'pinned' : ''}">
+        <div class="explore-aqi skeleton-line" aria-hidden="true"></div>
+        <button class="pin-btn ${isPinned ? 'pinned' : ''}" aria-label="${isPinned ? 'Unpin' : 'Pin'} ${zone.name}">
             ${getPinIconStack(isPinned)}
         </button>
     </div>
@@ -426,11 +429,32 @@ export function renderExploreItem(
     e.stopPropagation();
     handlePin();
   });
-  div.addEventListener('click', handlePin);
+  div.addEventListener('click', onOpen);
   div.addEventListener('animationend', () => div.classList.remove('pin-flash'));
   div.style.cursor = 'pointer';
   makeActivatable(div);
   return div;
+}
+
+export function setExploreAqi(card: HTMLElement, data: AQIData | null): void {
+  const chip = card.querySelector('.explore-aqi') as HTMLElement | null;
+  if (!chip) {
+    return;
+  }
+  chip.classList.remove('skeleton-line');
+  if (!data) {
+    chip.textContent = '--';
+    chip.style.background = '';
+    chip.style.color = '';
+    chip.title = '';
+    return;
+  }
+  const std = getAQIStandard();
+  const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
+  chip.textContent = String(displayAqi);
+  chip.style.background = getAQIColor(displayAqi, std).hex;
+  chip.style.color = aqiTextColor(displayAqi, std);
+  chip.title = getAQICategory(displayAqi, std);
 }
 
 // details

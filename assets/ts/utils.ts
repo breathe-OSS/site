@@ -324,6 +324,50 @@ export function getAQICategory(aqi: number, standard: 'india' | 'us' = 'us'): st
   return 'Severe';
 }
 
+export function aqiBandIndex(aqi: number, standard: 'india' | 'us' = 'us'): number {
+  const limits = standard === 'us' ? [50, 100, 150, 200, 300] : [50, 100, 200, 300, 400];
+  for (let i = 0; i < limits.length; i++) {
+    if (aqi <= limits[i]) {
+      return i;
+    }
+  }
+  return limits.length;
+}
+
+const HEALTH_ADVICE: { title: string; text: string }[] = [
+  {
+    title: 'Good time to be outside',
+    text: 'The air is clean. Open the windows and enjoy it.',
+  },
+  {
+    title: 'Fine for most people',
+    text: "If you're unusually sensitive to pollution, go easier on long outdoor workouts.",
+  },
+  {
+    title: 'Sensitive groups take care',
+    text: 'Kids, older adults and anyone with asthma or heart disease should cut back on long or heavy exertion outside.',
+  },
+  {
+    title: 'Cut back outdoors',
+    text: 'Everyone should ease off heavy exertion outside. Sensitive groups should keep outdoor time short.',
+  },
+  {
+    title: 'Avoid exertion outside',
+    text: 'Keep windows shut and run a purifier if you have one. Wear an N95 if you need to be out for long.',
+  },
+  {
+    title: 'Stay indoors',
+    text: 'Keep windows and doors shut. If you have to go out, wear a well fitted N95.',
+  },
+];
+
+export function getHealthAdvice(
+  aqi: number,
+  standard: 'india' | 'us' = 'us'
+): { title: string; text: string } {
+  return HEALTH_ADVICE[aqiBandIndex(aqi, standard)];
+}
+
 // Calculate position on AQI bar (0-100%)
 export function getAQIBarPosition(aqi: number, standard: 'india' | 'us' = 'us'): number {
   if (standard === 'us') {

@@ -12,6 +12,7 @@ import {
   animateCount,
   setAQIStandard,
   aqiTextColor,
+  getHealthAdvice,
 } from './utils.js';
 import { Zone, AQIData, AQIHistory, Pollutants, NodeData, WeatherInfo } from './types.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
@@ -224,6 +225,25 @@ export function renderNowViewing(zone: Zone, data: AQIData): void {
 
     ${renderCigaretteCard(data.averages_24h?.['pm2_5'] || data.concentrations_us_units['pm2_5'] || 0)}
     ${renderConcentrationsPreview(data.concentrations_us_units)}
+  `;
+}
+
+const HEART_PATH =
+  'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
+
+export function renderHealthAdviceCard(aqi: number, std: 'india' | 'us'): string {
+  const advice = getHealthAdvice(aqi, std);
+  const color = getAQIColor(aqi, std).hex;
+  return `
+    <div class="cigarette-card advice-card" style="--aqi-color: ${color};">
+      <div class="cigarette-icon advice-icon">
+        <svg viewBox="0 0 24 24"><path d="${HEART_PATH}"/></svg>
+      </div>
+      <div class="cigarette-content">
+        <div class="cigarette-value">${advice.title}</div>
+        <div class="cigarette-label">${advice.text}</div>
+      </div>
+    </div>
   `;
 }
 
@@ -510,6 +530,11 @@ export function updateDetailView(zone: Zone, data: AQIData) {
 
   if (aqiBarIndicator) {
     aqiBarIndicator.style.left = `${barPosition}%`;
+  }
+
+  const adviceContainer = document.getElementById('health-advice-container');
+  if (adviceContainer) {
+    adviceContainer.innerHTML = renderHealthAdviceCard(displayAqi, std);
   }
 
   // Cigarettes Card

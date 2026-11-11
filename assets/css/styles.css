@@ -2823,6 +2823,17 @@ textarea:focus-visible,
 .cigarette-content {
   flex: 1;
 }
+.advice-icon {
+  background: color-mix(in srgb, var(--aqi-color) 22%, transparent);
+  box-shadow: none;
+}
+.advice-icon svg {
+  fill: var(--aqi-color);
+}
+.advice-card .cigarette-label {
+  font-size: 12px;
+  line-height: 1.45;
+}
 .cigarette-value {
   font-size: 16px;
   font-weight: 700;

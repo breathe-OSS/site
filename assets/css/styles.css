@@ -2914,6 +2914,112 @@ textarea:focus-visible,
 .map-controls-row > * {
   pointer-events: auto;
 }
+.map-playback {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(440px, 100%);
+  box-sizing: border-box;
+  padding: 6px 16px 6px 6px;
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--shape-corner-full);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.map-playback.hidden {
+  display: none;
+}
+.map-play {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 20px;
+  background: var(--primary);
+  color: var(--on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    border-radius var(--motion-shape) var(--motion-spring-spatial),
+    transform var(--motion-squish) var(--motion-spring-squish);
+}
+.map-play.playing {
+  border-radius: var(--shape-corner-medium);
+}
+.map-play:active {
+  transform: scale(0.9);
+}
+.map-play svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+.map-play .icon-pause,
+.map-play.playing .icon-play {
+  display: none;
+}
+.map-play.playing .icon-pause {
+  display: block;
+}
+#map-time {
+  flex: 1;
+  min-width: 0;
+  height: 16px;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  --fill: 100%;
+}
+#map-time::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: var(--shape-corner-full);
+  background: linear-gradient(
+    to right,
+    var(--primary) var(--fill),
+    var(--surface-container-highest) var(--fill)
+  );
+}
+#map-time::-moz-range-track {
+  height: 6px;
+  border-radius: var(--shape-corner-full);
+  background: var(--surface-container-highest);
+}
+#map-time::-moz-range-progress {
+  height: 6px;
+  border-radius: var(--shape-corner-full);
+  background: var(--primary);
+}
+#map-time::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 4px;
+  height: 22px;
+  margin-top: -8px;
+  border-radius: 2px;
+  background: var(--primary);
+  box-shadow: 0 0 0 4px var(--surface-container-high);
+}
+#map-time::-moz-range-thumb {
+  width: 4px;
+  height: 22px;
+  border: none;
+  border-radius: 2px;
+  background: var(--primary);
+}
+.map-time-label {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 92px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--on-surface);
+}
+.map-playback.past .map-time-label {
+  color: var(--primary);
+}
 .map-legend {
   background: var(--surface-container-high);
   border: 1px solid var(--outline-variant);

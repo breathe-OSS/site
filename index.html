@@ -760,6 +760,22 @@
           </button>
         </div>
         <div class="map-controls">
+          <div class="map-playback hidden" id="map-playback">
+            <button class="map-play" id="map-play" aria-label="Play last 24 hours" onclick="toggleMapPlayback()">
+              <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+              <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+            </button>
+            <input
+              type="range"
+              id="map-time"
+              min="0"
+              max="24"
+              value="24"
+              step="1"
+              aria-label="Hour shown on the map"
+              oninput="scrubMap(this.value)" />
+            <span class="map-time-label" id="map-time-label">Now</span>
+          </div>
           <div class="map-controls-row">
             <div class="map-legend" id="map-legend" aria-label="AQI colour legend"></div>
             <button class="map-fab" id="map-locate" aria-label="Show my location" onclick="locateOnMap()">

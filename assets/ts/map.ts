@@ -8,7 +8,7 @@ import {
   getAQICategory,
   showSnackbar,
 } from './utils.js';
-import { Zone, AQIData, SensorInfo } from './types.js';
+import { Zone, AQIData, SensorInfo, AQIHistory } from './types.js';
 import { showNodeSheet } from './sensors.js';
 import { STORAGE_KEY_PINS } from './config.js';
 import { setPinIcon } from './ui.js';
@@ -31,6 +31,8 @@ export function initMap(allZones: Zone[]): void {
     mapInstance = null;
     markersLayer = null;
   }
+  stopPlayback();
+  playbackIndex = null;
 
   // Define bounds for J&K region
   const bounds: Leaflet.LatLngBoundsExpression = [
@@ -129,7 +131,7 @@ function fitToRegion() {
     return;
   }
   fittingMap = true;
-  const bottom = window.innerWidth < 768 ? 120 : 40;
+  const bottom = window.innerWidth < 768 ? 250 : 150;
   mapInstance.fitBounds(regionBounds, {
     paddingTopLeft: [32, 80],
     paddingBottomRight: [32, bottom],
@@ -186,6 +188,118 @@ interface MapBubble {
 }
 
 let markersLayer: Leaflet.LayerGroup | null = null;
+let playbackHours: number[] = [];
+let playbackIndex: number | null = null;
+let playbackTimer = 0;
+
+function atPlayback(history: AQIHistory[] | undefined, live: number | null): number | null {
+  if (playbackIndex === null || playbackIndex >= playbackHours.length) {
+    return live;
+  }
+  if (!history || history.length === 0) {
+    return null;
+  }
+  const target = playbackHours[playbackIndex];
+  let best: AQIHistory | null = null;
+  history.forEach((entry) => {
+    if (Math.abs(entry.ts - target) > 2400) {
+      return;
+    }
+    if (!best || Math.abs(entry.ts - target) < Math.abs(best.ts - target)) {
+      best = entry;
+    }
+  });
+  if (!best) {
+    return null;
+  }
+  const found: AQIHistory = best;
+  return displayAqiOf(found.us_aqi, found.aqi);
+}
+
+function buildPlaybackHours() {
+  const hours = new Set<number>();
+  loadedZones.forEach(({ data }) => {
+    (data?.history || []).forEach((entry) => {
+      hours.add(Math.round(entry.ts / 3600) * 3600);
+    });
+  });
+  const now = Date.now() / 1000;
+  playbackHours = Array.from(hours)
+    .filter((ts) => ts > now - 25 * 3600 && ts <= now)
+    .sort((a, b) => a - b)
+    .slice(-24);
+
+  const slider = document.getElementById('map-time') as HTMLInputElement | null;
+  const box = document.getElementById('map-playback');
+  if (slider) {
+    slider.max = String(playbackHours.length);
+    slider.value = String(playbackHours.length);
+  }
+  box?.classList.toggle('hidden', playbackHours.length < 2);
+  setPlaybackIndex(null);
+}
+
+function setPlaybackIndex(index: number | null) {
+  playbackIndex = index !== null && index >= playbackHours.length ? null : index;
+  const slider = document.getElementById('map-time') as HTMLInputElement | null;
+  const label = document.getElementById('map-time-label');
+  if (slider) {
+    slider.value = String(playbackIndex === null ? playbackHours.length : playbackIndex);
+    const percent = (Number(slider.value) / Math.max(Number(slider.max), 1)) * 100;
+    slider.style.setProperty('--fill', `${percent}%`);
+  }
+  if (label) {
+    if (playbackIndex === null) {
+      label.textContent = 'Now';
+    } else {
+      const ts = playbackHours[playbackIndex];
+      const d = new Date(ts * 1000);
+      const hh = d.getHours() < 10 ? `0${d.getHours()}` : `${d.getHours()}`;
+      const ago = Math.max(1, Math.round((Date.now() / 1000 - ts) / 3600));
+      label.textContent = `${hh}:00 · ${ago}h ago`;
+    }
+  }
+  document.getElementById('map-playback')?.classList.toggle('past', playbackIndex !== null);
+  renderMapMarkers();
+}
+
+function stopPlayback() {
+  window.clearInterval(playbackTimer);
+  playbackTimer = 0;
+  document.getElementById('map-play')?.classList.remove('playing');
+  document.getElementById('map-play')?.setAttribute('aria-label', 'Play last 24 hours');
+}
+
+function toggleMapPlayback() {
+  if (playbackTimer) {
+    stopPlayback();
+    return;
+  }
+  if (playbackHours.length < 2) {
+    return;
+  }
+  if (playbackIndex === null) {
+    setPlaybackIndex(0);
+  }
+  const button = document.getElementById('map-play');
+  button?.classList.add('playing');
+  button?.setAttribute('aria-label', 'Pause');
+  playbackTimer = window.setInterval(() => {
+    const next = (playbackIndex ?? 0) + 1;
+    setPlaybackIndex(next);
+    if (playbackIndex === null) {
+      stopPlayback();
+    }
+  }, 450);
+}
+
+function scrubMap(value: string) {
+  stopPlayback();
+  setPlaybackIndex(Number(value));
+}
+
+(window as any).toggleMapPlayback = toggleMapPlayback;
+(window as any).scrubMap = scrubMap;
 let mapLayer: MapLayerName = 'sensors';
 let loadedZones: { zone: Zone; data: AQIData | null }[] = [];
 let loadedSensors: SensorInfo[] = [];
@@ -204,7 +318,7 @@ async function populateMapMarkers(allZones: Zone[]) {
   ]);
   loadedZones = zoneData;
   loadedSensors = sensors || [];
-  renderMapMarkers();
+  buildPlaybackHours();
 }
 
 function displayAqiOf(us: number | null | undefined, naqi: number | null | undefined) {
@@ -243,7 +357,7 @@ function collectBubbles(): MapBubble[] {
         const isOffline = node.pm2_5 === null || node.pm2_5 === undefined;
         bubbles.push({
           latLng: L.latLng(info.latitude, info.longitude),
-          aqi: isOffline ? null : displayAqiOf(node.us_aqi, node.aqi),
+          aqi: atPlayback(node.history, isOffline ? null : displayAqiOf(node.us_aqi, node.aqi)),
           isLive: true,
           isModelled: false,
           count: 1,
@@ -261,7 +375,7 @@ function collectBubbles(): MapBubble[] {
     const isLive = zone.provider === 'airgradient' && hasLiveNode(data);
     bubbles.push({
       latLng: L.latLng(zone.lat, zone.lon),
-      aqi: displayAqiOf(data.us_aqi, data.aqi),
+      aqi: atPlayback(data.history, displayAqiOf(data.us_aqi, data.aqi)),
       isLive,
       isModelled: mapLayer === 'sensors' && !isLive,
       count: 1,

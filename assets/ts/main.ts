@@ -6,6 +6,9 @@ import {
   initKeyboardActivation,
   initSheetDragging,
   showSnackbar,
+  getAQIStandard,
+  getAQIColor,
+  aqiTextColor,
 } from './utils.js';
 import { initMotion, motionEnabled } from './motion.js';
 import { initMap, updateMapTiles, resizeMap, getCurrentMapZoneId } from './map.js';
@@ -144,6 +147,7 @@ async function refreshDashboard() {
   if (pinnedZoneIds.length === 0) {
     emptyState.classList.remove('hidden');
     requestAnimationFrame(drawEmptyHints);
+    renderRightNow();
     return;
   }
   emptyState.classList.add('hidden');
@@ -378,6 +382,111 @@ function startCardDrag(card: HTMLElement, container: HTMLElement, e: PointerEven
   window.addEventListener('pointerup', onUp);
   window.addEventListener('pointercancel', onUp);
 }
+
+function displayAqiFor(data: AQIData | null | undefined): number | null {
+  if (!data) {
+    return null;
+  }
+  if (getAQIStandard() === 'us') {
+    return data.us_aqi || 0;
+  }
+  return data.aqi;
+}
+
+async function renderRightNow() {
+  const box = document.getElementById('right-now');
+  const worstEl = document.getElementById('right-now-worst');
+  const bestEl = document.getElementById('right-now-best');
+  if (!box || !worstEl || !bestEl || allZones.length === 0) {
+    return;
+  }
+
+  const byId = await getZonesAQI(allZones.map((z) => z.id));
+  const std = getAQIStandard();
+  const ranked = allZones
+    .map((zone) => ({ zone, aqi: displayAqiFor(byId[zone.id]) }))
+    .filter((entry): entry is { zone: Zone; aqi: number } => entry.aqi !== null)
+    .sort((a, b) => b.aqi - a.aqi);
+  if (ranked.length < 2) {
+    box.classList.add('hidden');
+    return;
+  }
+
+  const row = (entry: { zone: Zone; aqi: number }) => {
+    const button = document.createElement('button');
+    button.className = 'right-now-row';
+    button.innerHTML = `
+      <span>${entry.zone.name}</span>
+      <span class="right-now-aqi" style="background: ${getAQIColor(entry.aqi, std).hex}; color: ${aqiTextColor(entry.aqi, std)};">${entry.aqi}</span>
+    `;
+    button.onclick = () => openDetails(entry.zone.id);
+    return button;
+  };
+
+  const count = Math.min(3, Math.floor(ranked.length / 2));
+  worstEl.replaceChildren(...ranked.slice(0, count).map(row));
+  bestEl.replaceChildren(...ranked.slice(-count).reverse().map(row));
+  box.classList.remove('hidden');
+}
+
+function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function nearestZone(lat: number, lon: number): { zone: Zone; km: number } | null {
+  let best: { zone: Zone; km: number } | null = null;
+  allZones.forEach((zone) => {
+    if (!zone.lat || !zone.lon) {
+      return;
+    }
+    const km = distanceKm(lat, lon, zone.lat, zone.lon);
+    if (!best || km < best.km) {
+      best = { zone, km };
+    }
+  });
+  return best;
+}
+
+function openNearestZone() {
+  if (!navigator.geolocation) {
+    showSnackbar("This browser can't share its location");
+    return;
+  }
+  const button = document.getElementById('nearest-btn') as HTMLButtonElement | null;
+  if (button) {
+    button.disabled = true;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      if (button) {
+        button.disabled = false;
+      }
+      const found = nearestZone(position.coords.latitude, position.coords.longitude);
+      if (!found) {
+        return;
+      }
+      openDetails(found.zone.id);
+      if (found.km > 60) {
+        showSnackbar(`${found.zone.name} is the closest zone, ${Math.round(found.km)} km away`);
+      }
+    },
+    () => {
+      if (button) {
+        button.disabled = false;
+      }
+      showSnackbar("Couldn't get your location");
+    },
+    { maximumAge: 600000, timeout: 10000 }
+  );
+}
+
+(window as any).openNearestZone = openNearestZone;
 
 // empty dashboard hints
 

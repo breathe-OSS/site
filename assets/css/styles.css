@@ -2937,7 +2937,7 @@ textarea:focus-visible,
   display: inline-block;
   width: 8px;
   height: 8px;
-  background-color: green;
+  background-color: var(--aqi-good);
   border-radius: 50%;
   margin-right: 5px;
 }

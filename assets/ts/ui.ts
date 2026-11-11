@@ -333,18 +333,47 @@ export function renderDashboardCard(
   card.onclick = onClick;
   markStale(card, data.timestamp_unix);
   makeActivatable(card);
+  const sparkValues = [...(data.history || [])]
+    .sort((a, b) => a.ts - b.ts)
+    .map((h) => (std === 'us' ? h.us_aqi || 0 : h.aqi));
   card.innerHTML = `
-        <div>
-            <h3 style="margin:0; font-size:18px; font-weight: 600;">${zone.name}</h3>
-            <p style="margin:4px 0 0 0; color:var(--on-surface-variant); font-size:12px;">
+        <div class="dash-info">
+            <h3 class="dash-name">${zone.name}</h3>
+            <p class="dash-meta">
+                <span style="color: ${colors.hex};">${getAQICategory(displayAqi, std)}</span>
+                <span class="dash-dot">·</span>
                 ${formatPollutantName(data.main_pollutant)}
             </p>
+            ${getTrendHTML(displayAqi, data.timestamp_unix, data.history)}
         </div>
+        ${sparklineSvg(sparkValues, colors.hex)}
         <div class="aqi-badge-small" style="background-color: ${colors.hex}; color: ${aqiTextColor(displayAqi, std)};">
             ${displayAqi}
         </div>
     `;
   return card;
+}
+
+export function sparklineSvg(values: number[], color: string): string {
+  if (values.length < 2) {
+    return '';
+  }
+  const width = 96;
+  const height = 32;
+  const max = Math.max(...values, 1);
+  const points = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * width;
+    const y = height - 3 - (v / max) * (height - 6);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const line = `M${points.join(' L')}`;
+  const area = `${line} L${width},${height} L0,${height} Z`;
+  return `
+    <svg class="dash-spark" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+      <path d="${area}" fill="${color}" opacity="0.14"></path>
+      <path d="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path>
+    </svg>
+  `;
 }
 
 export function renderSkeletonCard(): HTMLElement {

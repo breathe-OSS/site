@@ -1549,7 +1549,7 @@ textarea:focus-visible,
   display: none;
 }
 .settings-accordion summary .settings-chevron {
-  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+  transition: transform var(--motion-shape) var(--motion-easing-emphasized);
 }
 .settings-accordion[open] > summary .settings-chevron {
   transform: rotate(90deg);
@@ -2305,7 +2305,9 @@ textarea:focus-visible,
     font-size: 14px;
     font-weight: 500;
     text-align: left;
-    transition: 0.2s;
+    transition:
+      background var(--motion-press) var(--motion-easing-standard),
+      color var(--motion-press) var(--motion-easing-standard);
   }
   .nav-btn svg {
     width: 20px;

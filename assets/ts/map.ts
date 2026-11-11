@@ -36,7 +36,6 @@ export function initMap(allZones: Zone[]): void {
     [37.0, 80.5],
   ];
 
-  // center on j&k
   mapInstance = L.map('map-container', {
     zoomControl: false,
     minZoom: 6,
@@ -45,9 +44,51 @@ export function initMap(allZones: Zone[]): void {
     maxBoundsViscosity: 0.8,
   }).setView([33.9, 75.5], 7);
 
+  const located = allZones.filter((zone) => zone.lat && zone.lon);
+  regionBounds =
+    located.length > 0 ? L.latLngBounds(located.map((zone) => L.latLng(zone.lat, zone.lon))) : null;
+  userMovedMap = false;
+  fitToRegion();
+  mapInstance.on('dragstart', () => {
+    userMovedMap = true;
+  });
+  mapInstance.on('zoomstart', () => {
+    if (!fittingMap) {
+      userMovedMap = true;
+    }
+  });
+
   updateMapTiles(getCurrentTheme());
   populateMapMarkers(allZones);
 }
+
+let regionBounds: Leaflet.LatLngBounds | null = null;
+let userMovedMap = false;
+let fittingMap = false;
+
+function fitToRegion() {
+  if (!mapInstance || !regionBounds) {
+    return;
+  }
+  fittingMap = true;
+  const bottom = window.innerWidth < 768 ? 120 : 40;
+  mapInstance.fitBounds(regionBounds, {
+    paddingTopLeft: [32, 80],
+    paddingBottomRight: [32, bottom],
+    animate: false,
+  });
+  fittingMap = false;
+}
+
+window.addEventListener('resize', () => {
+  if (!mapInstance) {
+    return;
+  }
+  mapInstance.invalidateSize();
+  if (!userMovedMap) {
+    fitToRegion();
+  }
+});
 
 export function updateMapTiles(theme: string): void {
   if (!mapInstance) return;
@@ -65,7 +106,12 @@ export function updateMapTiles(theme: string): void {
 
 export function resizeMap(): void {
   if (!mapInstance) return;
-  setTimeout(() => mapInstance?.invalidateSize(), 100);
+  setTimeout(() => {
+    mapInstance?.invalidateSize();
+    if (!userMovedMap) {
+      fitToRegion();
+    }
+  }, 100);
 }
 
 type MapLayerName = 'sensors' | 'districts';

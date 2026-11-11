@@ -104,6 +104,16 @@ function displayAqiOf(us: number | null | undefined, naqi: number | null | undef
   return naqi ?? null;
 }
 
+function hasLiveNode(data: AQIData): boolean {
+  const nodes = data.nodes;
+  if (!nodes) {
+    return false;
+  }
+  return Object.keys(nodes).some(
+    (name) => nodes[name].pm2_5 !== null && nodes[name].pm2_5 !== undefined
+  );
+}
+
 // in the sensor layer a zone with live sensors is replaced by them, zones that
 // only have modelled data keep their one bubble
 function collectBubbles(): MapBubble[] {
@@ -112,7 +122,7 @@ function collectBubbles(): MapBubble[] {
 
   if (mapLayer === 'sensors') {
     loadedZones.forEach(({ zone, data }) => {
-      if (!data || !data.nodes) return;
+      if (!data || !data.nodes || !hasLiveNode(data)) return;
       const nodes = data.nodes;
       Object.keys(nodes).forEach((name) => {
         const node = nodes[name];
@@ -138,7 +148,7 @@ function collectBubbles(): MapBubble[] {
 
   loadedZones.forEach(({ zone, data }) => {
     if (!zone.lat || !zone.lon || !data || zonesWithSensors.has(zone.id)) return;
-    const isLive = zone.provider === 'airgradient';
+    const isLive = zone.provider === 'airgradient' && hasLiveNode(data);
     bubbles.push({
       latLng: L.latLng(zone.lat, zone.lon),
       aqi: displayAqiOf(data.us_aqi, data.aqi),

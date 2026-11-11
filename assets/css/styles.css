@@ -1002,6 +1002,37 @@ header {
   font-size: 28px;
   font-weight: 600;
 }
+.who-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+.who-track {
+  position: relative;
+  height: 6px;
+  border-radius: var(--shape-corner-full);
+  background: var(--surface-variant);
+  overflow: visible;
+}
+.who-fill {
+  height: 100%;
+  border-radius: var(--shape-corner-full);
+  transition: width var(--motion-shape) var(--motion-easing-emphasized-decelerate);
+}
+.who-mark {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  border-radius: 1px;
+  background: var(--on-surface);
+  opacity: 0.6;
+}
+.who-text {
+  font-size: 12px;
+  font-weight: 500;
+}
 .p-unit {
   font-size: 14px;
   font-weight: 400;

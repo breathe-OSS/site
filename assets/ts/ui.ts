@@ -738,12 +738,12 @@ function renderPollutantGrid(comps: Pollutants) {
   container.innerHTML = '';
 
   const defs = [
-    { key: 'pm2_5', label: 'PM<sub>2.5</sub>', unit: 'µg/m³' },
-    { key: 'co', label: 'CO', unit: 'mg/m³' },
-    { key: 'pm10', label: 'PM<sub>10</sub>', unit: 'µg/m³' },
-    { key: 'so2', label: 'SO₂', unit: 'µg/m³' },
-    { key: 'no2', label: 'NO₂', unit: 'µg/m³' },
-    { key: 'ch4', label: 'CH₄', unit: 'mg/m³' },
+    { key: 'pm2_5', label: 'PM<sub>2.5</sub>', unit: 'µg/m³', who: 15 },
+    { key: 'co', label: 'CO', unit: 'mg/m³', who: 4 },
+    { key: 'pm10', label: 'PM<sub>10</sub>', unit: 'µg/m³', who: 45 },
+    { key: 'so2', label: 'SO₂', unit: 'µg/m³', who: 40 },
+    { key: 'no2', label: 'NO₂', unit: 'µg/m³', who: 25 },
+    { key: 'ch4', label: 'CH₄', unit: 'mg/m³', who: 0 },
   ];
 
   defs.forEach((def) => {
@@ -755,10 +755,44 @@ function renderPollutantGrid(comps: Pollutants) {
                 <span class="p-value">
                     ${comps[def.key]}<span class="p-unit">${def.unit}</span>
                 </span>
+                ${def.who > 0 ? renderWhoMeter(comps[def.key], def.who, def.unit) : ''}
             `;
       container.appendChild(div);
     }
   });
+}
+
+export function whoRatioColor(ratio: number): string {
+  if (ratio <= 1) {
+    return 'var(--aqi-good)';
+  }
+  if (ratio <= 2) {
+    return 'var(--aqi-moderate)';
+  }
+  if (ratio <= 4) {
+    return 'var(--aqi-poor)';
+  }
+  return 'var(--aqi-very-poor)';
+}
+
+function renderWhoMeter(value: number, limit: number, unit: string): string {
+  const ratio = value / limit;
+  const color = whoRatioColor(ratio);
+  const fill = Math.min(ratio / 5, 1) * 100;
+  const mark = (1 / 5) * 100;
+  const text =
+    ratio <= 1
+      ? `Within WHO guideline of ${limit} ${unit}`
+      : `${ratio.toFixed(1)}× WHO 24h guideline`;
+  return `
+    <div class="who-meter" title="WHO 2021 24 hour guideline is ${limit} ${unit}">
+      <div class="who-track">
+        <div class="who-fill" style="width: ${fill}%; background: ${color};"></div>
+        <div class="who-mark" style="left: ${mark}%;"></div>
+      </div>
+      <span class="who-text" style="color: ${color};">${text}</span>
+    </div>
+  `;
 }
 
 export function updateChartTheme() {

@@ -21,6 +21,9 @@ The web app is a JavaScript dashboard, so its readings are not in the HTML. Use 
 
 ## What the web app does
 
+Every view has its own URL. A zone lives at `https://breatheoss.app/zone/{zone_id}` (for example [Srinagar](https://breatheoss.app/zone/srinagar)) and its history at `/zone/{zone_id}/history`. The map and zone list are at `/map` and `/explore`.
+
+
 - Live AQI per zone, switchable between US EPA and Indian NAQI
 - Interactive map (Leaflet) with every ground sensor at its own location, or one bubble per zone
 - 24-hour AQI trend and per-sensor readings for zones with ground sensors

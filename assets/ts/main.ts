@@ -60,6 +60,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   updateNavHighlight('dashboard');
 
+  history.replaceState({ depth: 0 }, '', location.pathname);
+  applyRoute(parseRoute(location.pathname));
+  window.addEventListener('popstate', () => {
+    applyRoute(parseRoute(location.pathname));
+  });
+
   // Listen for custom event from map detail sheet
   window.addEventListener('openDetails', (e: Event) => {
     const customEvent = e as CustomEvent;
@@ -1108,6 +1114,7 @@ function handleShowView(viewName: string) {
   currentViewDepth = nextDepth;
 
   updateNavHighlight(viewName);
+  syncUrl(viewName);
 
   if (viewName === 'dashboard') {
     requestAnimationFrame(drawEmptyHints);
@@ -1123,6 +1130,127 @@ function handleShowView(viewName: string) {
     loadExploreAqi();
   }
 }
+
+interface Route {
+  view: string;
+  zoneId: string | null;
+}
+
+const DEFAULT_TITLE = document.title;
+
+function parseRoute(pathname: string): Route {
+  const parts = pathname.split('/').filter((part) => part.length > 0);
+  if (parts[0] === 'zone' && parts[1]) {
+    const zoneId = decodeURIComponent(parts[1]);
+    if (parts[2] === 'history') {
+      return { view: 'history', zoneId };
+    }
+    return { view: 'details', zoneId };
+  }
+  if (parts[0] === 'map') {
+    return { view: 'map', zoneId: parts[1] ? decodeURIComponent(parts[1]) : null };
+  }
+  if (parts[0] === 'explore' || parts[0] === 'settings') {
+    return { view: parts[0], zoneId: null };
+  }
+  return { view: 'dashboard', zoneId: null };
+}
+
+function routePath(viewName: string): string {
+  if (viewName === 'details' && currentZoneId) {
+    return `/zone/${encodeURIComponent(currentZoneId)}`;
+  }
+  if (viewName === 'history' && currentHistoryZoneId) {
+    return `/zone/${encodeURIComponent(currentHistoryZoneId)}/history`;
+  }
+  if (viewName === 'map' || viewName === 'explore' || viewName === 'settings') {
+    return `/${viewName}`;
+  }
+  return '/';
+}
+
+function routeTitle(viewName: string): string {
+  const zoneName = (id: string | null) => allZones.find((z) => z.id === id)?.name;
+  if (viewName === 'details') {
+    const name = zoneName(currentZoneId);
+    if (name) {
+      return `${name} air quality right now | Breathe`;
+    }
+  }
+  if (viewName === 'history') {
+    const name = zoneName(currentHistoryZoneId);
+    if (name) {
+      return `${name} air quality history | Breathe`;
+    }
+  }
+  if (viewName === 'map') {
+    return 'Air quality map of Jammu & Kashmir and Ladakh | Breathe';
+  }
+  if (viewName === 'explore') {
+    return 'All zones | Breathe';
+  }
+  if (viewName === 'settings') {
+    return 'Settings | Breathe';
+  }
+  return DEFAULT_TITLE;
+}
+
+let applyingRoute = false;
+
+function syncUrl(viewName: string) {
+  const path = routePath(viewName);
+  document.title = routeTitle(viewName);
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical) {
+    canonical.setAttribute('href', `https://breatheoss.app${path}`);
+  }
+  if (applyingRoute || path === location.pathname) {
+    return;
+  }
+  const depth = history.state && typeof history.state.depth === 'number' ? history.state.depth : 0;
+  history.pushState({ depth: depth + 1 }, '', path);
+}
+
+function applyRoute(route: Route) {
+  applyingRoute = true;
+  try {
+    const known = route.zoneId !== null && allZones.some((z) => z.id === route.zoneId);
+    if (route.view === 'details' && known) {
+      openDetails(route.zoneId!);
+    } else if (route.view === 'history' && known) {
+      currentZoneId = route.zoneId;
+      openHistoryView();
+    } else if (route.view === 'details' || route.view === 'history') {
+      handleShowView('dashboard');
+      history.replaceState(history.state, '', '/');
+    } else {
+      handleShowView(route.view);
+    }
+  } finally {
+    applyingRoute = false;
+  }
+}
+
+function goBack(fallback: string) {
+  if (history.state && history.state.depth > 0) {
+    history.back();
+    return;
+  }
+  applyingRoute = true;
+  try {
+    if (fallback === 'details' && currentHistoryZoneId) {
+      openDetails(currentHistoryZoneId);
+    } else {
+      fallback = 'dashboard';
+      handleShowView(fallback);
+    }
+  } finally {
+    applyingRoute = false;
+  }
+  history.replaceState({ depth: 0 }, '', routePath(fallback));
+}
+
+(window as any).goBack = goBack;
 
 function updateNavHighlight(viewName: string) {
   document.querySelectorAll('.nav-item, .nav-btn').forEach((el) => el.classList.remove('active'));

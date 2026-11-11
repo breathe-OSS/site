@@ -1,5 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://breatheoss.app/</loc></url>
+  <url><loc>https://breatheoss.app/map</loc></url>
+  <url><loc>https://breatheoss.app/explore</loc></url>
+  <url><loc>https://breatheoss.app/zone/anantnag_city</loc></url>
+  <url><loc>https://breatheoss.app/zone/bandipora_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/baramulla_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/doda_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/ganderbal_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/handwara_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/jammu_city</loc></url>
+  <url><loc>https://breatheoss.app/zone/kargil_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/kathua_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/katra_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/kishtwar_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/kulgam_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/kupwara_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/leh</loc></url>
+  <url><loc>https://breatheoss.app/zone/pahalgam_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/poonch_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/pulwama_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/rajouri_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/ramban_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/reasi_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/samba_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/shopian_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/sopore_town</loc></url>
+  <url><loc>https://breatheoss.app/zone/srinagar</loc></url>
+  <url><loc>https://breatheoss.app/zone/udhampur_city</loc></url>
   <url><loc>https://breatheoss.app/privacy/</loc></url>
 </urlset>

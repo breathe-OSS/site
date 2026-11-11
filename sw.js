@@ -1,4 +1,4 @@
-const CACHE_NAME = 'breathe-cache-v5';
+const CACHE_NAME = 'breathe-cache-v6';
 
 const PRECACHE_ASSETS = [
   './',
@@ -26,7 +26,9 @@ self.addEventListener('install', (event) => {
     caches
       .open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(PRECACHE_ASSETS);
+        return cache.addAll(
+          PRECACHE_ASSETS.map((asset) => new Request(asset, { cache: 'reload' }))
+        );
       })
       .then(() => self.skipWaiting())
   );
@@ -55,7 +57,9 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match('./index.html')));
+    event.respondWith(
+      fetch(request, { cache: 'no-cache' }).catch(() => caches.match('./index.html'))
+    );
     return;
   }
 
@@ -65,7 +69,7 @@ self.addEventListener('fetch', (event) => {
     url.hostname.includes('airgradient.com')
   ) {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-cache' })
         .then((response) => {
           if (response && response.status === 200) {
             const responseClone = response.clone();

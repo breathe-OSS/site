@@ -40,7 +40,7 @@ function setCachedData<T>(key: string, data: T): void {
 }
 
 export async function fetchZones(): Promise<Zone[]> {
-  const cacheKey = 'breathe_zones';
+  const cacheKey = 'breathe_places';
   const cached = getCachedData<Zone[]>(cacheKey);
 
   if (cached) {
@@ -48,7 +48,7 @@ export async function fetchZones(): Promise<Zone[]> {
   }
 
   try {
-    const res = await fetch(`${API_URL}/zones`);
+    const res = await fetch(`${API_URL}/zones?layout=sensors`);
     const data = await res.json();
     const zones = data.zones;
     setCachedData(cacheKey, zones);
@@ -60,7 +60,7 @@ export async function fetchZones(): Promise<Zone[]> {
 }
 
 export async function getZoneAQI(zoneId: string): Promise<AQIData | null> {
-  const cacheKey = `breathe_aqi_${zoneId}`;
+  const cacheKey = `breathe_place_aqi_${zoneId}`;
   const cached = getCachedData<AQIData>(cacheKey);
 
   if (cached) {
@@ -68,7 +68,8 @@ export async function getZoneAQI(zoneId: string): Promise<AQIData | null> {
   }
 
   try {
-    const res = await fetch(`${API_URL}/aqi/${zoneId}`);
+    const res = await fetch(`${API_URL}/aqi/zone/${encodeURIComponent(zoneId)}`);
+    if (!res.ok) return null;
     const aqiData = await res.json();
     setCachedData(cacheKey, aqiData);
     return aqiData;
@@ -85,7 +86,7 @@ export async function getZonesAQI(zoneIds: string[]): Promise<{ [id: string]: AQ
   const missing: string[] = [];
 
   zoneIds.forEach((id) => {
-    const cached = getCachedData<AQIData>(`breathe_aqi_${id}`);
+    const cached = getCachedData<AQIData>(`breathe_place_aqi_${id}`);
     if (cached) {
       result[id] = cached;
     } else {
@@ -103,7 +104,7 @@ export async function getZonesAQI(zoneIds: string[]): Promise<{ [id: string]: AQ
     );
     if (res.ok) {
       const data: { zones: AQIData[] } = await res.json();
-      data.zones.forEach((zone) => setCachedData(`breathe_aqi_${zone.zone_id}`, zone));
+      data.zones.forEach((zone) => setCachedData(`breathe_place_aqi_${zone.zone_id}`, zone));
       const byId: { [id: string]: AQIData } = {};
       data.zones.forEach((zone) => {
         byId[zone.zone_id] = zone;

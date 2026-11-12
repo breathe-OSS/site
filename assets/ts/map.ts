@@ -1,4 +1,4 @@
-import { getZonesAQI, getSensorInfoList, getZoneAQI } from './api.js';
+import { getZonesAQI, getZoneAQI } from './api.js';
 import { openZonePanel } from './panel.js';
 import {
   getAQIColor,
@@ -8,8 +8,8 @@ import {
   getAQICategory,
   showSnackbar,
 } from './utils.js';
-import { Zone, AQIData, SensorInfo, AQIHistory } from './types.js';
-import { showNodeSheet } from './sensors.js';
+import { Zone, AQIData, AQIHistory } from './types.js';
+import { historyAqi, isEstimate, zoneAqi } from './readings.js';
 import * as Leaflet from 'leaflet';
 
 declare const L: typeof Leaflet;
@@ -167,7 +167,7 @@ export function resizeMap(): void {
   }, 100);
 }
 
-type MapLayerName = 'sensors' | 'districts';
+type MapLayerName = 'all' | 'sensors';
 
 // one bubble on the map, either a whole zone or a single sensor
 interface MapBubble {
@@ -206,7 +206,7 @@ function atPlayback(history: AQIHistory[] | undefined, live: number | null): num
     return null;
   }
   const found: AQIHistory = best;
-  return displayAqiOf(found.us_aqi, found.aqi);
+  return historyAqi(found);
 }
 
 function buildPlaybackHours() {
@@ -293,9 +293,8 @@ function scrubMap(value: string) {
 
 (window as any).toggleMapPlayback = toggleMapPlayback;
 (window as any).scrubMap = scrubMap;
-let mapLayer: MapLayerName = 'sensors';
+let mapLayer: MapLayerName = 'all';
 let loadedZones: { zone: Zone; data: AQIData | null }[] = [];
-let loadedSensors: SensorInfo[] = [];
 
 async function populateMapMarkers(allZones: Zone[]) {
   if (!mapInstance) return;
@@ -303,79 +302,30 @@ async function populateMapMarkers(allZones: Zone[]) {
   markersLayer = L.layerGroup().addTo(mapInstance);
   mapInstance.on('zoomend', renderMapMarkers);
 
-  const [zoneData, sensors] = await Promise.all([
-    getZonesAQI(allZones.map((zone) => zone.id)).then((byId) =>
-      allZones.map((zone) => ({ zone, data: byId[zone.id] ?? null }))
-    ),
-    getSensorInfoList(),
-  ]);
-  loadedZones = zoneData;
-  loadedSensors = sensors || [];
+  const byId = await getZonesAQI(allZones.map((zone) => zone.id));
+  loadedZones = allZones.map((zone) => ({ zone, data: byId[zone.id] ?? null }));
   buildPlaybackHours();
 }
 
-function displayAqiOf(us: number | null | undefined, naqi: number | null | undefined) {
-  if (getAQIStandard() === 'us') {
-    return us ?? naqi ?? null;
-  }
-  return naqi ?? null;
+function isLiveReading(zone: Zone, data: AQIData): boolean {
+  return !isEstimate(zone) && !!data.source && data.source.startsWith('airgradient');
 }
 
-function hasLiveNode(data: AQIData): boolean {
-  const nodes = data.nodes;
-  if (!nodes) {
-    return false;
-  }
-  return Object.keys(nodes).some(
-    (name) => nodes[name].pm2_5 !== null && nodes[name].pm2_5 !== undefined
-  );
-}
-
-// in the sensor layer a zone with live sensors is replaced by them, zones that
-// only have modelled data keep their one bubble
 function collectBubbles(): MapBubble[] {
   const bubbles: MapBubble[] = [];
-  const zonesWithSensors = new Set<string>();
-
-  if (mapLayer === 'sensors') {
-    loadedZones.forEach(({ zone, data }) => {
-      if (!data || !data.nodes || !hasLiveNode(data)) return;
-      const nodes = data.nodes;
-      Object.keys(nodes).forEach((name) => {
-        const node = nodes[name];
-        // names only have to be unique inside a zone, so match the zone name too
-        const info = loadedSensors.find((s) => s.name === name && s.zone === data.zone_name);
-        if (!info || info.latitude == null || info.longitude == null) return;
-        zonesWithSensors.add(zone.id);
-        const isOffline = node.pm2_5 === null || node.pm2_5 === undefined;
-        bubbles.push({
-          latLng: L.latLng(info.latitude, info.longitude),
-          aqi: atPlayback(node.history, isOffline ? null : displayAqiOf(node.us_aqi, node.aqi)),
-          isLive: true,
-          isModelled: false,
-          count: 1,
-          onClick: () =>
-            showNodeSheet(name, node, data.zone_name, () =>
-              openMapDetailSheet(zone.id, zone, data)
-            ),
-        });
-      });
-    });
-  }
-
   loadedZones.forEach(({ zone, data }) => {
-    if (!zone.lat || !zone.lon || !data || zonesWithSensors.has(zone.id)) return;
-    const isLive = zone.provider === 'airgradient' && hasLiveNode(data);
+    if (!zone.lat || !zone.lon || !data) return;
+    if (mapLayer === 'sensors' && isEstimate(zone)) return;
+    const live = isLiveReading(zone, data);
     bubbles.push({
       latLng: L.latLng(zone.lat, zone.lon),
-      aqi: atPlayback(data.history, displayAqiOf(data.us_aqi, data.aqi)),
-      isLive,
-      isModelled: mapLayer === 'sensors' && !isLive,
+      aqi: atPlayback(data.history, zoneAqi(data)),
+      isLive: live,
+      isModelled: !live,
       count: 1,
       onClick: () => openMapDetailSheet(zone.id, zone, data),
     });
   });
-
   return bubbles;
 }
 
@@ -463,8 +413,8 @@ function renderMapMarkers() {
 
 function setMapLayer(layer: MapLayerName) {
   mapLayer = layer;
+  document.getElementById('map-layer-all')?.classList.toggle('active', layer === 'all');
   document.getElementById('map-layer-sensors')?.classList.toggle('active', layer === 'sensors');
-  document.getElementById('map-layer-districts')?.classList.toggle('active', layer === 'districts');
   renderMapMarkers();
 }
 

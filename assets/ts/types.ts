@@ -1,3 +1,5 @@
+export type PlaceKind = 'sensor' | 'estimate';
+
 export interface Zone {
   id: string;
   name: string;
@@ -5,6 +7,10 @@ export interface Zone {
   lon: number;
   provider?: string;
   zone_type?: string;
+  kind?: PlaceKind;
+  district?: string;
+  division?: string;
+  legacy_zone?: string;
 }
 
 export interface AQIHistory {
@@ -13,6 +19,29 @@ export interface AQIHistory {
   us_aqi?: number;
   pm2_5?: number | null;
   pm10?: number | null;
+  temp?: number | null;
+  humidity?: number | null;
+  aqi_raw?: number | null;
+  us_aqi_raw?: number | null;
+  pm2_5_raw?: number | null;
+  pm10_raw?: number | null;
+  temp_raw?: number | null;
+  humidity_raw?: number | null;
+}
+
+export interface SensorReadings {
+  pm2_5: number | null;
+  pm10: number | null;
+  temp: number | null;
+  humidity: number | null;
+}
+
+export interface RawReadings extends SensorReadings {
+  aqi: number | null;
+  us_aqi: number | null;
+  main_pollutant?: string;
+  us_main_pollutant?: string;
+  concentrations_us_units?: Pollutants;
 }
 
 export interface Pollutants {
@@ -65,6 +94,17 @@ export interface AQIData {
   warning?: string;
   nodes?: { [name: string]: NodeData };
   weather?: WeatherInfo;
+  kind?: PlaceKind;
+  district?: string;
+  division?: string;
+  location_id?: number;
+  sensor_status?: string;
+  coordinates?: { lat: number; lon: number };
+  readings?: SensorReadings;
+  raw?: RawReadings | null;
+  raw_available?: boolean;
+  averages_24h_raw?: Pollutants;
+  us_main_pollutant?: string;
 }
 
 export interface WeatherHistoryPoint {

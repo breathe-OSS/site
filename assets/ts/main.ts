@@ -1,4 +1,4 @@
-import { STORAGE_KEY_PINS, API_URL } from './config.js';
+import { STORAGE_KEY_PINS } from './config.js';
 import { fetchZones, getZoneAQI, getZonesAQI } from './api.js';
 import {
   initTheme,
@@ -13,30 +13,29 @@ import {
 import { initMotion, motionEnabled } from './motion.js';
 import { initMap, updateMapTiles, resizeMap, openMapZoneById } from './map.js';
 import { getPanelZoneId, setPanelPinned, closeZonePanel, refreshZonePanel } from './panel.js';
-import { showNodeSheet } from './sensors.js';
 import {
   renderDashboardCard,
-  renderExploreItem,
   updateDetailView,
   updateChartTheme,
   renderSkeletonCard,
-  setPinIcon,
-  getRenderedNode,
-  getRenderedZoneName,
-  setExploreAqi,
 } from './ui.js';
-import { Zone, AQIData, WeatherHistory } from './types.js';
 import {
-  HistoryPeriod,
-  HistoryPeriodMode,
-  formatCalendarDate,
-  historyPeriodContaining,
-  historyPeriodInterval,
-  historyPeriodLabel,
-  historyPeriodToken,
-  parseCalendarDate,
-  shiftHistoryPeriod,
-} from './utils.js';
+  initExplore,
+  renderExplore,
+  setExploreData,
+  repaintExplore,
+  revealDistrict,
+  syncExplorePin,
+} from './explore.js';
+import {
+  initHistory,
+  openHistoryFor,
+  refreshHistory,
+  historyZoneId,
+  syncHistoryRawMode,
+} from './history.js';
+import { initRawMode, setRawMode, zoneAqi } from './readings.js';
+import { Zone, AQIData } from './types.js';
 
 let allZones: Zone[] = [];
 let dashboardHasRendered = false;
@@ -59,7 +58,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     repaintAqiColours();
   });
 
+  initRawMode(() => {
+    repaintAqiColours();
+    syncHistoryRawMode();
+  });
+
+  initExplore({
+    isPinned: (id) => pinnedZoneIds.includes(id),
+    togglePin: (id) => togglePin(id),
+    openPlace: (id) => openDetails(id),
+  });
+  initHistory(handleShowView);
+
   allZones = await fetchZones();
+  migratePins();
   refreshDashboard();
 
   updateNavHighlight('dashboard');
@@ -101,15 +113,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   watchDetailScroll();
 });
 
+function migratePins() {
+  if (allZones.length === 0) {
+    return;
+  }
+  const known = new Set(allZones.map((z) => z.id));
+  const next: string[] = [];
+  const add = (id: string) => {
+    if (!next.includes(id)) {
+      next.push(id);
+    }
+  };
+  pinnedZoneIds.forEach((id) => {
+    if (known.has(id)) {
+      add(id);
+      return;
+    }
+    const replacements = allZones.filter((z) => z.legacy_zone === id);
+    if (replacements.length === 0) {
+      add(id);
+      return;
+    }
+    replacements.forEach((z) => add(z.id));
+  });
+  if (next.join(',') !== pinnedZoneIds.join(',')) {
+    pinnedZoneIds = next;
+    localStorage.setItem(STORAGE_KEY_PINS, JSON.stringify(pinnedZoneIds));
+  }
+}
+
 function repaintAqiColours() {
   refreshDashboard();
-
-  const loaded = exploreAqi;
-  if (loaded) {
-    Object.keys(exploreNodes).forEach((id) => {
-      setExploreAqi(exploreNodes[id], loaded[id] ?? null);
-    });
-  }
+  repaintExplore();
+  refreshHistory();
 
   const detailView = document.getElementById('view-details');
   if (detailView && detailView.classList.contains('active-view') && currentZoneId) {
@@ -172,7 +208,9 @@ async function refreshDashboard() {
   );
   container.append(...skeletons);
 
-  const aqiById = await getZonesAQI(pinnedZoneIds);
+  const aqiById = await getZonesAQI(
+    pinnedZoneIds.filter((id) => allZones.some((z) => z.id === id))
+  );
   const results = pinnedZoneIds.map((id) => {
     const zone = allZones.find((z) => z.id === id);
     const data = aqiById[id];
@@ -401,10 +439,7 @@ function displayAqiFor(data: AQIData | null | undefined): number | null {
   if (!data) {
     return null;
   }
-  if (getAQIStandard() === 'us') {
-    return data.us_aqi || 0;
-  }
-  return data.aqi;
+  return zoneAqi(data);
 }
 
 async function renderRightNow() {
@@ -563,27 +598,7 @@ function drawEmptyHints() {
   });
 }
 
-const exploreNodes: { [id: string]: HTMLElement } = {};
-let exploreAqi: { [id: string]: AQIData | null } | null = null;
 let exploreAqiLoading = false;
-
-function exploreNodeFor(zone: Zone): HTMLElement {
-  let node = exploreNodes[zone.id];
-  if (!node) {
-    node = renderExploreItem(
-      zone,
-      pinnedZoneIds.includes(zone.id),
-      () => togglePin(zone.id),
-      () => openDetails(zone.id)
-    );
-    node.dataset.zoneId = zone.id;
-    exploreNodes[zone.id] = node;
-    if (exploreAqi) {
-      setExploreAqi(node, exploreAqi[zone.id] ?? null);
-    }
-  }
-  return node;
-}
 
 async function loadExploreAqi() {
   if (exploreAqiLoading) {
@@ -592,76 +607,11 @@ async function loadExploreAqi() {
   exploreAqiLoading = true;
   const byId = await getZonesAQI(allZones.map((z) => z.id));
   exploreAqiLoading = false;
-  exploreAqi = byId;
-  Object.keys(exploreNodes).forEach((id) => {
-    setExploreAqi(exploreNodes[id], byId[id] ?? null);
-  });
+  setExploreData(byId);
 }
 
-// Reuses the card elements across filters and moves the survivors, rather than
-// rebuilding the list, which made every remaining card replay its entrance
-// animation on every keystroke.
 function refreshExploreList(filter: string = '') {
-  const container = document.getElementById('zone-list');
-  if (!container) return;
-
-  const before: { [id: string]: number } = {};
-  Array.from(container.children).forEach((el) => {
-    const id = (el as HTMLElement).dataset.zoneId;
-    if (id) before[id] = el.getBoundingClientRect().top;
-  });
-
-  const needle = filter.toLowerCase();
-  const filtered = allZones.filter((z) => z.name.toLowerCase().includes(needle));
-
-  const fragment = document.createDocumentFragment();
-  filtered.forEach((zone) => {
-    const node = exploreNodeFor(zone);
-    node.style.transition = '';
-    node.style.transform = '';
-    node.classList.toggle('no-entrance', before[zone.id] !== undefined);
-    fragment.appendChild(node);
-  });
-
-  container.textContent = '';
-  container.appendChild(fragment);
-
-  if (!motionEnabled('listAnimations')) return;
-
-  Array.from(container.children).forEach((el) => {
-    const node = el as HTMLElement;
-    const id = node.dataset.zoneId;
-    if (!id || before[id] === undefined) return;
-
-    const delta = before[id] - node.getBoundingClientRect().top;
-    if (!delta) return;
-
-    node.style.transition = 'none';
-    node.style.transform = `translateY(${delta}px)`;
-    requestAnimationFrame(() => {
-      node.style.transition =
-        'transform var(--motion-list) var(--motion-easing-emphasized-decelerate)';
-      node.style.transform = '';
-    });
-  });
-}
-
-// Keeps a cached explore card's pin button in step when the pin was changed
-// from somewhere else, such as the snackbar's undo.
-function syncExplorePin(id: string) {
-  const node = exploreNodes[id];
-  if (!node) return;
-
-  const btn = node.querySelector('.pin-btn') as HTMLElement | null;
-  if (!btn) return;
-
-  const pinned = pinnedZoneIds.includes(id);
-  btn.classList.toggle('pinned', pinned);
-  setPinIcon(btn, pinned);
-  const zone = allZones.find((z) => z.id === id);
-  if (zone) {
-    btn.setAttribute('aria-label', `${pinned ? 'Unpin' : 'Pin'} ${zone.name}`);
-  }
+  renderExplore(allZones, filter);
 }
 
 function togglePin(id: string, announce: boolean = true) {
@@ -682,7 +632,7 @@ function togglePin(id: string, announce: boolean = true) {
   if (!announce) return;
 
   const zone = allZones.find((z) => z.id === id);
-  const name = zone ? zone.name : 'zone';
+  const name = zone ? zone.name : 'place';
   showSnackbar(`${wasPinned ? 'Unpinned' : 'Pinned'} ${name}`, 'Undo', () => {
     togglePin(id, false);
   });
@@ -722,471 +672,15 @@ async function openDetails(zoneId: string) {
   }
 }
 
-// the node cards pass the name url encoded so names with quotes survive the
-// inline onclick
-function openNodeDetails(encodedName: string) {
-  const name = decodeURIComponent(encodedName);
-  const node = getRenderedNode(name);
-  if (!node) return;
-  showNodeSheet(name, node, getRenderedZoneName() ?? undefined);
-}
-
-let currentHistoryZoneId: string | null = null;
-let currentHistoryRange: string = '1w';
-
-import { fetchHistoricalData, fetchWeatherHistory } from './api.js';
-import { renderExtendedHistoryChart, renderExtendedDotsGrid, setupExtendedPager } from './ui.js';
-
-let currentHistoryData: any = null;
-let currentWeatherData: WeatherHistory | null = null;
-let currentWeatherFilter: string = 'all';
-let historyPeriodMode: HistoryPeriodMode = 'month';
-let historyPeriod: HistoryPeriod | null = null;
-let historyPeriodActive: boolean = false;
-let historyRequestId: number = 0;
-
-async function openHistoryView() {
-  if (!currentZoneId) return;
+function openHistoryView() {
   const zone = allZones.find((z) => z.id === currentZoneId);
   if (!zone) return;
-
-  currentHistoryZoneId = zone.id;
-  const histTitle = document.getElementById('history-title-header');
-  if (histTitle) histTitle.innerText = `${zone.name} History`;
-
-  const aqiData = await getZoneAQI(zone.id);
-  const sensorSelect = document.getElementById('hist-sensor-select') as HTMLSelectElement;
-  if (sensorSelect) {
-    sensorSelect.innerHTML = '<option value="zone">Zone Average</option>';
-    if (aqiData && aqiData.nodes) {
-      Object.keys(aqiData.nodes).forEach((node) => {
-        sensorSelect.innerHTML += `<option value="${node}">${node}</option>`;
-      });
-    }
-  }
-
-  handleShowView('history');
-  currentHistoryData = null;
-  currentWeatherData = null;
-  historyPeriod = null;
-  setWeatherFilter('all');
-  setHistoryRange('1w');
+  openHistoryFor(zone);
 }
 
-function setWeatherFilter(condition: string) {
-  currentWeatherFilter = condition;
-  document
-    .querySelectorAll('#weather-filter-chips .btn-outlined')
-    .forEach((btn) => btn.classList.remove('active'));
-  const btn = document.getElementById(`wf-${condition}`);
-  if (btn) {
-    btn.classList.add('active');
-  }
-  renderFilteredHistory();
-}
-
-function conditionForTs(ts: number): string | null {
-  if (!currentWeatherData || currentWeatherData.points.length === 0) {
-    return null;
-  }
-  const interval = currentWeatherData.interval;
-  const anchor = currentWeatherData.anchor ?? 0;
-  const bucket = anchor + Math.floor((ts - anchor) / interval) * interval;
-  const point = currentWeatherData.points.find((p) => p.ts === bucket);
-  return point ? point.condition : null;
-}
-
-function matchesFilter(condition: string | null, filter: string): boolean {
-  if (filter === 'all') {
-    return true;
-  }
-  if (condition === null) {
-    return false;
-  }
-  if (filter === 'rain') {
-    return condition === 'rain' || condition === 'thunderstorm';
-  }
-  return condition === filter;
-}
-
-function renderFilteredHistory() {
-  if (!currentHistoryData) {
-    return;
-  }
-
-  const pm25Cb = document.getElementById('hist-pm25') as HTMLInputElement;
-  const pm10Cb = document.getElementById('hist-pm10') as HTMLInputElement;
-  const showPm25 = pm25Cb ? pm25Cb.checked : true;
-  const showPm10 = pm10Cb ? pm10Cb.checked : true;
-
-  let points = currentHistoryData.data || [];
-  if (currentWeatherFilter !== 'all') {
-    points = points.filter((p: any) => matchesFilter(conditionForTs(p.ts), currentWeatherFilter));
-  }
-
-  renderExtendedHistoryChart(points, showPm25, showPm10);
-  renderExtendedDotsGrid(points, showPm25, showPm10);
-  const emptyEl = document.getElementById('hist-empty');
-  if (emptyEl) emptyEl.style.display = points.length === 0 ? 'block' : 'none';
-  renderWeatherImpact();
-}
-
-const WEATHER_LABELS: { [key: string]: string } = {
-  rain: 'Rain',
-  snow: 'Snow',
-  fog: 'Fog',
-  cloudy: 'Cloudy',
-  clear: 'Clear',
-};
-
-function computeWeatherGroups(): { [key: string]: { sum: number; count: number } } | null {
-  if (!currentWeatherData || !currentHistoryData || !currentHistoryData.data) {
-    return null;
-  }
-
-  const groups: { [key: string]: { sum: number; count: number } } = {};
-  for (const p of currentHistoryData.data) {
-    if (p.pm2_5 === null || p.pm2_5 === undefined) {
-      continue;
-    }
-    let condition = conditionForTs(p.ts);
-    if (condition === null) {
-      continue;
-    }
-    if (condition === 'thunderstorm') {
-      condition = 'rain';
-    }
-    if (!groups[condition]) {
-      groups[condition] = { sum: 0, count: 0 };
-    }
-    groups[condition].sum += p.pm2_5;
-    groups[condition].count += 1;
-  }
-  return groups;
-}
-
-function updateWeatherChips(groups: { [key: string]: { sum: number; count: number } } | null) {
-  let activeVisible = currentWeatherFilter === 'all';
-
-  for (const condition of Object.keys(WEATHER_LABELS)) {
-    const btn = document.getElementById(`wf-${condition}`);
-    if (!btn) {
-      continue;
-    }
-    const present =
-      groups !== null && groups[condition] !== undefined && groups[condition].count > 0;
-    btn.style.display = present ? '' : 'none';
-    if (present && currentWeatherFilter === condition) {
-      activeVisible = true;
-    }
-  }
-
-  if (!activeVisible) {
-    setWeatherFilter('all');
-  }
-}
-
-function renderWeatherImpact() {
-  const container = document.getElementById('weather-impact');
-  if (!container) {
-    return;
-  }
-
-  const groups = computeWeatherGroups();
-  updateWeatherChips(groups);
-
-  if (!groups) {
-    container.innerHTML = '';
-    return;
-  }
-
-  let totalSum = 0;
-  let totalCount = 0;
-  for (const condition of Object.keys(groups)) {
-    totalSum += groups[condition].sum;
-    totalCount += groups[condition].count;
-  }
-  if (totalCount === 0) {
-    container.innerHTML = '';
-    return;
-  }
-  const overallAvg = totalSum / totalCount;
-  const interval = currentWeatherData ? currentWeatherData.interval : 3600;
-
-  const cards = Object.keys(WEATHER_LABELS)
-    .filter((c) => groups[c] && groups[c].count >= 3)
-    .map((c) => {
-      const avg = groups[c].sum / groups[c].count;
-      const hours = Math.round((groups[c].count * interval) / 3600);
-      const diffPct = Math.round(((avg - overallAvg) / overallAvg) * 100);
-      const diffColor = diffPct <= 0 ? 'var(--aqi-good)' : 'var(--aqi-poor)';
-      const diffText =
-        diffPct === 0 ? 'same as average' : `${diffPct > 0 ? '+' : ''}${diffPct}% vs average`;
-      return `
-        <div class="stat-card">
-          <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant);">${WEATHER_LABELS[c]} (${hours}h of data)</div>
-          <div class="stat-value" style="font-size: 18px; font-weight: bold; margin-top: 4px;">${avg.toFixed(1)} µg/m³</div>
-          <div style="font-size: 11px; color: ${diffColor}; margin-top: 2px;">${diffText}</div>
-        </div>
-      `;
-    });
-
-  if (cards.length < 2) {
-    container.innerHTML = '';
-    return;
-  }
-
-  container.innerHTML = `
-    <div style="padding: 16px; background: var(--surface-variant); border-radius: 12px;">
-      <div style="font-size: 12px; color: var(--on-surface-variant); margin-bottom: 12px; text-align: center;">Average PM2.5 by weather condition</div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; text-align: center;">
-        ${cards.join('')}
-      </div>
-    </div>
-  `;
-}
-
-function clearHistoryRangeSelection() {
-  document
-    .querySelectorAll('#hist-range-buttons .btn-outlined')
-    .forEach((btn) => btn.classList.remove('active'));
-
-  const customInputs = document.getElementById('hist-custom-inputs');
-  if (customInputs) customInputs.style.display = 'none';
-
-  const dateInputs = document.getElementById('hist-date-inputs');
-  if (dateInputs) dateInputs.style.display = 'none';
-
-  historyPeriodActive = false;
-}
-
-function setHistoryRange(range: string) {
-  clearHistoryRangeSelection();
-  const btn = document.getElementById(`hist-${range}`);
-  if (btn) btn.classList.add('active');
-
-  currentHistoryRange = range;
-  loadCustomHistory();
-}
-
-function todayCalendarDate(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-
-function renderHistoryPeriod() {
-  if (!historyPeriod) return;
-
-  ['month', 'week', 'days'].forEach((mode) => {
-    const btn = document.getElementById(`hist-period-${mode}`);
-    if (btn) btn.classList.toggle('active', mode === historyPeriodMode);
-  });
-
-  const today = formatCalendarDate(todayCalendarDate());
-  const startInput = document.getElementById('hist-date-start') as HTMLInputElement;
-  const endInput = document.getElementById('hist-date-end') as HTMLInputElement;
-  const endField = document.getElementById('hist-date-end-field');
-  const startLabel = document.getElementById('hist-date-start-label');
-  const label = document.getElementById('hist-date-label');
-  const nextBtn = document.getElementById('hist-date-next') as HTMLButtonElement;
-
-  if (startInput) {
-    startInput.max = today;
-    startInput.value = formatCalendarDate(historyPeriod.start);
-  }
-  if (endInput) {
-    endInput.max = today;
-    endInput.value = formatCalendarDate(historyPeriod.end);
-  }
-  if (endField) endField.style.display = historyPeriodMode === 'days' ? 'flex' : 'none';
-  if (startLabel) {
-    if (historyPeriodMode === 'days') startLabel.innerText = 'From';
-    else if (historyPeriodMode === 'week') startLabel.innerText = 'Week containing';
-    else startLabel.innerText = 'Month containing';
-  }
-  if (label) label.innerText = historyPeriodLabel(historyPeriodMode, historyPeriod);
-  if (nextBtn) {
-    const next = shiftHistoryPeriod(historyPeriodMode, historyPeriod, 1);
-    nextBtn.disabled = formatCalendarDate(next.start) > today;
-  }
-}
-
-function applyHistoryPeriod() {
-  if (!historyPeriod) return;
-  renderHistoryPeriod();
-  currentHistoryRange = historyPeriodToken(historyPeriod);
-  loadCustomHistory();
-}
-
-function toggleDateRange() {
-  clearHistoryRangeSelection();
-  const btn = document.getElementById('hist-date-btn');
-  if (btn) btn.classList.add('active');
-
-  const dateInputs = document.getElementById('hist-date-inputs');
-  if (dateInputs) dateInputs.style.display = 'flex';
-
-  historyPeriodActive = true;
-  if (!historyPeriod) {
-    historyPeriod = historyPeriodContaining(historyPeriodMode, todayCalendarDate());
-  }
-  applyHistoryPeriod();
-}
-
-function setHistoryPeriodMode(mode: HistoryPeriodMode) {
-  const today = todayCalendarDate();
-  let anchor = historyPeriod ? historyPeriod.end : today;
-  if (anchor > today) {
-    anchor = today;
-  }
-  historyPeriodMode = mode;
-  historyPeriod = historyPeriodContaining(mode, anchor);
-  applyHistoryPeriod();
-}
-
-function stepHistoryPeriod(direction: number) {
-  if (!historyPeriod) return;
-  historyPeriod = shiftHistoryPeriod(historyPeriodMode, historyPeriod, direction);
-  applyHistoryPeriod();
-}
-
-function onHistoryDateChange() {
-  const startInput = document.getElementById('hist-date-start') as HTMLInputElement;
-  const endInput = document.getElementById('hist-date-end') as HTMLInputElement;
-  const start = startInput ? parseCalendarDate(startInput.value) : null;
-  if (!start) {
-    renderHistoryPeriod();
-    return;
-  }
-
-  if (historyPeriodMode !== 'days') {
-    historyPeriod = historyPeriodContaining(historyPeriodMode, start);
-    applyHistoryPeriod();
-    return;
-  }
-
-  const end = endInput ? parseCalendarDate(endInput.value) : null;
-  if (!end) {
-    renderHistoryPeriod();
-    return;
-  }
-  historyPeriod = start <= end ? { start, end } : { start: end, end: start };
-  applyHistoryPeriod();
-}
-
-function historyInterval(): string {
-  if (historyPeriodActive && historyPeriod) {
-    return historyPeriodInterval(historyPeriod);
-  }
-
-  const customInputs = document.getElementById('hist-custom-inputs');
-  let interval = '1h';
-  if (customInputs && customInputs.style.display === 'flex') {
-    const intInput = document.getElementById('custom-interval') as HTMLInputElement;
-    if (intInput && intInput.value) interval = intInput.value;
-  } else {
-    if (currentHistoryRange === '1w') interval = '1h';
-    else if (currentHistoryRange === '1mo') interval = '4h';
-    else if (currentHistoryRange === '6mo') interval = '1d';
-  }
-  return interval;
-}
-
-function toggleCustomRange() {
-  clearHistoryRangeSelection();
-  const btn = document.getElementById('hist-custom-btn');
-  if (btn) btn.classList.add('active');
-
-  const customInputs = document.getElementById('hist-custom-inputs');
-  if (customInputs) customInputs.style.display = 'flex';
-}
-
-function applyCustomHistory() {
-  const rangeInput = document.getElementById('custom-range') as HTMLInputElement;
-  if (rangeInput && rangeInput.value) {
-    currentHistoryRange = rangeInput.value;
-    loadCustomHistory();
-  }
-}
-
-async function loadCustomHistory() {
-  if (!currentHistoryZoneId) return;
-
-  const sensorSelect = document.getElementById('hist-sensor-select') as HTMLSelectElement;
-  const location = sensorSelect
-    ? sensorSelect.value === 'zone'
-      ? currentHistoryZoneId
-      : `${currentHistoryZoneId}_${sensorSelect.value}`
-    : currentHistoryZoneId;
-
-  const interval = historyInterval();
-
-  const pm25Cb = document.getElementById('hist-pm25') as HTMLInputElement;
-  const pm10Cb = document.getElementById('hist-pm10') as HTMLInputElement;
-
-  const showPm25 = pm25Cb ? pm25Cb.checked : true;
-  const showPm10 = pm10Cb ? pm10Cb.checked : true;
-
-  let metrics = [];
-  if (showPm25) metrics.push('pm2.5');
-  if (showPm10) metrics.push('pm10');
-  if (metrics.length === 0) metrics = ['pm2.5', 'pm10'];
-
-  historyRequestId += 1;
-  const requestId = historyRequestId;
-
-  const [data, weather] = await Promise.all([
-    fetchHistoricalData(location, currentHistoryRange, interval, metrics.join(',')),
-    currentHistoryZoneId
-      ? fetchWeatherHistory(currentHistoryZoneId, currentHistoryRange, interval)
-      : Promise.resolve(null),
-  ]);
-  if (requestId !== historyRequestId) {
-    return;
-  }
-  currentHistoryData = data;
-  currentWeatherData = weather;
-
-  renderFilteredHistory();
-  setupExtendedPager();
-  updateHistoryStatsUI();
-}
-
-function updateHistoryStatsUI() {
-  if (!currentHistoryData || !currentHistoryData.stats) return;
-  const stats = currentHistoryData.stats;
-
-  const maxPm25El = document.getElementById('stat-max-pm25');
-  const minPm25El = document.getElementById('stat-min-pm25');
-  const avgPm25El = document.getElementById('stat-avg-pm25');
-
-  const maxPm10El = document.getElementById('stat-max-pm10');
-  const minPm10El = document.getElementById('stat-min-pm10');
-  const avgPm10El = document.getElementById('stat-avg-pm10');
-
-  if (maxPm25El) maxPm25El.innerText = stats.max_pm2_5 ?? '--';
-  if (minPm25El) minPm25El.innerText = stats.min_pm2_5 ?? '--';
-  if (avgPm25El) avgPm25El.innerText = stats.avg_pm2_5 ?? '--';
-
-  if (maxPm10El) maxPm10El.innerText = stats.max_pm10 ?? '--';
-  if (minPm10El) minPm10El.innerText = stats.min_pm10 ?? '--';
-  if (avgPm10El) avgPm10El.innerText = stats.avg_pm10 ?? '--';
-}
-
-function downloadHistoryCSV() {
-  if (!currentHistoryZoneId) return;
-  const sensorSelect = document.getElementById('hist-sensor-select') as HTMLSelectElement;
-  const location = sensorSelect
-    ? sensorSelect.value === 'zone'
-      ? currentHistoryZoneId
-      : `${currentHistoryZoneId}_${sensorSelect.value}`
-    : currentHistoryZoneId;
-
-  const interval = historyInterval();
-
-  window.open(
-    `${API_URL}/historical-data/${location}/${currentHistoryRange}/${interval}/pm2.5,pm10?format=csv`
-  );
+function openDistrictInExplore(district: string) {
+  handleShowView('explore');
+  revealDistrict(district);
 }
 
 // navigation logic
@@ -1195,19 +689,9 @@ function downloadHistoryCSV() {
 (window as any).toggleReorder = toggleReorder;
 window.addEventListener('resize', drawEmptyHints);
 (window as any).openDetails = openDetails;
-(window as any).openNodeDetails = openNodeDetails;
 (window as any).openHistoryView = openHistoryView;
-(window as any).setHistoryRange = setHistoryRange;
-(window as any).setWeatherFilter = setWeatherFilter;
-(window as any).toggleCustomRange = toggleCustomRange;
-(window as any).toggleDateRange = toggleDateRange;
-(window as any).setHistoryPeriodMode = setHistoryPeriodMode;
-(window as any).stepHistoryPeriod = stepHistoryPeriod;
-(window as any).onHistoryDateChange = onHistoryDateChange;
-(window as any).applyCustomHistory = applyCustomHistory;
-(window as any).loadCustomHistory = loadCustomHistory;
-(window as any).updateHistoryStatsUI = updateHistoryStatsUI;
-(window as any).downloadHistoryCSV = downloadHistoryCSV;
+(window as any).openDistrictInExplore = openDistrictInExplore;
+(window as any).setRawMode = (on: boolean) => setRawMode(on);
 (window as any).openModal = (id: string) => document.getElementById(id)?.classList.remove('hidden');
 (window as any).closeModal = (id: string) => document.getElementById(id)?.classList.add('hidden');
 
@@ -1291,8 +775,8 @@ function routePath(viewName: string): string {
   if (viewName === 'details' && currentZoneId) {
     return `/zone/${encodeURIComponent(currentZoneId)}`;
   }
-  if (viewName === 'history' && currentHistoryZoneId) {
-    return `/zone/${encodeURIComponent(currentHistoryZoneId)}/history`;
+  if (viewName === 'history' && historyZoneId()) {
+    return `/zone/${encodeURIComponent(historyZoneId()!)}/history`;
   }
   if (viewName === 'map' || viewName === 'explore' || viewName === 'settings') {
     return `/${viewName}`;
@@ -1309,7 +793,7 @@ function routeTitle(viewName: string): string {
     }
   }
   if (viewName === 'history') {
-    const name = zoneName(currentHistoryZoneId);
+    const name = zoneName(historyZoneId());
     if (name) {
       return `${name} air quality history | Breathe`;
     }
@@ -1318,7 +802,7 @@ function routeTitle(viewName: string): string {
     return 'Air quality map of Jammu & Kashmir and Ladakh | Breathe';
   }
   if (viewName === 'explore') {
-    return 'All zones | Breathe';
+    return 'Sensors by district | Breathe';
   }
   if (viewName === 'settings') {
     return 'Settings | Breathe';
@@ -1342,9 +826,40 @@ function syncUrl(viewName: string) {
   history.pushState({ depth: depth + 1 }, '', path);
 }
 
+function legacyPlaces(id: string | null): Zone[] {
+  if (id === null) {
+    return [];
+  }
+  return allZones.filter((z) => z.legacy_zone === id);
+}
+
 function applyRoute(route: Route) {
   applyingRoute = true;
   try {
+    const legacy = legacyPlaces(route.zoneId);
+    if (
+      route.zoneId !== null &&
+      !allZones.some((z) => z.id === route.zoneId) &&
+      legacy.length > 0
+    ) {
+      if (legacy.length === 1) {
+        route = { ...route, zoneId: legacy[0].id };
+        const suffix = route.view === 'history' ? '/history' : '';
+        const base = route.view === 'map' ? '/map/' : '/zone/';
+        history.replaceState(
+          history.state,
+          '',
+          `${base}${encodeURIComponent(legacy[0].id)}${suffix}`
+        );
+      } else if (route.view === 'details' || route.view === 'history') {
+        handleShowView('explore');
+        history.replaceState(history.state, '', '/explore');
+        revealDistrict(legacy[0].district || '');
+        return;
+      } else if (route.view === 'map') {
+        route = { ...route, zoneId: null };
+      }
+    }
     const known = route.zoneId !== null && allZones.some((z) => z.id === route.zoneId);
     if (route.view === 'details' && known) {
       openDetails(route.zoneId!);
@@ -1378,8 +893,8 @@ function goBack(fallback: string) {
   }
   applyingRoute = true;
   try {
-    if (fallback === 'details' && currentHistoryZoneId) {
-      openDetails(currentHistoryZoneId);
+    if (fallback === 'details' && historyZoneId()) {
+      openDetails(historyZoneId()!);
     } else {
       fallback = 'dashboard';
       handleShowView(fallback);

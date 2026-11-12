@@ -14,7 +14,21 @@ import {
   aqiTextColor,
   getHealthAdvice,
 } from './utils.js';
-import { Zone, AQIData, AQIHistory, Pollutants, NodeData, WeatherInfo } from './types.js';
+import { Zone, AQIData, AQIHistory, Pollutants, WeatherInfo, SensorInfo } from './types.js';
+import {
+  historyAqi,
+  isEstimate,
+  isRawMode,
+  placeLine,
+  rawApplies,
+  rawExplainerHtml,
+  zoneAqi,
+  zoneAverages,
+  zoneConcentrations,
+  zoneMainPollutant,
+  zoneReadings,
+} from './readings.js';
+import { getSensorInfoList } from './api.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
 
 declare const Chart: typeof ChartJS;
@@ -57,13 +71,15 @@ function getTrendHTML(currentAqi: number, currentTs: number, history: AQIHistory
   const oneHourAgo = currentTs - 3600;
   const std = getAQIStandard();
 
-  const validHistory = history.filter((h) => Math.abs(h.ts - oneHourAgo) < 1800);
+  const validHistory = history.filter(
+    (h) => Math.abs(h.ts - oneHourAgo) < 1800 && historyAqi(h, std) !== null
+  );
   if (validHistory.length === 0) return '';
 
   validHistory.sort((a, b) => Math.abs(a.ts - oneHourAgo) - Math.abs(b.ts - oneHourAgo));
   const pastEntry = validHistory[0];
 
-  const pastVal = std === 'us' ? pastEntry.us_aqi || 0 : pastEntry.aqi;
+  const pastVal = historyAqi(pastEntry, std) as number;
   const diff = currentAqi - pastVal;
 
   if (diff === 0) {
@@ -319,8 +335,7 @@ export function renderDashboardCard(
   animate: boolean = true
 ): HTMLElement {
   const std = getAQIStandard();
-  // Fallback to NAQI if us_aqi is missing (0)
-  const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
+  const displayAqi = zoneAqi(data, std);
   const colors = getAQIColor(displayAqi, std);
 
   const card = document.createElement('div');
@@ -335,14 +350,17 @@ export function renderDashboardCard(
   makeActivatable(card);
   const sparkValues = [...(data.history || [])]
     .sort((a, b) => a.ts - b.ts)
-    .map((h) => (std === 'us' ? h.us_aqi || 0 : h.aqi));
+    .map((h) => historyAqi(h, std))
+    .filter((v): v is number => v !== null);
+  const district = zone.district ? `<p class="dash-place">${zone.district} district</p>` : '';
   card.innerHTML = `
         <div class="dash-info">
             <h3 class="dash-name">${zone.name}</h3>
+            ${district}
             <p class="dash-meta">
                 <span style="color: ${colors.hex};">${getAQICategory(displayAqi, std)}</span>
                 <span class="dash-dot">·</span>
-                ${formatPollutantName(data.main_pollutant)}
+                ${formatPollutantName(zoneMainPollutant(data))}
             </p>
             ${getTrendHTML(displayAqi, data.timestamp_unix, data.history)}
         </div>
@@ -389,90 +407,36 @@ export function renderSkeletonCard(): HTMLElement {
   return card;
 }
 
-// explore
-export function renderExploreItem(
-  zone: Zone,
-  isPinned: boolean,
-  onPinClick: () => void,
-  onOpen: () => void
-): HTMLElement {
-  const div = document.createElement('div');
-  div.className = 'explore-card';
-  div.setAttribute('aria-label', `Open ${zone.name}`);
-  const provider = zone.provider;
-
-  const providerText =
-    provider === 'airgradient'
-      ? '<span class="status-indicator"></span> Live Ground Sensors'
-      : 'Satellite & Model Data';
-
-  div.innerHTML = `
-    <div class="explore-card-inner">
-        <div class="explore-text">
-            <div style="font-weight:500; font-size:16px; margin-bottom:4px;">${zone.name}</div>
-            <div style="font-size:12px; color:var(--on-surface-variant);">${providerText}</div>
-        </div>
-        <div class="explore-aqi skeleton-line" aria-hidden="true"></div>
-        <button class="pin-btn ${isPinned ? 'pinned' : ''}" aria-label="${isPinned ? 'Unpin' : 'Pin'} ${zone.name}">
-            ${getPinIconStack(isPinned)}
-        </button>
-    </div>
-    `;
-  const btn = div.querySelector('.pin-btn') as HTMLButtonElement;
-  const handlePin = () => {
-    onPinClick();
-    div.classList.remove('pin-flash');
-    void div.offsetWidth;
-    div.classList.add('pin-flash');
-  };
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    handlePin();
-  });
-  div.addEventListener('click', onOpen);
-  div.addEventListener('animationend', () => div.classList.remove('pin-flash'));
-  div.style.cursor = 'pointer';
-  makeActivatable(div);
-  return div;
-}
-
-export function setExploreAqi(card: HTMLElement, data: AQIData | null): void {
-  const chip = card.querySelector('.explore-aqi') as HTMLElement | null;
-  if (!chip) {
-    return;
-  }
-  chip.classList.remove('skeleton-line');
-  if (!data) {
-    chip.textContent = '--';
-    chip.style.background = '';
-    chip.style.color = '';
-    chip.title = '';
-    return;
-  }
-  const std = getAQIStandard();
-  const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
-  chip.textContent = String(displayAqi);
-  chip.style.background = getAQIColor(displayAqi, std).hex;
-  chip.style.color = aqiTextColor(displayAqi, std);
-  chip.title = getAQICategory(displayAqi, std);
-}
-
 // details
+const LIVE_SOURCE_HTML = '<span class="live-dot"></span> Live ground sensor';
+
+function sourceIndicatorHtml(zone: Zone, data: AQIData): { html: string; muted: boolean } {
+  if (isEstimate(zone)) {
+    return { html: 'Satellite estimate, no sensor here yet', muted: true };
+  }
+  if (data.source && data.source.startsWith('openmeteo')) {
+    return { html: 'Sensor offline, showing a satellite estimate', muted: true };
+  }
+  if (rawApplies(data)) {
+    return { html: `${LIVE_SOURCE_HTML} · raw readings`, muted: false };
+  }
+  return { html: LIVE_SOURCE_HTML, muted: false };
+}
+
 export function updateDetailView(zone: Zone, data: AQIData) {
   const titleHeader = document.getElementById('detail-title-header');
   if (titleHeader) titleHeader.innerText = zone.name;
 
   const std = getAQIStandard();
-  const displayAqi = std === 'us' ? data.us_aqi || 0 : data.aqi;
+  const displayAqi = zoneAqi(data, std);
   const colors = getAQIColor(displayAqi, std);
   const category = getAQICategory(displayAqi, std);
   const barPosition = getAQIBarPosition(displayAqi, std);
 
-  // Now viewing section elements
   const zoneNameEl = document.getElementById('detail-zone-name');
+  const placeLineEl = document.getElementById('detail-place-line');
   const sourceIndicatorEl = document.getElementById('detail-source-indicator');
 
-  // Main card elements
   const aqiEl = document.getElementById('detail-aqi');
   const chipEl = document.getElementById('detail-standard-chip') as HTMLElement;
   const primaryEl = document.getElementById('detail-primary');
@@ -482,52 +446,44 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   const cigaretteContainer = document.getElementById('cigarette-card-container');
   const mainCard = document.getElementById('detail-main-card');
 
-  // AQI Bar elements
-  const aqiBarContainer = document.getElementById('aqi-bar-container');
   const aqiBarLabel = document.getElementById('aqi-bar-label');
   const aqiBar = document.getElementById('aqi-bar');
   const aqiBarIndicator = document.getElementById('aqi-bar-indicator');
 
-  // Update now viewing section
   if (zoneNameEl) zoneNameEl.innerText = zone.name;
 
-  const provider = zone.provider || 'openmeteo';
-  if (sourceIndicatorEl) {
-    if (provider === 'airgradient') {
-      sourceIndicatorEl.innerHTML = `
-        <span class="live-dot"></span>
-        Live Ground Sensors
-      `;
-      sourceIndicatorEl.style.color = '';
-      sourceIndicatorEl.style.display = 'flex';
-    } else {
-      sourceIndicatorEl.innerHTML = `Satellite and Model data`;
-      sourceIndicatorEl.style.color = 'var(--on-surface-variant)';
-      sourceIndicatorEl.style.display = 'flex';
-    }
+  if (placeLineEl) {
+    const line = placeLine(zone);
+    placeLineEl.textContent = line;
+    placeLineEl.classList.toggle('hidden', !line);
+    placeLineEl.dataset.district = zone.district || '';
   }
+
+  if (sourceIndicatorEl) {
+    const source = sourceIndicatorHtml(zone, data);
+    sourceIndicatorEl.innerHTML = source.html;
+    sourceIndicatorEl.style.color = source.muted ? 'var(--on-surface-variant)' : '';
+    sourceIndicatorEl.style.display = 'flex';
+  }
+
+  renderRawControls(zone, data);
 
   const btnHistory = document.getElementById('btn-extended-history');
   if (btnHistory) {
-    if (provider === 'airgradient') {
-      btnHistory.style.display = 'block';
-    } else {
-      btnHistory.style.display = 'none';
-    }
+    btnHistory.style.display = isEstimate(zone) ? 'none' : 'block';
   }
 
-  // Update main card with gradient background
   if (mainCard) {
     mainCard.style.setProperty('--aqi-color', colors.hex);
     markStale(mainCard, data.timestamp_unix);
   }
 
-  let warningEl = document.getElementById('detail-warning');
+  const warningEl = document.getElementById('detail-warning');
   if (data.warning && warningEl) {
     warningEl.innerHTML = `
-      <div style="background: rgba(255, 82, 82, 0.1); border: 1px solid var(--aqi-very-poor); border-radius: 16px; padding: 16px; display: flex; align-items: start; gap: 12px; margin-bottom: 16px;">
+      <div class="detail-warning-box">
           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="var(--aqi-very-poor)"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
-          <div style="font-size: 13px; color: var(--on-surface); line-height: 1.5;">${data.warning}</div>
+          <div>${data.warning}</div>
       </div>
     `;
   } else if (warningEl) {
@@ -548,14 +504,15 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   if (chipEl) {
     chipEl.style.backgroundColor = colors.hex;
     chipEl.style.color = aqiTextColor(displayAqi, std);
-    chipEl.innerText = std === 'us' ? 'US AQI' : 'NAQI';
+    const label = std === 'us' ? 'US AQI' : 'NAQI';
+    chipEl.innerText = rawApplies(data) ? `Raw ${label}` : label;
     chipEl.setAttribute('role', 'button');
     chipEl.setAttribute('tabindex', '0');
     chipEl.setAttribute('title', 'Switch AQI standard');
     chipEl.onclick = () => setAQIStandard(std === 'us' ? 'india' : 'us');
   }
 
-  if (primaryEl) primaryEl.innerHTML = formatPollutantName(data.main_pollutant);
+  if (primaryEl) primaryEl.innerHTML = formatPollutantName(zoneMainPollutant(data));
 
   if (trendEl) {
     updateTrendBadge(trendEl, displayAqi, data.timestamp_unix, data.history);
@@ -567,18 +524,13 @@ export function updateDetailView(zone: Zone, data: AQIData) {
     updatedEl.classList.toggle('stale-label', diff > STALE_AFTER_MINUTES);
   }
 
-  // Update AQI Bar
   if (aqiBarLabel) {
     aqiBarLabel.innerText = category;
     aqiBarLabel.style.color = colors.hex;
   }
 
   if (aqiBar) {
-    if (std === 'us') {
-      aqiBar.classList.add('aqi-bar-us');
-    } else {
-      aqiBar.classList.remove('aqi-bar-us');
-    }
+    aqiBar.classList.toggle('aqi-bar-us', std === 'us');
   }
 
   if (aqiBarIndicator) {
@@ -590,31 +542,14 @@ export function updateDetailView(zone: Zone, data: AQIData) {
     adviceContainer.innerHTML = renderHealthAdviceCard(displayAqi, std);
   }
 
-  // Cigarettes Card
   if (cigaretteContainer) {
-    const pm25 = data.averages_24h?.['pm2_5'] || data.concentrations_us_units['pm2_5'] || 0;
-    const cigs = calculateCigarettes(pm25);
-
-    if (cigs > 0.1) {
-      cigaretteContainer.innerHTML = `
-        <div class="cigarette-card">
-          <div class="cigarette-icon">
-            <svg viewBox="0 0 24 24"><path d="M2 16h15v3H2zm18.5 0H22v3h-1.5zM18 16h1.5v3H18zm.85-8.27c.62-.61 1-1.45 1-2.38C19.85 3.5 18.35 2 16.5 2v1.5c1.02 0 1.85.83 1.85 1.85S17.52 7.2 16.5 7.2v1.5c2.24 0 4 1.83 4 4.07V15H22v-2.24c0-2.22-1.28-4.14-3.15-5.03zm-2.82 2.47H14.5c-1.02 0-1.85-.98-1.85-2s.83-1.75 1.85-1.75v-1.5c-1.85 0-3.35 1.5-3.35 3.35s1.5 3.35 3.35 3.35h1.53c1.05 0 1.97.74 1.97 2.05V15h1.5v-1.64c0-1.81-1.6-3.16-3.47-3.16z"/></svg>
-          </div>
-          <div class="cigarette-content">
-            <div class="cigarette-value">≈ ${cigs} cigarettes</div>
-            <div class="cigarette-label">Equivalent PM<sub>2.5</sub> inhalation today</div>
-          </div>
-        </div>
-      `;
-    } else {
-      cigaretteContainer.innerHTML = '';
-    }
+    const averages = zoneAverages(data);
+    const pm25 = averages?.['pm2_5'] || zoneConcentrations(data)['pm2_5'] || 0;
+    cigaretteContainer.innerHTML = renderCigaretteCard(pm25);
   }
 
-  // Provider Logo
   if (providerContainer) {
-    if (provider === 'airgradient') {
+    if (!isEstimate(zone)) {
       providerContainer.innerHTML = `
         <a href="https://airgradient.com" target="_blank" class="provider-link">
           <img src="assets/images/air_gradient_logo.png" alt="AirGradient" style="height: 24px; display: block;">
@@ -629,58 +564,12 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   }
 
   renderWeatherCard(data.weather);
+  renderPollutantGrid(zoneConcentrations(data));
+  renderSensorCard(zone, data);
 
-  renderPollutantGrid(data.concentrations_us_units || {});
-  renderNodeReadings(data.nodes || {}, data.zone_name);
-
-  const chartSelect = document.getElementById('chart-node-select') as HTMLSelectElement;
-  const chartLocationName = document.getElementById('chart-location-name');
-  if (chartSelect) {
-    const nodeNames = data.nodes ? Object.keys(data.nodes) : [];
-    const nodesWithHistory = nodeNames.filter(
-      (name) => data.nodes![name].history && data.nodes![name].history!.length > 0
-    );
-
-    if (nodesWithHistory.length > 0) {
-      chartSelect.classList.remove('hidden');
-      if (chartLocationName) {
-        chartLocationName.style.display = 'inline';
-        chartLocationName.innerText = 'Zone Average';
-      }
-      chartSelect.innerHTML = `<option value="zone">Zone Average</option>`;
-      nodesWithHistory.forEach((name) => {
-        const option = document.createElement('option');
-        option.value = name;
-        option.innerText = name;
-        chartSelect.appendChild(option);
-      });
-
-      chartSelect.onchange = () => {
-        const val = chartSelect.value;
-        if (chartLocationName) {
-          chartLocationName.innerText = val === 'zone' ? 'Zone Average' : val;
-        }
-        if (val === 'zone') {
-          renderChart(data.history);
-          renderDotsHistory(data.history);
-        } else {
-          const history = data.nodes?.[val]?.history;
-          if (history) {
-            renderChart(history);
-            renderDotsHistory(history);
-          }
-        }
-      };
-
-      chartSelect.addEventListener('click', (e) => e.stopPropagation());
-      chartSelect.addEventListener('mousedown', (e) => e.stopPropagation());
-      chartSelect.addEventListener('touchstart', (e) => e.stopPropagation());
-
-      chartSelect.value = 'zone';
-    } else {
-      chartSelect.classList.add('hidden');
-      if (chartLocationName) chartLocationName.style.display = 'none';
-    }
+  const trendTitle = document.getElementById('chart-mode-label');
+  if (trendTitle) {
+    trendTitle.textContent = rawApplies(data) ? 'Raw readings' : '';
   }
 
   renderChart(data.history);
@@ -688,75 +577,109 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   setupChartPager();
 }
 
-// the node detail sheet reads its numbers back from here instead of having
-// them all stuffed into the inline onclick
-let renderedNodes: { [name: string]: NodeData } = {};
-let renderedZoneName: string | null = null;
+function renderRawControls(zone: Zone, data: AQIData) {
+  const switcher = document.getElementById('detail-raw-switch');
+  const banner = document.getElementById('detail-raw-banner');
+  const unavailable = document.getElementById('detail-raw-unavailable');
+  const estimate = isEstimate(zone);
+  const hasRaw = !!data.raw;
 
-export function getRenderedNode(name: string): NodeData | null {
-  return renderedNodes[name] ?? null;
+  if (switcher) {
+    switcher.classList.toggle('hidden', estimate);
+    switcher.querySelectorAll<HTMLButtonElement>('[data-raw-choice]').forEach((btn) => {
+      if (btn.dataset.rawChoice === 'raw') {
+        btn.disabled = !hasRaw;
+      }
+    });
+  }
+
+  if (banner) {
+    const show = rawApplies(data);
+    banner.classList.toggle('hidden', !show);
+    const body = banner.querySelector('.raw-banner-points');
+    if (body && !body.innerHTML) {
+      body.innerHTML = rawExplainerHtml();
+    }
+  }
+
+  if (unavailable) {
+    let text = '';
+    if (isRawMode() && !estimate && !hasRaw) {
+      text =
+        'Raw readings are switched on, but this sensor has no live reading to show raw, so these are the calibrated satellite numbers.';
+    } else if (isRawMode() && estimate) {
+      text = 'Raw readings are switched on, but there is no sensor here, so nothing changes.';
+    }
+    unavailable.textContent = text;
+    unavailable.classList.toggle('hidden', !text);
+  }
 }
 
-export function getRenderedZoneName(): string | null {
-  return renderedZoneName;
-}
+let sensorInfoCache: SensorInfo[] | null = null;
 
-function renderNodeReadings(nodes: { [name: string]: NodeData }, zoneName: string) {
-  renderedNodes = nodes;
-  renderedZoneName = zoneName;
-  const container = document.getElementById('node-readings-container');
+async function renderSensorCard(zone: Zone, data: AQIData) {
+  const container = document.getElementById('sensor-card-container');
   if (!container) return;
 
-  const nodeNames = Object.keys(nodes);
-  if (nodeNames.length === 0) {
+  if (isEstimate(zone)) {
     container.innerHTML = '';
-    container.style.display = 'none';
     return;
   }
 
-  container.style.display = 'block';
-  const std = getAQIStandard();
+  const readings = zoneReadings(data);
+  const raw = rawApplies(data);
+  const fmt = (value: number | null | undefined, unit: string) =>
+    value === null || value === undefined ? '--' : `${Math.round(value * 10) / 10}${unit}`;
 
-  container.innerHTML = `
-    <h3 class="section-title">Individual Node Readings</h3>
-    <div class="node-grid">
-      ${nodeNames
-        .map((name) => {
-          const node = nodes[name];
-          const isOffline = node.pm2_5 === null || node.pm2_5 === undefined;
-          const displayAqi = std === 'us' ? (node.us_aqi ?? node.aqi ?? 0) : (node.aqi ?? 0);
-          const colors = getAQIColor(displayAqi, std);
-          const aqiColor = isOffline ? 'var(--on-surface-variant)' : colors.hex;
+  const readingRows = readings
+    ? `
+      <div class="sensor-readings">
+        <div class="sensor-reading">
+          <span class="sensor-reading-label">Temperature${raw ? ' (raw)' : ''}</span>
+          <span class="sensor-reading-value">${fmt(readings.temp, ' °C')}</span>
+        </div>
+        <div class="sensor-reading">
+          <span class="sensor-reading-label">Humidity${raw ? ' (raw)' : ''}</span>
+          <span class="sensor-reading-value">${fmt(readings.humidity, '%')}</span>
+        </div>
+        <div class="sensor-reading">
+          <span class="sensor-reading-label">PM<sub>2.5</sub>${raw ? ' (raw)' : ''}</span>
+          <span class="sensor-reading-value">${fmt(readings.pm2_5, ' µg/m³')}</span>
+        </div>
+        <div class="sensor-reading">
+          <span class="sensor-reading-label">PM<sub>10</sub>${raw ? ' (raw)' : ''}</span>
+          <span class="sensor-reading-value">${fmt(readings.pm10, ' µg/m³')}</span>
+        </div>
+      </div>
+    `
+    : '';
 
-          return `
-          <div class="node-card">
-            <div class="node-header">
-              <span class="node-name" title="${name}">${name}</span>
-              <button class="icon-btn-compact" onclick="openNodeDetails('${encodeURIComponent(name).replace(/'/g, '%27')}')" style="color: var(--on-surface-variant); position: absolute; right: -8px; top: -8px;">
-                <svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/></svg>
-              </button>
-            </div>
-            <div class="node-aqi-section">
-              <div class="node-aqi-value" style="color: ${aqiColor}">${isOffline ? 'N/A' : displayAqi}</div>
-              <div class="node-aqi-label">${std === 'us' ? 'US AQI' : 'NAQI'}</div>
-            </div>
-            <div class="node-separator"></div>
-            <div class="node-pollutants">
-              <div class="node-pollutant">
-                <span class="node-pollutant-label">PM2.5</span>
-                <span class="node-pollutant-value">${node.pm2_5 ?? 'N/A'}</span>
-              </div>
-              <div class="node-pollutant">
-                <span class="node-pollutant-label">PM10</span>
-                <span class="node-pollutant-value">${node.pm10 ?? 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-        `;
-        })
-        .join('')}
-    </div>
-  `;
+  const render = (info: SensorInfo | null) => {
+    const facts = [
+      ['Provider', info?.provider || 'AirGradient'],
+      ['Model', info?.model || '--'],
+      ['Location ID', String(data.location_id ?? info?.location_id ?? '--')],
+      ['Installed', info?.installation_date || '--'],
+    ];
+    container.innerHTML = `
+      <div class="pollutants-container-card sensor-card">
+        <h3 class="section-title">About this sensor</h3>
+        ${readingRows}
+        <dl class="sensor-facts">
+          ${facts.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}
+        </dl>
+      </div>
+    `;
+  };
+
+  const match = (list: SensorInfo[] | null) =>
+    list?.find((s) => s.location_id === data.location_id) ?? null;
+
+  render(match(sensorInfoCache));
+  if (!sensorInfoCache) {
+    sensorInfoCache = await getSensorInfoList();
+    render(match(sensorInfoCache));
+  }
 }
 
 function renderConcentrationsDisplay(comps: Pollutants) {
@@ -929,8 +852,9 @@ function renderChart(history: AQIHistory[]) {
     return `${hour}:00`;
   });
 
-  const values = sorted.map((h) => (std === 'us' ? h.us_aqi || 0 : h.aqi));
-  const peak = values.length > 0 ? Math.max(...values) : 0;
+  const values = sorted.map((h) => historyAqi(h, std));
+  const present = values.filter((v): v is number => v !== null);
+  const peak = present.length > 0 ? Math.max(...present) : 0;
   const breakpoints = aqiBreakpoints(std);
   const topBand = Math.max(Math.ceil((peak * 1.15) / 10) * 10, 60);
 
@@ -948,7 +872,7 @@ function renderChart(history: AQIHistory[]) {
       labels: labels,
       datasets: [
         {
-          data: values,
+          data: values as unknown as number[],
           borderColor: peakColor,
           backgroundColor: gradient,
           borderWidth: 2.5,
@@ -1074,9 +998,14 @@ export function renderDotsHistory(history: AQIHistory[]) {
   const row = document.createElement('div');
   row.className = 'dots-row';
   sorted.forEach((h) => {
-    const value = std === 'us' ? h.us_aqi || 0 : h.aqi;
+    const value = historyAqi(h, std);
     const cell = document.createElement('div');
     cell.className = 'dot-cell';
+    if (value === null) {
+      cell.classList.add('empty');
+      row.appendChild(cell);
+      return;
+    }
     cell.style.backgroundColor = getAQIColor(value, std).hex;
     const label = `AQI ${value}  ·  ${fmtHour(h.ts)}`;
     cell.dataset.label = label;
@@ -1174,102 +1103,6 @@ export function setupChartPager() {
     }
   });
   update();
-}
-
-let extendedHistoryChart: LineChart | null = null;
-
-export function renderExtendedHistoryChart(
-  history: any[],
-  showPm25: boolean = true,
-  showPm10: boolean = true
-) {
-  const canvas = document.getElementById('extendedHistoryChart') as HTMLCanvasElement;
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  if (extendedHistoryChart) extendedHistoryChart.destroy();
-
-  const isDark = getCurrentTheme() === 'dark';
-  const lineColor1 = '#a8c7fa';
-  const lineColor2 = '#d8b4fe';
-
-  const gradient1 = ctx.createLinearGradient(0, 0, 0, 300);
-  gradient1.addColorStop(0, isDark ? 'rgba(168, 199, 250, 0.4)' : 'rgba(65, 105, 225, 0.4)');
-  gradient1.addColorStop(1, 'rgba(168, 199, 250, 0.0)');
-
-  const gradient2 = ctx.createLinearGradient(0, 0, 0, 300);
-  gradient2.addColorStop(0, isDark ? 'rgba(216, 180, 254, 0.4)' : 'rgba(147, 51, 234, 0.4)');
-  gradient2.addColorStop(1, 'rgba(216, 180, 254, 0.0)');
-
-  const labels = history.map((h) => {
-    const d = new Date(h.ts * 1000);
-    const hrs = d.getHours() < 10 ? '0' + d.getHours() : d.getHours();
-    return `${d.getDate()}/${d.getMonth() + 1} ${hrs}:00`;
-  });
-
-  const datasets = [];
-
-  if (showPm25) {
-    datasets.push({
-      label: 'PM2.5',
-      data: history.map((h) => h.pm2_5),
-      borderColor: lineColor1,
-      backgroundColor: gradient1,
-      borderWidth: 2,
-      tension: 0.4,
-      pointRadius: 0,
-      pointHoverRadius: 6,
-      fill: true,
-    });
-  }
-
-  if (showPm10) {
-    datasets.push({
-      label: 'PM10',
-      data: history.map((h) => h.pm10),
-      borderColor: lineColor2,
-      backgroundColor: gradient2,
-      borderWidth: 2,
-      tension: 0.4,
-      pointRadius: 0,
-      pointHoverRadius: 6,
-      fill: true,
-    });
-  }
-
-  const config: ChartConfiguration<'line', number[], string> = {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: datasets,
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: true, labels: { color: isDark ? '#fff' : '#000' } },
-        tooltip: { enabled: true },
-      },
-      scales: {
-        x: {
-          display: true,
-          ticks: { color: isDark ? '#aaa' : '#666', maxTicksLimit: 8 },
-          grid: { display: false },
-        },
-        y: {
-          display: true,
-          min: 0,
-          ticks: { color: isDark ? '#aaa' : '#666' },
-          grid: { color: isDark ? '#333' : '#ddd' },
-          title: { display: true, text: 'Concentration (µg/m³)', color: isDark ? '#fff' : '#000' },
-        },
-      },
-    },
-  };
-
-  extendedHistoryChart = new Chart(ctx, config);
 }
 
 let extDotSelected: HTMLElement | null = null;
@@ -1509,47 +1342,8 @@ export function renderExtendedDotsGrid(
   container.appendChild(legend);
 }
 
-let extPagerInit = false;
-
-export function setupExtendedPager() {
-  if (extPagerInit) return;
-  const pager = document.getElementById('extended-chart-pager');
-  if (!pager) return;
-  extPagerInit = true;
-
-  const prev = document.getElementById('ext-arrow-prev');
-  const next = document.getElementById('ext-arrow-next');
-  const dots = Array.from(document.querySelectorAll<HTMLElement>('#ext-pager-dots .pd'));
-  const hint = document.getElementById('ext-swipe-hint');
-
-  const goTo = (page: number) =>
-    pager.scrollTo({ left: page * pager.clientWidth, behavior: 'smooth' });
-  prev?.addEventListener('click', () => goTo(0));
-  next?.addEventListener('click', () => goTo(1));
-  dots.forEach((d) => d.addEventListener('click', () => goTo(parseInt(d.dataset.page || '0', 10))));
-
-  const update = () => {
-    const page = Math.round(pager.scrollLeft / Math.max(pager.clientWidth, 1));
-    dots.forEach((d, i) => d.classList.toggle('active', i === page));
-    setArrowAvailable(prev, page > 0);
-    setArrowAvailable(next, page < dots.length - 1);
-    if (hint) hint.textContent = page === 0 ? 'Swipe for Dots History' : 'Swipe for Trend Graph';
-  };
-  pager.addEventListener('scroll', update);
-  window.addEventListener('resize', update);
-  document.addEventListener('click', (e) => {
-    if (!(e.target as HTMLElement).closest('.ext-cell')) {
-      if (extDotSelected) extDotSelected.classList.remove('selected');
-      extDotSelected = null;
-      hideDotTooltip();
-    }
-  });
-  update();
-}
-
-export function updateExtendedChartTheme() {
-  if (extendedHistoryChart) {
-    // Redraw
-    extendedHistoryChart.update();
-  }
+export function clearExtendedSelection(): void {
+  if (extDotSelected) extDotSelected.classList.remove('selected');
+  extDotSelected = null;
+  hideDotTooltip();
 }

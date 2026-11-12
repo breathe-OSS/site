@@ -1,6 +1,5 @@
 import { fetchHistoricalData } from './api.js';
 import { STORAGE_KEY_PINS } from './config.js';
-import { showNodeSheet } from './sensors.js';
 import { Zone, AQIData, AQIHistory } from './types.js';
 import {
   aqiTextColor,
@@ -22,6 +21,17 @@ import {
   updateTrendBadge,
   whoRatioColor,
 } from './ui.js';
+import {
+  historyPm25,
+  isEstimate,
+  isRawMode,
+  placeLine,
+  rawApplies,
+  zoneAqi,
+  zoneAverages,
+  zoneConcentrations,
+  zoneMainPollutant,
+} from './readings.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
 
 declare const Chart: typeof ChartJS;
@@ -51,10 +61,7 @@ function readPins(): string[] {
 }
 
 function displayAqi(data: AQIData): number {
-  if (getAQIStandard() === 'us') {
-    return data.us_aqi || 0;
-  }
-  return data.aqi;
+  return zoneAqi(data);
 }
 
 function minutesAgoText(timestampUnix: number): string {
@@ -72,8 +79,9 @@ function averagePm25(entries: AQIHistory[]): number | null {
   let sum = 0;
   let count = 0;
   entries.forEach((entry) => {
-    if (entry.pm2_5 !== null && entry.pm2_5 !== undefined) {
-      sum += entry.pm2_5;
+    const value = historyPm25(entry);
+    if (value !== null) {
+      sum += value;
       count += 1;
     }
   });
@@ -102,14 +110,21 @@ function pillHtml(label: string, pm25: number | null): string {
   `;
 }
 
-function headerHtml(zone: Zone, isLive: boolean, pinned: boolean): string {
-  const source = isLive
-    ? '<span class="live-dot"></span>Live ground sensors'
-    : 'Satellite and model data';
+function headerHtml(zone: Zone, data: AQIData, pinned: boolean): string {
+  let source = '<span class="live-dot"></span>Live ground sensor';
+  if (isEstimate(zone)) {
+    source = 'Satellite estimate, no sensor here yet';
+  } else if (data.source && data.source.startsWith('openmeteo')) {
+    source = 'Sensor offline, showing a satellite estimate';
+  } else if (rawApplies(data)) {
+    source += ' · raw readings';
+  }
+  const line = placeLine(zone);
   return `
     <div class="panel-header">
       <div class="panel-title-block">
         <h2 class="panel-title">${zone.name}</h2>
+        ${line ? `<div class="panel-place">${line}</div>` : ''}
         <div class="panel-source">${source}</div>
       </div>
       <div class="panel-actions">
@@ -131,7 +146,8 @@ function heroHtml(data: AQIData): string {
   const std = getAQIStandard();
   const aqi = displayAqi(data);
   const color = getAQIColor(aqi, std).hex;
-  const pm25 = data.concentrations_us_units ? data.concentrations_us_units['pm2_5'] : undefined;
+  const pm25 = zoneConcentrations(data)['pm2_5'];
+  const chipLabel = `${rawApplies(data) ? 'Raw ' : ''}${std === 'us' ? 'US AQI' : 'NAQI'}`;
   return `
     <div class="panel-hero" style="--aqi-color: ${color};">
       <div class="panel-hero-top">
@@ -141,11 +157,11 @@ function heroHtml(data: AQIData): string {
         </div>
         <div class="panel-aqi-block">
           <div class="panel-aqi" id="panel-aqi" style="color: ${color};">0</div>
-          <div class="panel-aqi-chip" style="background: ${color}; color: ${aqiTextColor(aqi, std)};">${std === 'us' ? 'US AQI' : 'NAQI'}</div>
+          <div class="panel-aqi-chip" style="background: ${color}; color: ${aqiTextColor(aqi, std)};">${chipLabel}</div>
         </div>
       </div>
       <div class="panel-hero-bottom">
-        <span>Main pollutant <strong>${formatPollutantName(data.main_pollutant)}</strong></span>
+        <span>Main pollutant <strong>${formatPollutantName(zoneMainPollutant(data))}</strong></span>
         ${pm25 !== undefined ? `<span>PM<sub>2.5</sub> <strong>${pm25} µg/m³</strong></span>` : ''}
         <span id="panel-trend"></span>
       </div>
@@ -179,10 +195,8 @@ function chartCardHtml(isLive: boolean): string {
 }
 
 function statTilesHtml(data: AQIData): string {
-  const pm25 =
-    (data.averages_24h && data.averages_24h['pm2_5']) ||
-    (data.concentrations_us_units && data.concentrations_us_units['pm2_5']) ||
-    0;
+  const averages = zoneAverages(data);
+  const pm25 = (averages && averages['pm2_5']) || zoneConcentrations(data)['pm2_5'] || 0;
   if (!pm25) {
     return '';
   }
@@ -206,39 +220,6 @@ function statTilesHtml(data: AQIData): string {
   `;
 }
 
-function sensorsHtml(data: AQIData): string {
-  const nodes = data.nodes || {};
-  const names = Object.keys(nodes);
-  if (names.length === 0) {
-    return '';
-  }
-  const std = getAQIStandard();
-  const rows = names
-    .map((name) => {
-      const node = nodes[name];
-      const offline = node.pm2_5 === null || node.pm2_5 === undefined;
-      const aqi = std === 'us' ? (node.us_aqi ?? node.aqi ?? 0) : (node.aqi ?? 0);
-      const chip = offline
-        ? '<span class="panel-sensor-aqi offline">Offline</span>'
-        : `<span class="panel-sensor-aqi" style="background: ${getAQIColor(aqi, std).hex}; color: ${aqiTextColor(aqi, std)};">${aqi}</span>`;
-      return `
-        <button class="panel-sensor" onclick="openPanelSensor('${encodeURIComponent(name).replace(/'/g, '%27')}')">
-          <span class="panel-sensor-name">${name}</span>
-          <span class="panel-sensor-pm">${offline ? '' : `${node.pm2_5} µg/m³`}</span>
-          ${chip}
-        </button>
-      `;
-    })
-    .join('');
-  return `
-    <div class="panel-card">
-      <div class="panel-card-title">Sensors in this zone</div>
-      <div class="panel-card-sub">The zone reading averages these</div>
-      <div class="panel-sensors">${rows}</div>
-    </div>
-  `;
-}
-
 function gridCardHtml(): string {
   return `
     <div class="panel-card">
@@ -253,11 +234,14 @@ function gridCardHtml(): string {
 
 function sourceHtml(zone: Zone, data: AQIData, isLive: boolean): string {
   if (isLive) {
-    const count = Object.keys(data.nodes || {}).length;
+    const offline = !!data.source && data.source.startsWith('openmeteo');
+    const body = offline
+      ? `This BreatheOSS AirGradient sensor isn't reporting right now, so these numbers are a CAMS estimate for its location, served through Open-Meteo.`
+      : `PM<sub>2.5</sub> and PM<sub>10</sub> come from this BreatheOSS AirGradient sensor${zone.district ? ` in the ${zone.district} district` : ''}. Gases come from CAMS through Open-Meteo.${rawApplies(data) ? " You are seeing its raw readings, before AirGradient's correction." : ''}`;
     return `
       <div class="panel-card panel-source-card">
         <div class="panel-card-title">Where this comes from</div>
-        <p>PM<sub>2.5</sub> and PM<sub>10</sub> come from ${count === 1 ? 'the BreatheOSS AirGradient sensor' : `${count} BreatheOSS AirGradient sensors`} in ${zone.name}. Gases come from CAMS through Open-Meteo.</p>
+        <p>${body}</p>
       </div>
     `;
   }
@@ -294,21 +278,20 @@ function renderPanel() {
   const zone = panelZone;
   const data = panelData;
   const std = getAQIStandard();
-  const isLive = zone.provider === 'airgradient';
+  const isLive = !isEstimate(zone);
   if (!isLive) {
     panelRange = '24h';
   }
   const pinned = readPins().includes(zone.id);
 
   body.innerHTML = `
-    ${headerHtml(zone, isLive, pinned)}
+    ${headerHtml(zone, data, pinned)}
     <div class="panel-content">
       ${heroHtml(data)}
       ${renderHealthAdviceCard(displayAqi(data), std)}
       ${chartCardHtml(isLive)}
       ${statTilesHtml(data)}
       ${isLive ? gridCardHtml() : ''}
-      ${sensorsHtml(data)}
       ${sourceHtml(zone, data, isLive)}
       ${contributeHtml()}
       <button class="btn-outlined panel-full-btn" onclick="openFullDetails()">Open full details</button>
@@ -332,7 +315,13 @@ function renderPanel() {
 
 async function renderPanelGrid(zoneId: string) {
   const request = panelRequest;
-  const result = await fetchHistoricalData(zoneId, '9d', '1h', 'pm2.5,pm10');
+  const raw = isRawMode();
+  const result = await fetchHistoricalData(
+    zoneId,
+    '9d',
+    '1h',
+    raw ? 'pm2.5,pm10,pm2.5_raw,pm10_raw' : 'pm2.5,pm10'
+  );
   if (request !== panelRequest) {
     return;
   }
@@ -340,7 +329,14 @@ async function renderPanelGrid(zoneId: string) {
   if (!target) {
     return;
   }
-  const points = result && result.data ? result.data : [];
+  const fetched: { ts: number; [key: string]: number | null }[] = result && result.data ? result.data : [];
+  const points = fetched
+    .map((p) => ({
+      ts: p.ts,
+      pm2_5: raw ? (p.pm2_5_raw ?? null) : (p.pm2_5 ?? null),
+      pm10: raw ? (p.pm10_raw ?? null) : (p.pm10 ?? null),
+    }))
+    .filter((p) => p.pm2_5 !== null || p.pm10 !== null);
   if (points.length === 0) {
     target.innerHTML = '<div class="panel-card-sub">No history yet.</div>';
     return;
@@ -362,24 +358,25 @@ async function renderPanelChart() {
   let sub = 'µg/m³, hourly';
 
   if (panelRange === '24h') {
-    const history = sortedHistory(data).filter(
-      (entry) => entry.pm2_5 !== null && entry.pm2_5 !== undefined
-    );
+    const history = sortedHistory(data).filter((entry) => historyPm25(entry) !== null);
     labels = history.map((entry) => {
       const d = new Date(entry.ts * 1000);
       return d.getHours() < 10 ? `0${d.getHours()}:00` : `${d.getHours()}:00`;
     });
-    values = history.map((entry) => entry.pm2_5 as number);
+    values = history.map((entry) => historyPm25(entry) as number);
     pills =
       pillHtml('Last 24 hours', averagePm25(history)) +
       pillHtml('Last 12 hours', averagePm25(history.slice(-12)));
   } else {
     sub = 'µg/m³, daily average';
-    const result = await fetchHistoricalData(zone.id, panelRange, '1d', 'pm2.5');
+    const metricName = rawApplies(data) ? 'pm2.5_raw' : 'pm2.5';
+    const result = await fetchHistoricalData(zone.id, panelRange, '1d', metricName);
     if (request !== panelRequest) {
       return;
     }
-    const points: { ts: number; pm2_5: number | null }[] = result && result.data ? result.data : [];
+    const key = rawApplies(data) ? 'pm2_5_raw' : 'pm2_5';
+    const fetched: { ts: number; [k: string]: number | null }[] = result && result.data ? result.data : [];
+    const points = fetched.map((p) => ({ ts: p.ts, pm2_5: p[key] ?? null }));
     const valid = points.filter((p) => p.pm2_5 !== null && p.pm2_5 !== undefined);
     labels = valid.map((p) =>
       new Date(p.ts * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
@@ -580,17 +577,6 @@ async function sharePanelZone() {
   }
 }
 
-function openPanelSensor(encodedName: string) {
-  if (!panelZone || !panelData || !panelData.nodes) {
-    return;
-  }
-  const name = decodeURIComponent(encodedName);
-  const node = panelData.nodes[name];
-  if (node) {
-    showNodeSheet(name, node, panelData.zone_name);
-  }
-}
-
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && panelZone) {
     closeZonePanel();
@@ -600,7 +586,6 @@ document.addEventListener('keydown', (e) => {
 (window as any).closeMapDetailSheet = () => closeZonePanel();
 (window as any).setPanelRange = setPanelRange;
 (window as any).sharePanelZone = sharePanelZone;
-(window as any).openPanelSensor = openPanelSensor;
 (window as any).openFullDetails = () => {
   if (!panelZone) {
     return;

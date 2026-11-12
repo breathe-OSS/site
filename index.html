@@ -176,6 +176,11 @@
           </div>
         </header>
 
+        <div class="raw-note-wrap"><button class="raw-note" id="raw-note-home" onclick="showView('settings')">
+            <span class="raw-note-dot" aria-hidden="true"></span>
+            Showing raw sensor readings
+            <span class="raw-note-action">Change</span>
+          </button></div>
         <div id="pinned-container" class="content-scroll home-list"></div>
 
         <div id="empty-state" class="empty-state hidden">
@@ -237,13 +242,32 @@
                   Now Viewing
                 </div>
                 <div class="now-viewing-name" id="detail-zone-name">Location</div>
+                <button class="place-line hidden" id="detail-place-line" onclick="openDistrictInExplore(this.dataset.district)"></button>
                 <div class="now-viewing-source" id="detail-source-indicator">
                   <span class="live-dot"></span>
-                  Live Ground Sensors
+                  Live ground sensor
                 </div>
               </div>
               <div id="detail-provider" class="provider-container"></div>
             </div>
+
+            <div class="raw-switch-row hidden" id="detail-raw-switch">
+              <span class="raw-switch-label">Readings</span>
+              <div class="toggle-group" role="group" aria-label="Calibrated or raw readings">
+                <button class="btn-outlined btn-small" data-raw-choice="calibrated" onclick="setRawMode(false)">Calibrated</button>
+                <button class="btn-outlined btn-small" data-raw-choice="raw" onclick="setRawMode(true)">Raw</button>
+              </div>
+            </div>
+
+            <details class="raw-banner hidden" id="detail-raw-banner">
+              <summary>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" /></svg>
+                <span>You're looking at this sensor's raw readings, before AirGradient's correction.</span>
+                <span class="raw-banner-more">What changes</span>
+              </summary>
+              <div class="raw-banner-body"><div class="raw-banner-points"></div></div>
+            </details>
+            <div class="raw-unavailable hidden" id="detail-raw-unavailable"></div>
 
             <div class="card main-aqi-card" id="detail-main-card">
               <div
@@ -287,13 +311,8 @@
               <div class="chart-header">
                 <div style="display: flex; align-items: baseline; gap: 8px">
                   <h3>24 Hour Trend</h3>
-                  <span
-                    id="chart-location-name"
-                    style="font-size: 13px; color: var(--on-surface-variant); display: none"
-                    >Zone Average</span
-                  >
+                  <span id="chart-mode-label" class="chart-mode-label"></span>
                 </div>
-                <select id="chart-node-select" class="chart-dropdown hidden"></select>
               </div>
               <div class="chart-pager-viewport">
                 <button
@@ -333,10 +352,7 @@
               </button>
             </div>
 
-            <div
-              id="node-readings-container"
-              class="pollutants-container-card"
-              style="display: none"></div>
+            <div id="sensor-card-container"></div>
 
             <div class="pollutants-container-card">
               <h3 class="section-title">All Pollutants</h3>
@@ -354,340 +370,140 @@
               <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
             </svg>
           </button>
-          <h1 id="history-title-header">Location History</h1>
+          <div class="header-titles">
+            <h1 id="history-title-header">Location History</h1>
+            <div class="header-sub" id="history-place-line"></div>
+          </div>
         </header>
 
         <div class="content-scroll">
-          <div class="detail-container">
-            <div
-              class="card chart-card"
-              style="margin-top: 16px; padding: 24px 16px; cursor: default">
-              <h3 style="margin-bottom: 16px; text-align: center">Extended History</h3>
-
-              <div class="history-controls">
-                <label class="m3-field">
-                  <span class="m3-field-label">Location</span>
-                  <select id="hist-sensor-select" class="m3-select" onchange="loadCustomHistory()">
-                    <option value="zone">Zone Average</option>
-                  </select>
-                </label>
-
-                <div class="chip-set" role="group" aria-label="Pollutants">
-                  <label class="filter-chip">
-                    <input type="checkbox" id="hist-pm25" value="pm2.5" checked onchange="loadCustomHistory()" />
-                    <span>PM2.5</span>
-                  </label>
-                  <label class="filter-chip">
-                    <input type="checkbox" id="hist-pm10" value="pm10" checked onchange="loadCustomHistory()" />
-                    <span>PM10</span>
-                  </label>
+          <div class="detail-container history-page">
+            <div class="history-toolbar" id="history-toolbar">
+              <div class="history-toolbar-row">
+                <div class="toggle-group" id="hist-range-buttons" role="group" aria-label="Time range">
+                  <button class="btn-outlined btn-small active" id="hist-1w" onclick="setHistoryRange('1w')">1W</button>
+                  <button class="btn-outlined btn-small" id="hist-1mo" onclick="setHistoryRange('1mo')">1M</button>
+                  <button class="btn-outlined btn-small" id="hist-6mo" onclick="setHistoryRange('6mo')">6M</button>
+                  <button class="btn-outlined btn-small" id="hist-date-btn" onclick="toggleDateRange()">By date</button>
+                  <button class="btn-outlined btn-small" id="hist-custom-btn" onclick="toggleCustomRange()">Custom</button>
+                </div>
+                <div class="toggle-group" id="hist-mode-buttons" role="group" aria-label="Calibrated or raw">
+                  <button class="btn-outlined btn-small active" id="hist-mode-cal" onclick="setHistoryMode('cal')">Calibrated</button>
+                  <button class="btn-outlined btn-small" id="hist-mode-raw" onclick="setHistoryMode('raw')">Raw</button>
+                  <button class="btn-outlined btn-small" id="hist-mode-both" onclick="setHistoryMode('both')">Both</button>
                 </div>
               </div>
 
-              <div
-                id="hist-range-buttons"
-                class="toggle-group history-range-group">
-                <button class="btn-outlined active" id="hist-1w" onclick="setHistoryRange('1w')">
-                  1 Week
-                </button>
-                <button class="btn-outlined" id="hist-1mo" onclick="setHistoryRange('1mo')">
-                  1 Month
-                </button>
-                <button class="btn-outlined" id="hist-6mo" onclick="setHistoryRange('6mo')">
-                  6 Months
-                </button>
-                <button class="btn-outlined" id="hist-date-btn" onclick="toggleDateRange()">
-                  By Date
-                </button>
-                <button class="btn-outlined" id="hist-custom-btn" onclick="toggleCustomRange()">
-                  Custom...
+              <div class="history-toolbar-row">
+                <div class="toggle-group" id="hist-metric-buttons" role="group" aria-label="What to plot">
+                  <button class="btn-outlined btn-small active" id="hist-metric-aqi" onclick="setHistoryMetric('aqi')">AQI</button>
+                  <button class="btn-outlined btn-small" id="hist-metric-pm25" onclick="setHistoryMetric('pm25')">PM2.5</button>
+                  <button class="btn-outlined btn-small" id="hist-metric-pm10" onclick="setHistoryMetric('pm10')">PM10</button>
+                  <button class="btn-outlined btn-small" id="hist-metric-pm" onclick="setHistoryMetric('pm')">PM2.5 + PM10</button>
+                  <button class="btn-outlined btn-small" id="hist-metric-temp" onclick="setHistoryMetric('temp')">Temp</button>
+                  <button class="btn-outlined btn-small" id="hist-metric-humidity" onclick="setHistoryMetric('humidity')">Humidity</button>
+                </div>
+                <button class="btn-outlined btn-small history-csv" onclick="downloadHistoryCSV()" aria-label="Download CSV">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" /></svg>
+                  CSV
                 </button>
               </div>
 
-              <div
-                id="hist-date-inputs"
-                style="
-                  display: none;
-                  flex-direction: column;
-                  gap: 12px;
-                  align-items: center;
-                  margin-bottom: 16px;
-                  background: var(--surface-variant);
-                  padding: 12px;
-                  border-radius: 8px;
-                ">
-                <div class="toggle-group">
-                  <button
-                    class="btn-outlined"
-                    id="hist-period-month"
-                    onclick="setHistoryPeriodMode('month')">
-                    Month
-                  </button>
-                  <button
-                    class="btn-outlined"
-                    id="hist-period-week"
-                    onclick="setHistoryPeriodMode('week')">
-                    Week
-                  </button>
-                  <button
-                    class="btn-outlined"
-                    id="hist-period-days"
-                    onclick="setHistoryPeriodMode('days')">
-                    Days
-                  </button>
+              <div class="history-subpanel hidden" id="hist-date-inputs">
+                <div class="toggle-group" id="hist-period-modes">
+                  <button class="btn-outlined btn-small" id="hist-period-month" onclick="setHistoryPeriodMode('month')">Month</button>
+                  <button class="btn-outlined btn-small" id="hist-period-week" onclick="setHistoryPeriodMode('week')">Week</button>
+                  <button class="btn-outlined btn-small" id="hist-period-days" onclick="setHistoryPeriodMode('days')">Days</button>
                 </div>
-                <div
-                  style="
-                    display: flex;
-                    align-items: flex-end;
-                    justify-content: center;
-                    flex-wrap: wrap;
-                    gap: 8px;
-                  ">
+                <div class="history-dates">
                   <label class="m3-field">
                     <span class="m3-field-label" id="hist-date-start-label">Month containing</span>
-                    <input
-                      type="date"
-                      id="hist-date-start"
-                      onchange="onHistoryDateChange()"
-                      class="m3-input" />
+                    <input type="date" id="hist-date-start" onchange="onHistoryDateChange()" class="m3-input" />
                   </label>
-                  <label id="hist-date-end-field" class="m3-field" style="display: none">
+                  <label id="hist-date-end-field" class="m3-field hidden">
                     <span class="m3-field-label">To</span>
-                    <input
-                      type="date"
-                      id="hist-date-end"
-                      onchange="onHistoryDateChange()"
-                      class="m3-input" />
+                    <input type="date" id="hist-date-end" onchange="onHistoryDateChange()" class="m3-input" />
                   </label>
                 </div>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 8px">
-                  <button
-                    class="icon-btn"
-                    id="hist-date-prev"
-                    aria-label="Previous period"
-                    onclick="stepHistoryPeriod(-1)">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-                    </svg>
+                <div class="history-stepper">
+                  <button class="icon-btn" id="hist-date-prev" aria-label="Previous period" onclick="stepHistoryPeriod(-1)">
+                    <svg viewBox="0 0 24 24"><path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z" /></svg>
                   </button>
-                  <div id="hist-date-label" style="font-size: 13px; font-weight: 500"></div>
-                  <button
-                    class="icon-btn"
-                    id="hist-date-next"
-                    aria-label="Next period"
-                    onclick="stepHistoryPeriod(1)">
-                    <svg viewBox="0 0 24 24">
-                      <path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-                    </svg>
+                  <div id="hist-date-label" class="history-stepper-label"></div>
+                  <button class="icon-btn" id="hist-date-next" aria-label="Next period" onclick="stepHistoryPeriod(1)">
+                    <svg viewBox="0 0 24 24"><path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" /></svg>
                   </button>
                 </div>
               </div>
 
-              <div style="margin-bottom: 16px">
-                <div
-                  style="
-                    font-size: 12px;
-                    color: var(--on-surface-variant);
-                    text-align: center;
-                    margin-bottom: 8px;
-                  ">
-                  Filter by weather during that time
-                </div>
-                <div
-                  id="weather-filter-chips"
-                  class="toggle-group">
-                  <button class="btn-outlined active" id="wf-all" onclick="setWeatherFilter('all')">
-                    All Weather
-                  </button>
-                  <button class="btn-outlined" id="wf-rain" onclick="setWeatherFilter('rain')">
-                    Rain
-                  </button>
-                  <button class="btn-outlined" id="wf-snow" onclick="setWeatherFilter('snow')">
-                    Snow
-                  </button>
-                  <button class="btn-outlined" id="wf-fog" onclick="setWeatherFilter('fog')">
-                    Fog
-                  </button>
-                  <button class="btn-outlined" id="wf-cloudy" onclick="setWeatherFilter('cloudy')">
-                    Cloudy
-                  </button>
-                  <button class="btn-outlined" id="wf-clear" onclick="setWeatherFilter('clear')">
-                    Clear
-                  </button>
-                </div>
+              <div class="history-subpanel hidden" id="hist-custom-inputs">
+                <label class="m3-field">
+                  <span class="m3-field-label">Range</span>
+                  <input type="text" id="custom-range" placeholder="14d" value="14d" class="m3-input" />
+                </label>
+                <label class="m3-field">
+                  <span class="m3-field-label">Step</span>
+                  <input type="text" id="custom-interval" placeholder="1h" value="1h" class="m3-input" />
+                </label>
+                <button class="btn-filled" onclick="applyCustomHistory()">Apply</button>
               </div>
 
-              <div id="weather-impact" style="margin-bottom: 24px"></div>
-
-              <div
-                id="hist-custom-inputs"
-                style="
-                  display: none;
-                  gap: 8px;
-                  align-items: center;
-                  justify-content: center;
-                  margin-bottom: 16px;
-                  flex-wrap: wrap;
-                  background: var(--surface-variant);
-                  padding: 12px;
-                  border-radius: 8px;
-                ">
-                <input
-                  type="text"
-                  id="custom-range"
-                  placeholder="Range (e.g. 14d)"
-                  value="14d"
-                  class="m3-input" />
-                <input
-                  type="text"
-                  id="custom-interval"
-                  placeholder="Interval (e.g. 1h)"
-                  value="1h"
-                  class="m3-input" />
-                <button class="btn-filled" onclick="applyCustomHistory()">
-                  Apply
-                </button>
-              </div>
-
-              <div
-                id="hist-stats"
-                style="
-                  display: grid;
-                  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-                  gap: 12px;
-                  margin-bottom: 24px;
-                  padding: 16px;
-                  background: var(--surface-variant);
-                  border-radius: 12px;
-                  text-align: center;
-                ">
-                <div class="stat-card">
-                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
-                    Max PM2.5
-                  </div>
-                  <div
-                    class="stat-value"
-                    id="stat-max-pm25"
-                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
-                    --
-                  </div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
-                    Min PM2.5
-                  </div>
-                  <div
-                    class="stat-value"
-                    id="stat-min-pm25"
-                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
-                    --
-                  </div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
-                    Avg PM2.5
-                  </div>
-                  <div
-                    class="stat-value"
-                    id="stat-avg-pm25"
-                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
-                    --
-                  </div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
-                    Max PM10
-                  </div>
-                  <div
-                    class="stat-value"
-                    id="stat-max-pm10"
-                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
-                    --
-                  </div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
-                    Min PM10
-                  </div>
-                  <div
-                    class="stat-value"
-                    id="stat-min-pm10"
-                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
-                    --
-                  </div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-label" style="font-size: 11px; color: var(--on-surface-variant)">
-                    Avg PM10
-                  </div>
-                  <div
-                    class="stat-value"
-                    id="stat-avg-pm10"
-                    style="font-size: 18px; font-weight: bold; margin-top: 4px">
-                    --
-                  </div>
+              <div class="history-weather-row hidden" id="hist-weather-row">
+                <span class="history-weather-label">Weather</span>
+                <div id="weather-filter-chips" class="toggle-group">
+                  <button class="btn-outlined btn-small active" id="wf-all" onclick="setWeatherFilter('all')">Any</button>
+                  <button class="btn-outlined btn-small" id="wf-rain" onclick="setWeatherFilter('rain')">Rain</button>
+                  <button class="btn-outlined btn-small" id="wf-snow" onclick="setWeatherFilter('snow')">Snow</button>
+                  <button class="btn-outlined btn-small" id="wf-fog" onclick="setWeatherFilter('fog')">Fog</button>
+                  <button class="btn-outlined btn-small" id="wf-cloudy" onclick="setWeatherFilter('cloudy')">Cloudy</button>
+                  <button class="btn-outlined btn-small" id="wf-clear" onclick="setWeatherFilter('clear')">Clear</button>
                 </div>
               </div>
+            </div>
 
-              <div
-                id="hist-empty"
-                style="
-                  display: none;
-                  font-size: 13px;
-                  color: var(--on-surface-variant);
-                  text-align: center;
-                  margin-bottom: 16px;
-                ">
-                No readings for this selection.
+            <details class="raw-banner hidden" id="hist-raw-note">
+              <summary>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" /></svg>
+                <span id="hist-raw-note-text">Showing the sensor's uncorrected readings.</span>
+                <span class="raw-banner-more">What changes</span>
+              </summary>
+              <div class="raw-banner-body"><div class="raw-banner-points"></div></div>
+            </details>
+
+            <div class="history-card history-summary hidden" id="history-summary"></div>
+
+            <div class="history-card">
+              <div class="history-card-head">
+                <h3 id="hist-chart-title">US AQI</h3>
+                <div class="history-card-sub" id="hist-chart-sub"></div>
               </div>
+              <div class="history-chart"><canvas id="extendedHistoryChart"></canvas></div>
+              <div id="hist-empty" class="history-muted hidden">No readings for this selection.</div>
+            </div>
 
-              <div class="chart-pager-viewport">
-                <button
-                  class="chart-pager-arrow left"
-                  id="ext-arrow-prev"
-                  aria-label="Previous view">
-                  ‹
-                </button>
-                <div class="chart-pager" id="extended-chart-pager">
-                  <div class="chart-slide">
-                    <div class="chart-wrapper" style="height: 350px; width: 100%">
-                      <canvas id="extendedHistoryChart"></canvas>
-                    </div>
-                  </div>
-                  <div class="chart-slide">
-                    <div class="ext-dots-slide">
-                      <div class="ext-dots-subtitle" id="extended-dots-subtitle"></div>
-                      <div id="extended-dots-grid"></div>
-                    </div>
-                  </div>
+            <div class="history-grid">
+              <div class="history-card">
+                <div class="history-card-head">
+                  <h3>Day by day</h3>
+                  <div class="history-card-sub" id="extended-dots-subtitle"></div>
                 </div>
-                <button class="chart-pager-arrow right" id="ext-arrow-next" aria-label="Next view">
-                  ›
-                </button>
+                <div id="extended-dots-grid"></div>
               </div>
-              <div class="chart-pager-dots" id="ext-pager-dots">
-                <span class="pd active" data-page="0"></span>
-                <span class="pd" data-page="1"></span>
+              <div class="history-card" id="hist-hour-card">
+                <div class="history-card-head">
+                  <h3>Hour of day</h3>
+                  <div class="history-card-sub" id="hist-hour-sub"></div>
+                </div>
+                <div class="history-chart history-chart-small"><canvas id="hourProfileChart"></canvas></div>
               </div>
-              <div class="chart-swipe-hint" id="ext-swipe-hint">Swipe for Dots History</div>
+            </div>
 
-              <button
-                class="btn-outlined"
-                style="
-                  width: 100%;
-                  margin-top: 24px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  gap: 8px;
-                "
-                onclick="downloadHistoryCSV()">
-                <svg style="width: 18px; height: 18px" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-                </svg>
-                Download CSV
-              </button>
+            <div class="history-card hidden" id="hist-weather-card">
+              <div class="history-card-head">
+                <h3>Weather</h3>
+                <div class="history-card-sub" id="hist-weather-sub"></div>
+              </div>
+              <div class="weather-impact-grid" id="weather-impact"></div>
             </div>
           </div>
         </div>
@@ -696,14 +512,11 @@
       <div id="view-map" class="view">
         <div id="map-container"></div>
         <div class="toggle-group map-layer-toggle">
-          <button
-            class="btn-outlined active"
-            id="map-layer-sensors"
-            onclick="setMapLayer('sensors')">
-            Sensors
+          <button class="btn-outlined active" id="map-layer-all" onclick="setMapLayer('all')">
+            All
           </button>
-          <button class="btn-outlined" id="map-layer-districts" onclick="setMapLayer('districts')">
-            Districts
+          <button class="btn-outlined" id="map-layer-sensors" onclick="setMapLayer('sensors')">
+            Sensors only
           </button>
         </div>
         <div class="map-controls">
@@ -742,10 +555,15 @@
               <path
                 d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
             </svg>
-            <input type="text" id="zone-search" placeholder="Search J&K..." />
+            <input type="text" id="zone-search" placeholder="Search sensors or districts" />
           </div>
+          <button class="raw-note" id="raw-note-explore" onclick="showView('settings')">
+            <span class="raw-note-dot" aria-hidden="true"></span>
+            Showing raw sensor readings
+            <span class="raw-note-action">Change</span>
+          </button>
         </div>
-        <div id="zone-list" class="content-scroll grid-layout"></div>
+        <div id="zone-list" class="content-scroll explore-list"></div>
       </div>
 
       <div id="view-settings" class="view">
@@ -801,6 +619,41 @@
                 </svg>
               </summary>
               <div id="motion-advanced" class="settings-accordion-body"></div>
+            </details>
+          </div>
+
+          <div class="settings-section-title">Readings</div>
+          <div class="settings-card">
+            <label class="settings-row clickable">
+              <div>
+                <div class="settings-title">Raw sensor readings</div>
+                <div class="settings-subtitle">Show what each sensor measures before AirGradient's correction</div>
+              </div>
+              <span class="switch">
+                <input type="checkbox" id="raw-toggle" />
+                <span class="slider round"></span>
+              </span>
+            </label>
+            <details class="settings-accordion raw-settings-details">
+              <summary class="settings-item clickable">
+                <div>
+                  <div class="settings-title">What changes when this is on</div>
+                  <div class="settings-subtitle">Every page that shows a reading follows this switch</div>
+                </div>
+                <svg class="settings-chevron" viewBox="0 0 24 24">
+                  <path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+                </svg>
+              </summary>
+              <div class="settings-accordion-body raw-settings-body">
+                <ul class="raw-explainer-list">
+                  <li>PM<sub>2.5</sub> and PM<sub>10</sub> become the laser counter's own numbers, before AirGradient's correction. The correction mostly lowers PM<sub>2.5</sub>, and lowers it more in humid air, so raw readings and the AQI worked out from them usually come out higher.</li>
+                  <li>Temperature and humidity become the readings from inside the sensor's case. The case warms up in the sun, so raw temperature runs a few degrees high in the afternoon and raw humidity runs low.</li>
+                  <li>The AQI, its colour, the health advice, the cigarette count and the charts are all worked out again from the raw numbers, on the home screen, in Explore, on the map and on each sensor's page.</li>
+                  <li>Places marked as satellite estimates have no sensor, so they have no raw readings and don't change.</li>
+                  <li>Raw history only goes back to the day Breathe started keeping it. Hours before that show as gaps.</li>
+                  <li>Calibrated readings are closer to what a reference monitor would show. Raw is useful for checking the sensor itself or comparing it with another device.</li>
+                </ul>
+              </div>
             </details>
           </div>
 
@@ -1042,100 +895,6 @@
         <div class="bottom-sheet-handle"></div>
         <div id="zone-panel-body"></div>
       </aside>
-    </div>
-
-    <div
-      id="node-detail-sheet"
-      class="bottom-sheet-overlay hidden"
-      onclick="
-        if (event.target === this)
-          document.getElementById('node-detail-sheet').classList.add('hidden');
-      ">
-      <div class="bottom-sheet">
-        <div class="bottom-sheet-handle"></div>
-
-        <div class="bottom-sheet-header" style="margin-bottom: 24px">
-          <h2 class="bottom-sheet-title" id="node-sheet-title" style="margin: 0">--</h2>
-          <button
-            class="icon-btn-compact"
-            onclick="document.getElementById('node-detail-sheet').classList.add('hidden')">
-            <svg viewBox="0 0 24 24" width="24" height="24">
-              <path
-                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="node-sheet-list">
-          <div class="node-sheet-offline hidden" id="node-sheet-offline">
-            <svg viewBox="0 0 24 24" width="24" height="24">
-              <path
-                d="M19.35 10.04C18.67 6.59 15.64 4 12 4c-1.48 0-2.85.43-4.01 1.17l1.46 1.46C10.21 6.23 11.08 6 12 6c3.04 0 5.5 2.46 5.5 5.5v.5H19c1.66 0 3 1.34 3 3 0 1.13-.64 2.11-1.56 2.62l1.45 1.45C23.16 18.16 24 16.68 24 15c0-2.64-2.05-4.78-4.65-4.96zM3 5.27l2.75 2.74C2.56 8.15 0 10.77 0 14c0 3.31 2.69 6 6 6h11.73l2 2L21 20.73 4.27 4 3 5.27zM7.73 10l8 8H6c-2.21 0-4-1.79-4-4s1.79-4 4-4h1.73z" />
-            </svg>
-            <div>
-              <strong>Sensor offline</strong>
-              <span
-                >It hasn't sent a reading lately, so there's nothing to show until it
-                reconnects.</span
-              >
-            </div>
-          </div>
-          <div class="node-sheet-readings" id="node-sheet-readings">
-            <div class="node-sheet-item">
-              <div class="node-sheet-label">AQI</div>
-              <div class="node-sheet-value" id="node-sheet-aqi">--</div>
-            </div>
-            <div class="node-sheet-item">
-              <div class="node-sheet-label">AQI Standard</div>
-              <div class="node-sheet-value" id="node-sheet-std">--</div>
-            </div>
-            <div class="node-sheet-item">
-              <div class="node-sheet-label">PM2.5</div>
-              <div class="node-sheet-value" id="node-sheet-pm25">--</div>
-            </div>
-            <div class="node-sheet-item">
-              <div class="node-sheet-label">PM10</div>
-              <div class="node-sheet-value" id="node-sheet-pm10">--</div>
-            </div>
-            <div class="node-sheet-item">
-              <div class="node-sheet-label">Temperature</div>
-              <div class="node-sheet-value" id="node-sheet-temp">--</div>
-            </div>
-            <div class="node-sheet-item">
-              <div class="node-sheet-label">Humidity</div>
-              <div class="node-sheet-value" id="node-sheet-humid">--</div>
-            </div>
-            <div class="node-sheet-notice">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                <path
-                  d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
-              </svg>
-              <span
-                >The internal sensor measures conditions inside the module to improve PM accuracy,
-                requiring dashboard corrections that may not perfectly match true ambient
-                temperature and humidity.</span
-              >
-            </div>
-          </div>
-          <div class="node-sheet-item">
-            <div class="node-sheet-label">Provider</div>
-            <div class="node-sheet-value" id="node-sheet-provider">--</div>
-          </div>
-          <div class="node-sheet-item">
-            <div class="node-sheet-label">Model</div>
-            <div class="node-sheet-value" id="node-sheet-model">--</div>
-          </div>
-          <div class="node-sheet-item">
-            <div class="node-sheet-label">Location ID</div>
-            <div class="node-sheet-value" id="node-sheet-locid">--</div>
-          </div>
-          <div class="node-sheet-item">
-            <div class="node-sheet-label">Install Date</div>
-            <div class="node-sheet-value" id="node-sheet-install">--</div>
-          </div>
-          <button id="node-sheet-open-zone" class="btn-outlined hidden"></button>
-        </div>
-      </div>
     </div>
 
     <div id="data-source-modal" class="modal-overlay hidden">

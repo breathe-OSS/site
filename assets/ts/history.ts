@@ -15,7 +15,7 @@ import {
   parseCalendarDate,
   shiftHistoryPeriod,
 } from './utils.js';
-import { isRawMode, placeLine, rawExplainerHtml } from './readings.js';
+import { isEstimate, isRawMode, placeLine, rawExplainerHtml } from './readings.js';
 import { clearExtendedSelection, hexToRgba, renderExtendedDotsGrid } from './ui.js';
 import type { Chart as ChartJS, ChartConfiguration, Plugin } from 'chart.js';
 
@@ -133,8 +133,9 @@ let requestId = 0;
 let mainChart: LineChart | null = null;
 let hourChart: LineChart | null = null;
 
-export function initHistory(show: (name: string) => void) {
+export function initHistory(show: (name: string) => void, places: () => Zone[]) {
   showView = show;
+  getPlaces = places;
 }
 
 export function historyZoneId(): string | null {
@@ -412,7 +413,7 @@ function renderMainChart(points: Row[]) {
           border: { display: false },
           ticks: {
             color: theme.tick,
-            maxTicksLimit: 7,
+            maxTicksLimit: window.innerWidth < 600 ? 4 : 7,
             maxRotation: 0,
             autoSkip: true,
             font: { size: 11 },
@@ -783,6 +784,7 @@ function renderAll() {
   renderCalendar(points);
   renderHourProfile(points);
   renderWeatherImpact(points);
+  renderCompare();
 }
 
 function markActive(groupId: string, activeId: string | null) {
@@ -809,7 +811,9 @@ async function load() {
   setLoading(false);
   rows = (data && data.data ? data.data : []).sort((a: Row, b: Row) => a.ts - b.ts);
   weather = weatherData;
+  compareRows = {};
   renderAll();
+  loadCompare();
 }
 
 function showPanel(which: 'date' | 'custom' | null) {
@@ -956,6 +960,10 @@ function downloadHistoryCSV() {
 }
 
 export function openHistoryFor(zone: Zone) {
+  if (!historyZone || historyZone.id !== zone.id) {
+    compareIds = [];
+    compareRows = {};
+  }
   historyZone = zone;
   const title = document.getElementById('history-title-header');
   if (title) title.innerText = `${zone.name} History`;
@@ -983,6 +991,453 @@ export function syncHistoryRawMode() {
   if (!historyZone) return;
   setHistoryMode(isRawMode() ? 'raw' : 'cal');
 }
+
+const COMPARE_COLORS_DARK = [
+  '#d95926',
+  '#199e70',
+  '#c98500',
+  '#d55181',
+  '#008300',
+  '#9085e9',
+  '#e66767',
+];
+const COMPARE_COLORS_LIGHT = [
+  '#eb6834',
+  '#1baf7a',
+  '#eda100',
+  '#e87ba4',
+  '#008300',
+  '#6250d6',
+  '#e34948',
+];
+const COMPARE_MIN_OVERLAP = 24;
+
+let getPlaces: () => Zone[] = () => [];
+let compareIds: string[] = [];
+let compareRows: { [id: string]: Row[] } = {};
+let compareRequest = 0;
+let compareChart: LineChart | null = null;
+
+interface PairStats {
+  n: number;
+  r: number | null;
+  ratio: number | null;
+  bias: number | null;
+  gap: number | null;
+}
+
+function comparablePlaces(): Zone[] {
+  return getPlaces().filter((p) => !isEstimate(p) && (!historyZone || p.id !== historyZone.id));
+}
+
+function compareKey(): string {
+  const base = METRICS[metric].cal[0];
+  return mode === 'raw' ? rawKey(base) : base;
+}
+
+function compareLabel(): string {
+  const name = METRICS[metric].names[0];
+  return mode === 'raw' ? `${name} raw` : name;
+}
+
+function seriesByTs(points: Row[], key: string): Map<number, number> {
+  const out = new Map<number, number>();
+  points.forEach((p) => {
+    const v = num(p, key);
+    if (v !== null) {
+      out.set(p.ts, v);
+    }
+  });
+  return out;
+}
+
+function pairStats(a: Map<number, number>, b: Map<number, number>): PairStats {
+  const xs: number[] = [];
+  const ys: number[] = [];
+  a.forEach((v, ts) => {
+    const w = b.get(ts);
+    if (w !== undefined) {
+      xs.push(v);
+      ys.push(w);
+    }
+  });
+  const n = xs.length;
+  if (n < 2) {
+    return { n, r: null, ratio: null, bias: null, gap: null };
+  }
+  const mx = xs.reduce((s, v) => s + v, 0) / n;
+  const my = ys.reduce((s, v) => s + v, 0) / n;
+  let sxy = 0;
+  let sxx = 0;
+  let syy = 0;
+  let gap = 0;
+  const ratios: number[] = [];
+  for (let i = 0; i < n; i++) {
+    sxy += (xs[i] - mx) * (ys[i] - my);
+    sxx += (xs[i] - mx) * (xs[i] - mx);
+    syy += (ys[i] - my) * (ys[i] - my);
+    gap += Math.abs(ys[i] - xs[i]);
+    if (xs[i] > 0) {
+      ratios.push(ys[i] / xs[i]);
+    }
+  }
+  ratios.sort((p, q) => p - q);
+  const ratio = ratios.length > 0 ? ratios[Math.floor(ratios.length / 2)] : null;
+  const r = sxx > 0 && syy > 0 ? sxy / Math.sqrt(sxx * syy) : null;
+  return { n, r, ratio, bias: my - mx, gap: gap / n };
+}
+
+function verdict(stats: PairStats): { label: string; tone: 'good' | 'fair' | 'poor' | 'none' } {
+  if (stats.n < COMPARE_MIN_OVERLAP || stats.r === null) {
+    return { label: 'Not enough overlap', tone: 'none' };
+  }
+  const levelMatches =
+    metric === 'temp' || metric === 'humidity'
+      ? stats.gap !== null && stats.gap <= (metric === 'temp' ? 2 : 8)
+      : stats.ratio !== null && Math.abs(stats.ratio - 1) <= 0.15;
+  if (stats.r >= 0.9 && levelMatches) {
+    return { label: 'Very consistent', tone: 'good' };
+  }
+  if (stats.r >= 0.9) {
+    return { label: 'Same pattern, different level', tone: 'fair' };
+  }
+  if (stats.r >= 0.75) {
+    return { label: 'Mostly consistent', tone: 'fair' };
+  }
+  if (stats.r >= 0.5) {
+    return { label: 'Loosely related', tone: 'poor' };
+  }
+  return { label: 'Inconsistent', tone: 'poor' };
+}
+
+function compareColor(index: number): string {
+  const dark = getCurrentTheme() === 'dark';
+  if (compareIds.length > COMPARE_COLORS_DARK.length) {
+    return dark ? 'rgba(196, 199, 208, 0.45)' : 'rgba(82, 81, 78, 0.4)';
+  }
+  const palette = dark ? COMPARE_COLORS_DARK : COMPARE_COLORS_LIGHT;
+  return palette[index % palette.length];
+}
+
+function placeName(id: string): string {
+  return getPlaces().find((p) => p.id === id)?.name ?? id;
+}
+
+function filterLikeBase(points: Row[]): Row[] {
+  if (weatherFilter === 'all') {
+    return points;
+  }
+  return points.filter((row) => conditionForTs(row.ts) === weatherFilter);
+}
+
+function renderComparePicker() {
+  const picker = document.getElementById('hist-compare-picker');
+  if (!picker) return;
+  const places = comparablePlaces();
+  const byDistrict = new Map<string, Zone[]>();
+  places.forEach((p) => {
+    const key = p.district || 'Other';
+    if (!byDistrict.has(key)) byDistrict.set(key, []);
+    byDistrict.get(key)!.push(p);
+  });
+  const districts = Array.from(byDistrict.keys()).sort((a, b) => a.localeCompare(b));
+  picker.innerHTML = districts
+    .map((district) => {
+      const chips = byDistrict
+        .get(district)!
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((p) => {
+          const on = compareIds.includes(p.id);
+          return `<button class="compare-chip${on ? ' active' : ''}" aria-pressed="${on}" onclick="toggleCompare('${p.id}')">${p.name}</button>`;
+        })
+        .join('');
+      return `<div class="compare-group"><span class="compare-group-label">${district}</span>${chips}</div>`;
+    })
+    .join('');
+}
+
+async function loadCompare() {
+  if (!historyZone) return;
+  compareRequest += 1;
+  const request = compareRequest;
+  const missing = compareIds.filter((id) => !compareRows[id]);
+  if (missing.length > 0) {
+    document.getElementById('hist-compare-card')?.classList.add('history-loading-card');
+    const results = await Promise.all(
+      missing.map((id) => fetchHistoricalData(id, currentRange, currentInterval, ALL_METRICS))
+    );
+    if (request !== compareRequest) return;
+    missing.forEach((id, i) => {
+      const data = results[i];
+      compareRows[id] = (data && data.data ? data.data : []).sort((a: Row, b: Row) => a.ts - b.ts);
+    });
+    document.getElementById('hist-compare-card')?.classList.remove('history-loading-card');
+  }
+  renderCompare();
+}
+
+function renderCompareChart(base: Row[]) {
+  const canvas = document.getElementById('compareChart') as HTMLCanvasElement | null;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  if (compareChart) {
+    compareChart.destroy();
+    compareChart = null;
+  }
+  if (!historyZone) return;
+
+  const key = compareKey();
+  const bucket = displayBucket(base);
+  const grid = new Set<number>();
+  const shownBase = aggregate(base, bucket, [key]);
+  shownBase.forEach((p) => grid.add(p.ts));
+  const shownOthers = compareIds.map((id) => {
+    const shown = aggregate(filterLikeBase(compareRows[id] || []), bucket, [key]);
+    shown.forEach((p) => grid.add(p.ts));
+    return seriesByTs(shown, key);
+  });
+  const stamps = Array.from(grid).sort((a, b) => a - b);
+  const baseMap = seriesByTs(shownBase, key);
+  const theme = chartTheme();
+  const def = METRICS[metric];
+  const dark = getCurrentTheme() === 'dark';
+  const many = compareIds.length > COMPARE_COLORS_DARK.length;
+
+  const datasets = compareIds.map((id, i) => ({
+    label: placeName(id),
+    data: stamps.map((ts) => shownOthers[i].get(ts) ?? null),
+    borderColor: compareColor(i),
+    backgroundColor: compareColor(i),
+    borderWidth: many ? 1.25 : 2,
+    tension: 0.3,
+    pointRadius: 0,
+    pointHoverRadius: 4,
+    spanGaps: false,
+    fill: false,
+    order: 2,
+  }));
+  datasets.unshift({
+    label: historyZone.name,
+    data: stamps.map((ts) => baseMap.get(ts) ?? null),
+    borderColor: dark ? '#3987e5' : '#2a78d6',
+    backgroundColor: dark ? '#3987e5' : '#2a78d6',
+    borderWidth: 3,
+    tension: 0.3,
+    pointRadius: 0,
+    pointHoverRadius: 5,
+    spanGaps: false,
+    fill: false,
+    order: 1,
+  });
+
+  const config: ChartConfiguration<'line', (number | null)[], string> = {
+    type: 'line',
+    data: { labels: stamps.map((ts) => timeLabel(ts, bucket)), datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 300 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: !many,
+          position: 'top',
+          align: 'start',
+          labels: { color: theme.text, usePointStyle: true, pointStyle: 'line', boxWidth: 24 },
+        },
+        tooltip: {
+          itemSort: (a, b) => (Number(b.raw) || 0) - (Number(a.raw) || 0),
+          filter: (item) => typeof item.raw === 'number',
+          callbacks: {
+            label: (c) => {
+              const value = typeof c.raw === 'number' ? c.raw : null;
+              return `${c.dataset.label}  ${fmt(value)} ${def.unit === 'US AQI' ? '' : def.unit}`.trim();
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: {
+            color: theme.tick,
+            maxTicksLimit: window.innerWidth < 600 ? 4 : 7,
+            maxRotation: 0,
+            font: { size: 11 },
+          },
+        },
+        y: {
+          beginAtZero: metric !== 'temp',
+          position: 'right',
+          border: { display: false },
+          grid: { color: theme.grid },
+          ticks: { color: theme.tick, maxTicksLimit: 6, font: { size: 11 } },
+        },
+      },
+    },
+    plugins: [categoryBands],
+  };
+  compareChart = new Chart(ctx, config);
+}
+
+function toneColor(tone: string): string {
+  if (tone === 'good') return 'var(--aqi-good)';
+  if (tone === 'fair') return 'var(--us-aqi-moderate)';
+  if (tone === 'poor') return 'var(--us-aqi-sensitive)';
+  return 'var(--on-surface-variant)';
+}
+
+function renderCompareStats(base: Row[]) {
+  const host = document.getElementById('hist-compare-stats');
+  const summary = document.getElementById('hist-compare-summary');
+  if (!host || !summary || !historyZone) return;
+  const key = compareKey();
+  const baseMap = seriesByTs(base, key);
+  const unit = METRICS[metric].unit === 'US AQI' ? '' : ` ${METRICS[metric].unit}`;
+
+  const rowsHtml = compareIds
+    .map((id) => {
+      const stats = pairStats(baseMap, seriesByTs(filterLikeBase(compareRows[id] || []), key));
+      return { id, stats, v: verdict(stats) };
+    })
+    .sort((a, b) => (b.stats.r ?? -2) - (a.stats.r ?? -2));
+
+  const good = rowsHtml.filter((x) => x.v.tone === 'good').length;
+  const counted = rowsHtml.filter((x) => x.v.tone !== 'none').length;
+  summary.textContent =
+    counted === 0
+      ? `Not enough overlapping ${compareLabel()} readings in this range to judge.`
+      : `${good} of ${counted} sensor${counted === 1 ? '' : 's'} track ${historyZone.name} closely on ${compareLabel()}.`;
+
+  host.innerHTML = `
+    <div class="table-scroll">
+      <table class="compare-table">
+        <thead><tr><th>Sensor</th><th>Agreement</th><th title="How closely they rise and fall together, from 0 to 1">Moves together</th><th title="Their reading divided by this one's, middle value">Typical ratio</th><th title="Average size of the difference">Typical gap</th><th>Hours</th></tr></thead>
+        <tbody>
+          ${rowsHtml
+            .map(({ id, stats, v }) => {
+              const color = compareColor(compareIds.indexOf(id));
+              return `<tr>
+                <td><span class="compare-swatch" style="background: ${color};"></span>${placeName(id)}</td>
+                <td style="color: ${toneColor(v.tone)};">${v.label}</td>
+                <td>${stats.r === null ? '--' : stats.r.toFixed(2)}</td>
+                <td>${stats.ratio === null ? '--' : `${stats.ratio.toFixed(2)}×`}</td>
+                <td>${stats.gap === null ? '--' : `${fmt(stats.gap)}${unit}`}</td>
+                <td>${stats.n}</td>
+              </tr>`;
+            })
+            .join('')}
+        </tbody>
+      </table>
+    </div>
+    <p class="compare-note">Moves together is the correlation: 1 means they rise and fall at exactly the same times, 0 means no link at all. Typical ratio is their reading over ${historyZone.name}'s, so 1.20× means they usually read 20% higher. Typical gap is how far apart the two readings are on average. A pair can move together closely and still sit at different levels, which usually means one sensor reads high or low rather than the air being different.</p>
+  `;
+}
+
+function renderCompareMatrix(base: Row[]) {
+  const host = document.getElementById('hist-compare-matrix');
+  if (!host || !historyZone) return;
+  if (compareIds.length < 2) {
+    host.innerHTML = '';
+    return;
+  }
+  const key = compareKey();
+  const ids = [historyZone.id, ...compareIds];
+  const maps = ids.map((id, i) =>
+    seriesByTs(i === 0 ? base : filterLikeBase(compareRows[id] || []), key)
+  );
+  const names = ids.map((id, i) => (i === 0 ? historyZone!.name : placeName(id)));
+  const dark = getCurrentTheme() === 'dark';
+  const cell = (r: number | null) => {
+    if (r === null) return '<td class="matrix-empty">--</td>';
+    const strength = Math.max(0, Math.min(1, r));
+    const bg = dark
+      ? `rgba(57, 135, 229, ${0.08 + strength * 0.7})`
+      : `rgba(42, 120, 214, ${0.06 + strength * 0.6})`;
+    const fg = strength > 0.6 ? '#ffffff' : 'var(--on-surface)';
+    return `<td style="background: ${bg}; color: ${fg};">${r.toFixed(2)}</td>`;
+  };
+  const body = ids
+    .map((_, i) => {
+      const cells = ids
+        .map((__, j) => {
+          if (i === j) return '<td class="matrix-self"></td>';
+          const s = pairStats(maps[i], maps[j]);
+          return cell(s.n >= COMPARE_MIN_OVERLAP ? s.r : null);
+        })
+        .join('');
+      return `<tr><th>${names[i]}</th>${cells}</tr>`;
+    })
+    .join('');
+  host.innerHTML = `
+    <h4 class="compare-subhead">Every pair</h4>
+    <p class="compare-note">How closely each pair moves together on ${compareLabel()}, from 0 to 1. Darker means more consistent.</p>
+    <div class="table-scroll">
+      <table class="compare-matrix">
+        <thead><tr><th></th>${names.map((n) => `<th><span>${n}</span></th>`).join('')}</tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderCompare() {
+  const card = document.getElementById('hist-compare-card');
+  const results = document.getElementById('hist-compare-results');
+  const sub = document.getElementById('hist-compare-sub');
+  if (!card || !results) return;
+  renderComparePicker();
+  if (sub) {
+    sub.textContent = `Overlay ${compareLabel()} from other sensors on ${historyZone ? historyZone.name : 'this one'} for the same range`;
+  }
+  const hasSelection = compareIds.length > 0;
+  results.classList.toggle('hidden', !hasSelection);
+  if (!hasSelection) {
+    if (compareChart) {
+      compareChart.destroy();
+      compareChart = null;
+    }
+    return;
+  }
+  const base = filteredRows();
+  renderCompareChart(base);
+  renderCompareStats(base);
+  renderCompareMatrix(base);
+}
+
+function toggleCompare(id: string) {
+  if (compareIds.includes(id)) {
+    compareIds = compareIds.filter((x) => x !== id);
+  } else {
+    compareIds = [...compareIds, id];
+  }
+  loadCompare();
+}
+
+function compareAll() {
+  compareIds = comparablePlaces().map((p) => p.id);
+  loadCompare();
+}
+
+function compareDistrict() {
+  const district = historyZone?.district;
+  compareIds = comparablePlaces()
+    .filter((p) => p.district === district)
+    .map((p) => p.id);
+  loadCompare();
+}
+
+function clearCompare() {
+  compareIds = [];
+  renderCompare();
+}
+
+(window as any).toggleCompare = toggleCompare;
+(window as any).compareAll = compareAll;
+(window as any).compareDistrict = compareDistrict;
+(window as any).clearCompare = clearCompare;
 
 (window as any).setHistoryRange = setHistoryRange;
 (window as any).toggleDateRange = toggleDateRange;

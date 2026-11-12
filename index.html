@@ -498,6 +498,25 @@
               </div>
             </div>
 
+            <div class="history-card" id="hist-compare-card">
+              <div class="history-card-head">
+                <h3>Compare with other sensors</h3>
+                <div class="history-card-sub" id="hist-compare-sub"></div>
+              </div>
+              <div class="compare-actions">
+                <button class="btn-outlined btn-small" onclick="compareDistrict()">Same district</button>
+                <button class="btn-outlined btn-small" onclick="compareAll()">All sensors</button>
+                <button class="btn-text" onclick="clearCompare()">Clear</button>
+              </div>
+              <div class="compare-picker" id="hist-compare-picker"></div>
+              <div class="hidden" id="hist-compare-results">
+                <div class="history-chart"><canvas id="compareChart"></canvas></div>
+                <p class="compare-summary" id="hist-compare-summary"></p>
+                <div id="hist-compare-stats"></div>
+                <div id="hist-compare-matrix"></div>
+              </div>
+            </div>
+
             <div class="history-card hidden" id="hist-weather-card">
               <div class="history-card-head">
                 <h3>Weather</h3>

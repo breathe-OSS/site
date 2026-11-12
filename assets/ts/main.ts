@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     togglePin: (id) => togglePin(id),
     openPlace: (id) => openDetails(id),
   });
-  initHistory(handleShowView);
+  initHistory(handleShowView, () => allZones);
 
   allZones = await fetchZones();
   migratePins();

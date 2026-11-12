@@ -4522,3 +4522,146 @@ header .icon-btn + h1 {
 .map-controls-row .map-fab {
   margin-left: auto;
 }
+.compare-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.compare-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.compare-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.compare-group-label {
+  min-width: 84px;
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+.compare-chip {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--outline);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-press) var(--motion-easing-standard),
+    border-color var(--motion-press) var(--motion-easing-standard);
+}
+.compare-chip:hover {
+  background: var(--surface-container-high);
+}
+.compare-chip.active {
+  background: var(--primary-container);
+  border-color: transparent;
+  color: var(--primary);
+}
+.history-loading-card {
+  opacity: 0.6;
+}
+.compare-summary {
+  margin: 16px 0 8px;
+  font-size: 15px;
+  font-weight: 500;
+}
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.compare-table,
+.compare-matrix {
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.compare-table {
+  width: 100%;
+}
+.compare-table th {
+  padding: 8px 12px 8px 0;
+  font-weight: 500;
+  font-size: 12px;
+  text-align: left;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+}
+.compare-table td {
+  padding: 8px 12px 8px 0;
+  border-top: 1px solid var(--outline-variant);
+  white-space: nowrap;
+}
+.compare-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.compare-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--on-surface-variant);
+}
+.compare-subhead {
+  margin: 24px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+.compare-matrix {
+  margin-top: 12px;
+}
+.compare-matrix th {
+  padding: 4px 8px 4px 0;
+  font-weight: 400;
+  font-size: 12px;
+  text-align: right;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+}
+.compare-matrix thead th {
+  height: 110px;
+  padding: 0;
+  vertical-align: bottom;
+  text-align: left;
+}
+.compare-matrix thead th span {
+  display: inline-block;
+  width: 44px;
+  transform: rotate(-50deg) translate(6px, 0);
+  transform-origin: left bottom;
+  white-space: nowrap;
+}
+.compare-matrix td {
+  min-width: 42px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid var(--surface);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 11px;
+}
+.compare-matrix .matrix-self {
+  background: var(--surface-container-high);
+}
+.compare-matrix .matrix-empty {
+  color: var(--on-surface-variant);
+}
+@media (max-width: 600px) {
+  .compare-group-label {
+    min-width: 100%;
+  }
+}

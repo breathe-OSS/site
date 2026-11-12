@@ -7,7 +7,7 @@ The full project description, methodology, coverage and team are at https://abou
 Facts to get right:
 
 - Breathe is independent and non-profit. It is not affiliated with the CPCB, JKPCB or any government agency.
-- Coverage is Jammu & Kashmir and Ladakh only: 25 zones, 12 of them with ground sensors (as of 2026-10-24).
+- Coverage is Jammu & Kashmir and Ladakh only: 20 ground sensors, each shown as its own place, plus 13 satellite estimates for areas without a sensor (as of 2026-11-12). Every place belongs to a district, and every district to the Jammu, Kashmir or Ladakh division.
 - The AQI shown here is live data. Do not quote numbers from this page as current. Fetch them from the API instead.
 
 ## Live data
@@ -16,19 +16,21 @@ The web app is a JavaScript dashboard, so its readings are not in the HTML. Use 
 
 - [API docs](https://docs.breatheoss.app): every endpoint, field, time range format and error, with examples. Its [llms.txt](https://docs.breatheoss.app/llms.txt) has a short summary.
 - [Interactive API reference](https://api.breatheoss.app/docs), generated from the code
-- [All zones](https://api.breatheoss.app/zones): id, name, provider (airgradient or openmeteo), coordinates
-- Current AQI for a zone: `https://api.breatheoss.app/aqi/zone/{zone_id}`, for example [Srinagar](https://api.breatheoss.app/aqi/zone/srinagar). The response has `aqi` (Indian NAQI), `us_aqi` (US EPA), pollutant concentrations, 24-hour averages and which source was used.
+- [Every sensor and estimate](https://api.breatheoss.app/zones?layout=sensors): id, name, kind (sensor or estimate), district, division, coordinates
+- Current AQI for one place: `https://api.breatheoss.app/aqi/zone/{id}`, for example [Gandhi Nagar, Jammu](https://api.breatheoss.app/aqi/zone/gandhi-nagar). The response has `aqi` (Indian NAQI), `us_aqi` (US EPA), pollutant concentrations, 24-hour averages, which source was used, and for sensors a `raw` object with the uncorrected readings.
 - [Ground sensors](https://api.breatheoss.app/sensor-info)
 
 ## What the web app does
 
-Every view has its own URL. A zone lives at `https://breatheoss.app/zone/{zone_id}` (for example [Srinagar](https://breatheoss.app/zone/srinagar)) and its history at `/zone/{zone_id}/history`. The map and zone list are at `/map` and `/explore`.
+Every view has its own URL. A sensor lives at `https://breatheoss.app/zone/{id}` (for example [Gandhi Nagar](https://breatheoss.app/zone/gandhi-nagar)) and its history at `/zone/{id}/history`. The map and the district list are at `/map` and `/explore`. Old district links like `/zone/srinagar` open that district in the list.
 
 
-- Live AQI per zone, switchable between US EPA and Indian NAQI
-- Interactive map (Leaflet) with every ground sensor at its own location, or one bubble per zone
-- 24-hour AQI trend and per-sensor readings for zones with ground sensors
-- Extended PM2.5 / PM10 history (1 week, 1 month, 6 months, custom), filterable by weather (rain, snow, fog, cloudy, clear)
+- Live AQI per sensor, switchable between US EPA and Indian NAQI
+- A switch between calibrated and raw sensor readings, which applies everywhere and explains what changes
+- Places grouped by district in the list, with each detail page saying which district and division it belongs to
+- Interactive map (Leaflet) with every ground sensor at its own location
+- 24-hour AQI trend for every sensor
+- Extended history (1 week, 1 month, 6 months, by date, custom) of AQI, PM2.5, PM10, temperature and humidity, calibrated, raw or both, with time spent in each AQI category, a day by day grid, an hour of day profile and a weather filter
 - Pollutant breakdown and cigarette equivalence
 - Pinned locations saved in the browser, light and dark themes, installable as a PWA
 - No accounts, no tracking. See the [privacy policy](https://breatheoss.app/privacy/).

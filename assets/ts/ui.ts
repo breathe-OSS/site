@@ -877,7 +877,18 @@ function renderChart(history: AQIHistory[]) {
           backgroundColor: gradient,
           borderWidth: 2.5,
           tension: 0.4,
-          pointRadius: 0,
+          pointRadius: (c) => {
+            const before = values[c.dataIndex - 1];
+            const after = values[c.dataIndex + 1];
+            if (values[c.dataIndex] === null) {
+              return 0;
+            }
+            if ((before === null || before === undefined) && (after === null || after === undefined)) {
+              return 3;
+            }
+            return 0;
+          },
+          pointBackgroundColor: (c) => getAQIColor(Number(c.raw) || 0, std).hex,
           pointHoverRadius: 6,
           pointHoverBackgroundColor: (c) => getAQIColor(Number(c.raw) || 0, std).hex,
           fill: true,

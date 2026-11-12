@@ -3962,18 +3962,44 @@ header .icon-btn + h1 {
 .raw-banner-body {
   padding: 0 16px 12px 46px;
 }
-.raw-explainer-list {
-  margin: 0;
-  padding-left: 18px;
+.raw-points {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 24px;
+}
+.raw-point-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--on-surface);
+}
+.raw-point-text {
+  margin-top: 4px;
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.5;
   color: var(--on-surface-variant);
 }
-.raw-explainer-list li + li {
-  margin-top: 6px;
-}
 .raw-settings-body {
-  padding: 0 20px 16px;
+  padding: 4px 20px 20px;
+}
+.raw-banner-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.raw-banner-actions .btn-text {
+  padding: 8px 12px;
+  border-radius: 18px;
+}
+.raw-banner-actions .btn-text:hover {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+}
+:root.raw-hint-hidden #detail-raw-banner,
+:root.raw-hint-hidden #hist-raw-note.generic {
+  display: none;
+}
+:root.raw-hint-hidden .raw-banner .raw-banner-more,
+:root.raw-hint-hidden .raw-banner .raw-banner-actions {
+  display: none;
 }
 .raw-unavailable {
   margin: -4px 4px 16px;

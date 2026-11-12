@@ -34,7 +34,14 @@ import {
   historyZoneId,
   syncHistoryRawMode,
 } from './history.js';
-import { initRawMode, setRawMode, zoneAqi } from './readings.js';
+import {
+  hideRawHint,
+  initRawMode,
+  isEstimate,
+  isRawMode,
+  setRawMode,
+  zoneAqi,
+} from './readings.js';
 import { Zone, AQIData } from './types.js';
 
 let allZones: Zone[] = [];
@@ -692,6 +699,7 @@ window.addEventListener('resize', drawEmptyHints);
 (window as any).openHistoryView = openHistoryView;
 (window as any).openDistrictInExplore = openDistrictInExplore;
 (window as any).setRawMode = (on: boolean) => setRawMode(on);
+(window as any).hideRawHint = hideRawHint;
 (window as any).openModal = (id: string) => document.getElementById(id)?.classList.remove('hidden');
 (window as any).closeModal = (id: string) => document.getElementById(id)?.classList.add('hidden');
 

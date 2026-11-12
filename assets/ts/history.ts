@@ -112,6 +112,8 @@ const WEATHER_LABELS: { [key: string]: string } = {
   clear: 'Clear',
 };
 
+const GENERIC_RAW_NOTE = "Showing the sensor's uncorrected readings.";
+
 const US_CATEGORY_SAMPLES = [25, 75, 125, 175, 250, 400];
 
 let showView: (name: string) => void = () => undefined;
@@ -759,9 +761,10 @@ function renderRawNote() {
     });
     message = `Raw readings for this sensor start on ${day}. Earlier parts of the range are blank in raw.`;
   } else {
-    message = "Showing the sensor's uncorrected readings.";
+    message = GENERIC_RAW_NOTE;
   }
   text.textContent = message;
+  note.classList.toggle('generic', message === GENERIC_RAW_NOTE);
   note.classList.remove('hidden');
   const points = note.querySelector('.raw-banner-points');
   if (points && !points.innerHTML) {

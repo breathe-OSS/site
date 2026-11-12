@@ -265,7 +265,7 @@
                 <span>You're looking at this sensor's raw readings, before AirGradient's correction.</span>
                 <span class="raw-banner-more">What changes</span>
               </summary>
-              <div class="raw-banner-body"><div class="raw-banner-points"></div></div>
+              <div class="raw-banner-body"><div class="raw-banner-points"></div><div class="raw-banner-actions"><button class="btn-text" onclick="hideRawHint()">Don't show this again</button></div></div>
             </details>
             <div class="raw-unavailable hidden" id="detail-raw-unavailable"></div>
 
@@ -467,7 +467,7 @@
                 <span id="hist-raw-note-text">Showing the sensor's uncorrected readings.</span>
                 <span class="raw-banner-more">What changes</span>
               </summary>
-              <div class="raw-banner-body"><div class="raw-banner-points"></div></div>
+              <div class="raw-banner-body"><div class="raw-banner-points"></div><div class="raw-banner-actions"><button class="btn-text" onclick="hideRawHint()">Don't show this again</button></div></div>
             </details>
 
             <div class="history-card history-summary hidden" id="history-summary"></div>
@@ -644,16 +644,7 @@
                   <path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
                 </svg>
               </summary>
-              <div class="settings-accordion-body raw-settings-body">
-                <ul class="raw-explainer-list">
-                  <li>PM<sub>2.5</sub> and PM<sub>10</sub> become the laser counter's own numbers, before AirGradient's correction. The correction mostly lowers PM<sub>2.5</sub>, and lowers it more in humid air, so raw readings and the AQI worked out from them usually come out higher.</li>
-                  <li>Temperature and humidity become the readings from inside the sensor's case. The case warms up in the sun, so raw temperature runs a few degrees high in the afternoon and raw humidity runs low.</li>
-                  <li>The AQI, its colour, the health advice, the cigarette count and the charts are all worked out again from the raw numbers, on the home screen, in Explore, on the map and on each sensor's page.</li>
-                  <li>Places marked as satellite estimates have no sensor, so they have no raw readings and don't change.</li>
-                  <li>Raw history only goes back to the day Breathe started keeping it. Hours before that show as gaps.</li>
-                  <li>Calibrated readings are closer to what a reference monitor would show. Raw is useful for checking the sensor itself or comparing it with another device.</li>
-                </ul>
-              </div>
+              <div class="settings-accordion-body raw-settings-body" id="raw-settings-points"></div>
             </details>
           </div>
 

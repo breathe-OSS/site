@@ -43,6 +43,11 @@ export function syncRawControls(): void {
 export function initRawMode(onChange: RawModeListener): void {
   rawListener = onChange;
   document.documentElement.classList.toggle('raw-mode', isRawMode());
+  document.documentElement.classList.toggle('raw-hint-hidden', rawHintHidden());
+  const settingsPoints = document.getElementById('raw-settings-points');
+  if (settingsPoints) {
+    settingsPoints.innerHTML = rawExplainerHtml();
+  }
   const toggle = document.getElementById('raw-toggle') as HTMLInputElement | null;
   if (toggle) {
     toggle.addEventListener('change', () => setRawMode(toggle.checked));
@@ -159,14 +164,56 @@ export function isEstimate(zone: Zone | null | undefined): boolean {
   return zone.provider !== 'airgradient';
 }
 
+const STORAGE_KEY_RAW_HINT = 'breathe_raw_hint_hidden';
+
 export const RAW_EXPLAINER_POINTS = [
-  "PM<sub>2.5</sub> and PM<sub>10</sub> become the laser counter's own numbers, before AirGradient's correction. The correction mostly lowers PM<sub>2.5</sub>, and lowers it more in humid air, so raw readings and the AQI worked out from them usually come out higher.",
-  "Temperature and humidity become the readings from inside the sensor's case. The case warms up in the sun, so raw temperature runs a few degrees high in the afternoon and raw humidity runs low.",
-  'The AQI, its colour, the health advice, the cigarette count and the charts are all worked out again from the raw numbers.',
-  "Places marked as satellite estimates have no sensor, so they have no raw readings and don't change.",
-  'Raw history only goes back to the day Breathe started keeping it. Hours before that show as gaps.',
+  {
+    title: 'PM<sub>2.5</sub> and PM<sub>10</sub>',
+    text: "The laser counter's own numbers, before AirGradient's correction. The correction mostly lowers PM<sub>2.5</sub>, more so in humid air, so raw usually reads higher.",
+  },
+  {
+    title: 'Temperature and humidity',
+    text: "Read inside the sensor's case, which warms up in the sun. Raw temperature runs a few degrees high in the afternoon and raw humidity runs low.",
+  },
+  {
+    title: 'AQI, advice and charts',
+    text: 'The index, its colour, the health advice, the cigarette count and every chart are worked out again from the raw numbers.',
+  },
+  {
+    title: 'Satellite estimates',
+    text: "Places without a sensor have no raw readings, so they don't change.",
+  },
+  {
+    title: 'History',
+    text: 'Raw history only goes back to the day Breathe started keeping it. Hours before that show as gaps.',
+  },
+  {
+    title: 'Which one to trust',
+    text: 'Calibrated is closer to what a reference monitor would show. Raw is useful for checking the sensor itself or comparing it with another device.',
+  },
 ];
 
 export function rawExplainerHtml(): string {
-  return `<ul class="raw-explainer-list">${RAW_EXPLAINER_POINTS.map((p) => `<li>${p}</li>`).join('')}</ul>`;
+  const points = RAW_EXPLAINER_POINTS.map(
+    (p) =>
+      `<div class="raw-point"><div class="raw-point-title">${p.title}</div><div class="raw-point-text">${p.text}</div></div>`
+  ).join('');
+  return `<div class="raw-points">${points}</div>`;
+}
+
+export function rawHintHidden(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEY_RAW_HINT) === 'yes';
+  } catch (e) {
+    return false;
+  }
+}
+
+export function hideRawHint(): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_RAW_HINT, 'yes');
+  } catch (e) {
+    return;
+  }
+  document.documentElement.classList.add('raw-hint-hidden');
 }

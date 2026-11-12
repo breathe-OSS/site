@@ -238,10 +238,13 @@ function build(container: HTMLElement, places: Zone[]) {
     section.className = 'explore-division';
     section.dataset.division = division;
     section.innerHTML = `<h2 class="explore-division-title">${division}</h2>`;
+    const grid = document.createElement('div');
+    grid.className = 'explore-grid';
+    section.appendChild(grid);
     groups
       .filter((g) => g.division === division)
       .forEach((group) => {
-        section.appendChild(buildDistrict(group, index));
+        grid.appendChild(buildDistrict(group, index));
         index += 1;
       });
     container.appendChild(section);

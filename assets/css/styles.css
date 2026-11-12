@@ -4053,9 +4053,17 @@ header .icon-btn + h1 {
   color: var(--on-surface-variant);
 }
 
-.explore-list {
-  max-width: 760px;
-  margin: 0 auto;
+.explore-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+ (max-width: 600px) {
+  .explore-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
 }
 .explore-division + .explore-division {
   margin-top: 8px;
@@ -4067,7 +4075,7 @@ header .icon-btn + h1 {
   color: var(--primary);
 }
 .district-card {
-  margin-bottom: 12px;
+  margin: 0;
   border-radius: var(--shape-corner-extra-large);
   background: var(--surface);
   overflow: hidden;
@@ -4089,7 +4097,7 @@ header .icon-btn + h1 {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 16px 18px 20px;
+  padding: 20px;
   cursor: pointer;
 }
 .district-head:hover,
@@ -4126,6 +4134,9 @@ header .icon-btn + h1 {
   fill: var(--on-surface-variant);
   transition: transform var(--motion-shape) var(--motion-easing-emphasized);
 }
+.district-card.expanded {
+  grid-column: 1 / -1;
+}
 .district-card.expanded .district-chevron {
   transform: rotate(180deg);
 }
@@ -4140,12 +4151,14 @@ header .icon-btn + h1 {
 .district-body-inner {
   min-height: 0;
   overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 .place-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px 12px 32px;
+  padding: 14px 20px;
   border-top: 1px solid var(--outline-variant);
   cursor: pointer;
 }

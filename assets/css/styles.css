@@ -4213,14 +4213,6 @@ header .icon-btn + h1 {
   background: var(--surface-container);
   border: 1px solid var(--outline-variant);
 }
-@media (min-width: 900px) {
-  .history-toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-  }
-}
 .history-toolbar-row {
   display: flex;
   flex-wrap: wrap;

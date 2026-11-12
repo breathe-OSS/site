@@ -4425,3 +4425,36 @@ header .icon-btn + h1 {
     align-self: flex-start;
   }
 }
+#detail-now-viewing {
+  align-items: flex-end;
+  padding: 8px 24px 16px;
+}
+#detail-now-viewing .now-viewing-left {
+  gap: 4px;
+  min-width: 0;
+}
+#detail-now-viewing .now-viewing-name {
+  font-size: 36px;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+#detail-now-viewing .place-line {
+  margin: 0;
+  font-size: 14px;
+}
+@media (max-width: 600px) {
+  #detail-now-viewing {
+    padding: 4px 16px 12px;
+  }
+  #detail-now-viewing .now-viewing-name {
+    font-size: 28px;
+  }
+}
+.raw-switch-row {
+  margin: 0 24px 16px;
+}
+@media (max-width: 600px) {
+  .raw-switch-row {
+    margin: 0 16px 12px;
+  }
+}

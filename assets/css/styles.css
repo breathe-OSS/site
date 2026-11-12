@@ -4160,9 +4160,6 @@ header .icon-btn + h1 {
   fill: var(--on-surface-variant);
   transition: transform var(--motion-shape) var(--motion-easing-emphasized);
 }
-.district-card.expanded {
-  grid-column: 1 / -1;
-}
 .district-card.expanded .district-chevron {
   transform: rotate(180deg);
 }
@@ -4177,8 +4174,6 @@ header .icon-btn + h1 {
 .district-body-inner {
   min-height: 0;
   overflow: hidden;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 .place-row {
   display: flex;

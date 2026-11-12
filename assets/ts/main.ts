@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initRawMode(() => {
     repaintAqiColours();
     syncHistoryRawMode();
+    syncRawUrl();
   });
 
   initExplore({
@@ -776,20 +777,44 @@ function parseRoute(pathname: string): Route {
   return { view: 'dashboard', zoneId: null };
 }
 
-function routePath(viewName: string): string {
+const RAW_SUFFIX = '-raw';
+
+function zoneSlug(id: string, raw: boolean = isRawMode()): string {
+  const zone = allZones.find((z) => z.id === id);
+  const suffix = raw && zone && !isEstimate(zone) ? RAW_SUFFIX : '';
+  return encodeURIComponent(id + suffix);
+}
+
+function routePath(viewName: string, raw: boolean = isRawMode()): string {
   if (viewName === 'map' && getPanelZoneId()) {
     return `/map/${encodeURIComponent(getPanelZoneId()!)}`;
   }
   if (viewName === 'details' && currentZoneId) {
-    return `/zone/${encodeURIComponent(currentZoneId)}`;
+    return `/zone/${zoneSlug(currentZoneId, raw)}`;
   }
   if (viewName === 'history' && historyZoneId()) {
-    return `/zone/${encodeURIComponent(historyZoneId()!)}/history`;
+    return `/zone/${zoneSlug(historyZoneId()!, raw)}/history`;
   }
   if (viewName === 'map' || viewName === 'explore' || viewName === 'settings') {
     return `/${viewName}`;
   }
   return '/';
+}
+
+function activeViewName(): string | null {
+  const view = document.querySelector('.view.active-view');
+  return view ? view.id.replace('view-', '') : null;
+}
+
+function syncRawUrl() {
+  const view = activeViewName();
+  if (view !== 'details' && view !== 'history') {
+    return;
+  }
+  const path = routePath(view);
+  if (path !== location.pathname) {
+    history.replaceState(history.state, '', path);
+  }
 }
 
 function routeTitle(viewName: string): string {
@@ -825,7 +850,7 @@ function syncUrl(viewName: string) {
   document.title = routeTitle(viewName);
   const canonical = document.querySelector('link[rel="canonical"]');
   if (canonical) {
-    canonical.setAttribute('href', `https://breatheoss.app${path}`);
+    canonical.setAttribute('href', `https://breatheoss.app${routePath(viewName, false)}`);
   }
   if (applyingRoute || path === location.pathname) {
     return;
@@ -844,6 +869,16 @@ function legacyPlaces(id: string | null): Zone[] {
 function applyRoute(route: Route) {
   applyingRoute = true;
   try {
+    if (route.zoneId !== null && route.zoneId.endsWith(RAW_SUFFIX)) {
+      const base = route.zoneId.slice(0, -RAW_SUFFIX.length);
+      const zone = allZones.find((z) => z.id === base);
+      if (zone && !isEstimate(zone)) {
+        route = { ...route, zoneId: base };
+        if (!isRawMode()) {
+          setRawMode(true);
+        }
+      }
+    }
     const legacy = legacyPlaces(route.zoneId);
     if (
       route.zoneId !== null &&
@@ -892,6 +927,7 @@ function applyRoute(route: Route) {
   } finally {
     applyingRoute = false;
   }
+  syncRawUrl();
 }
 
 function goBack(fallback: string) {

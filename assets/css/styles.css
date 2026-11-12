@@ -4476,3 +4476,54 @@ header .icon-btn + h1 {
     margin: 0 16px 12px;
   }
 }
+:root:not(.map-playback-on) #map-playback,
+:root:not(.map-legend-on) #map-legend {
+  display: none;
+}
+@media (max-width: 600px) {
+  .map-controls {
+    gap: 8px;
+  }
+  .map-playback {
+    width: 100%;
+    gap: 8px;
+    padding: 3px 12px 3px 3px;
+  }
+  .map-play {
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+  }
+  .map-play svg {
+    width: 18px;
+    height: 18px;
+  }
+  .map-time-label {
+    min-width: 56px;
+    font-size: 12px;
+  }
+  .map-legend {
+    flex: 1 1 auto;
+    max-width: 220px;
+    padding: 6px 8px 5px;
+    border-radius: 12px;
+  }
+  .map-legend-title,
+  .map-legend-ends {
+    display: none;
+  }
+  .map-legend-bar {
+    height: 6px;
+  }
+  .map-legend-ticks {
+    font-size: 9px;
+    margin-top: 3px;
+  }
+  .map-fab {
+    width: 48px;
+    height: 48px;
+  }
+}
+.map-controls-row .map-fab {
+  margin-left: auto;
+}

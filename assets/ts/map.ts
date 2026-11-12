@@ -256,6 +256,11 @@ function setPlaybackIndex(index: number | null) {
   renderMapMarkers();
 }
 
+export function stopMapPlayback() {
+  stopPlayback();
+  setPlaybackIndex(null);
+}
+
 function stopPlayback() {
   window.clearInterval(playbackTimer);
   playbackTimer = 0;

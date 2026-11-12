@@ -11,7 +11,8 @@ import {
   aqiTextColor,
 } from './utils.js';
 import { initMotion, motionEnabled } from './motion.js';
-import { initMap, updateMapTiles, resizeMap, openMapZoneById } from './map.js';
+import { initMapOptions } from './mapoptions.js';
+import { initMap, updateMapTiles, resizeMap, openMapZoneById, stopMapPlayback } from './map.js';
 import { getPanelZoneId, setPanelPinned, closeZonePanel, refreshZonePanel } from './panel.js';
 import {
   renderDashboardCard,
@@ -52,6 +53,7 @@ let isReordering = false;
 // init
 document.addEventListener('DOMContentLoaded', async () => {
   initMotion();
+  initMapOptions(() => stopMapPlayback());
   initKeyboardActivation();
   initSheetDragging();
 

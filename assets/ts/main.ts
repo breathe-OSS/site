@@ -68,9 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   initRawMode(() => {
+    syncRawUrl();
     repaintAqiColours();
     syncHistoryRawMode();
-    syncRawUrl();
   });
 
   initExplore({

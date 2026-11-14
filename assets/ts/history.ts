@@ -22,7 +22,7 @@ import type { Chart as ChartJS, ChartConfiguration, Plugin } from 'chart.js';
 declare const Chart: typeof ChartJS;
 type LineChart = InstanceType<typeof Chart<'line', (number | null)[], string>>;
 
-type Metric = 'aqi' | 'pm25' | 'pm10' | 'pm' | 'temp' | 'humidity';
+type Metric = 'aqi' | 'naqi' | 'pm25' | 'pm10' | 'pm' | 'temp' | 'humidity';
 type Mode = 'cal' | 'raw' | 'both';
 
 interface Row {
@@ -44,12 +44,15 @@ interface MetricDef {
   names: string[];
   bands: number[] | null;
   decimals: number;
+  standard: 'us' | 'india';
+  index: boolean;
 }
 
 const ALL_METRICS =
-  'pm2.5,pm10,temp,humidity,us_aqi,pm2.5_raw,pm10_raw,temp_raw,humidity_raw,us_aqi_raw';
+  'pm2.5,pm10,temp,humidity,us_aqi,naqi,pm2.5_raw,pm10_raw,temp_raw,humidity_raw,us_aqi_raw,naqi_raw';
 
 const US_AQI_BANDS = [0, 50, 100, 150, 200, 300, 500];
+const NAQI_BANDS = [0, 50, 100, 200, 300, 400, 500];
 const PM25_BANDS = [0, 9, 35.4, 55.4, 125.4, 225.4, 325.4];
 const PM10_BANDS = [0, 54, 154, 254, 354, 424, 604];
 
@@ -61,6 +64,18 @@ const METRICS: { [key in Metric]: MetricDef } = {
     names: ['US AQI'],
     bands: US_AQI_BANDS,
     decimals: 0,
+    standard: 'us',
+    index: true,
+  },
+  naqi: {
+    label: 'NAQI',
+    unit: 'NAQI',
+    cal: ['naqi'],
+    names: ['NAQI'],
+    bands: NAQI_BANDS,
+    decimals: 0,
+    standard: 'india',
+    index: true,
   },
   pm25: {
     label: 'PM2.5',
@@ -69,6 +84,8 @@ const METRICS: { [key in Metric]: MetricDef } = {
     names: ['PM2.5'],
     bands: PM25_BANDS,
     decimals: 1,
+    standard: 'us',
+    index: false,
   },
   pm10: {
     label: 'PM10',
@@ -77,6 +94,8 @@ const METRICS: { [key in Metric]: MetricDef } = {
     names: ['PM10'],
     bands: PM10_BANDS,
     decimals: 1,
+    standard: 'us',
+    index: false,
   },
   pm: {
     label: 'PM2.5 + PM10',
@@ -85,6 +104,8 @@ const METRICS: { [key in Metric]: MetricDef } = {
     names: ['PM2.5', 'PM10'],
     bands: null,
     decimals: 1,
+    standard: 'us',
+    index: false,
   },
   temp: {
     label: 'Temperature',
@@ -93,6 +114,8 @@ const METRICS: { [key in Metric]: MetricDef } = {
     names: ['Temperature'],
     bands: null,
     decimals: 1,
+    standard: 'us',
+    index: false,
   },
   humidity: {
     label: 'Humidity',
@@ -101,6 +124,8 @@ const METRICS: { [key in Metric]: MetricDef } = {
     names: ['Humidity'],
     bands: null,
     decimals: 0,
+    standard: 'us',
+    index: false,
   },
 };
 
@@ -115,6 +140,14 @@ const WEATHER_LABELS: { [key: string]: string } = {
 const GENERIC_RAW_NOTE = "Showing the sensor's uncorrected readings.";
 
 const US_CATEGORY_SAMPLES = [25, 75, 125, 175, 250, 400];
+const INDIA_CATEGORY_SAMPLES = [25, 75, 150, 250, 350, 450];
+
+function categorySample(i: number, standard: 'us' | 'india'): number {
+  if (standard === 'india') {
+    return INDIA_CATEGORY_SAMPLES[i];
+  }
+  return US_CATEGORY_SAMPLES[i];
+}
 
 let showView: (name: string) => void = () => undefined;
 
@@ -290,7 +323,8 @@ function bandColorFor(value: number, bands: number[]): string {
 const categoryBands: Plugin<'line'> = {
   id: 'categoryBands',
   beforeDatasetsDraw(chart) {
-    const bands = METRICS[metric].bands;
+    const def = METRICS[metric];
+    const bands = def.bands;
     const { ctx, chartArea, scales } = chart;
     const y = scales.y;
     if (!bands || !chartArea || !y) return;
@@ -301,7 +335,10 @@ const categoryBands: Plugin<'line'> = {
       const clippedTop = Math.max(top, chartArea.top);
       const clippedBottom = Math.min(bottom, chartArea.bottom);
       if (clippedBottom <= clippedTop) continue;
-      ctx.fillStyle = hexToRgba(getAQIColor(US_CATEGORY_SAMPLES[i], 'us').hex, 0.07);
+      ctx.fillStyle = hexToRgba(
+        getAQIColor(categorySample(i, def.standard), def.standard).hex,
+        0.07
+      );
       ctx.fillRect(
         chartArea.left,
         clippedTop,
@@ -367,7 +404,7 @@ function renderMainChart(points: Row[]) {
   if (subEl) {
     const step =
       bucket >= 86400 ? 'daily averages' : bucket >= 4 * 3600 ? '4 hour averages' : 'hourly';
-    subEl.textContent = `${def.unit}, ${step}${def.bands ? ', shaded by US AQI category' : ''}`;
+    subEl.textContent = `${def.unit}, ${step}${def.bands ? (def.standard === 'india' ? ', shaded by NAQI category' : ', shaded by US AQI category') : ''}`;
   }
 
   const config: ChartConfiguration<'line', (number | null)[], string> = {
@@ -397,10 +434,9 @@ function renderMainChart(points: Row[]) {
           callbacks: {
             label: (c) => {
               const value = typeof c.raw === 'number' ? c.raw : null;
-              let text =
-                `${c.dataset.label}  ${fmt(value)} ${def.unit === 'US AQI' ? '' : def.unit}`.trim();
-              if (value !== null && metric === 'aqi') {
-                text += `  ·  ${getAQICategory(value, 'us')}`;
+              let text = `${c.dataset.label}  ${fmt(value)} ${def.index ? '' : def.unit}`.trim();
+              if (value !== null && def.index) {
+                text += `  ·  ${getAQICategory(value, def.standard)}`;
               }
               return text;
             },
@@ -495,7 +531,7 @@ function renderHourProfile(points: Row[]) {
           callbacks: {
             label: (c) => {
               const value = typeof c.raw === 'number' ? c.raw : null;
-              return `${c.dataset.label}  ${fmt(value)} ${def.unit === 'US AQI' ? '' : def.unit}`.trim();
+              return `${c.dataset.label}  ${fmt(value)} ${def.index ? '' : def.unit}`.trim();
             },
           },
         },
@@ -540,6 +576,7 @@ function valueColor(key: string, value: number | null): string {
   if (value === null) return 'var(--on-surface)';
   const base = key.replace(/_raw$/, '');
   if (base === 'us_aqi') return getAQIColor(value, 'us').hex;
+  if (base === 'naqi') return getAQIColor(value, 'india').hex;
   if (base === 'pm2_5') return bandColorFor(value, PM25_BANDS);
   if (base === 'pm10') return bandColorFor(value, PM10_BANDS);
   return 'var(--on-surface)';
@@ -560,7 +597,7 @@ function renderSummary(points: Row[]) {
   }
   host.classList.remove('hidden');
   const def = METRICS[metric];
-  const unit = def.unit === 'US AQI' ? '' : ` ${def.unit}`;
+  const unit = def.index ? '' : ` ${def.unit}`;
 
   const blocks = activeSeries()
     .map((s) => {
@@ -583,13 +620,15 @@ function renderSummary(points: Row[]) {
     })
     .join('');
 
-  const aqiKey = mode === 'raw' ? 'us_aqi_raw' : 'us_aqi';
+  const standard = METRICS[metric].standard;
+  const aqiBase = standard === 'india' ? 'naqi' : 'us_aqi';
+  const aqiKey = mode === 'raw' ? rawKey(aqiBase) : aqiBase;
   const tally = new Array(6).fill(0);
   let tallied = 0;
   points.forEach((p) => {
     const v = num(p, aqiKey);
     if (v === null) return;
-    tally[aqiBandIndex(v, 'us')] += 1;
+    tally[aqiBandIndex(v, standard)] += 1;
     tallied += 1;
   });
 
@@ -599,22 +638,22 @@ function renderSummary(points: Row[]) {
       .map((n, i) => {
         if (n === 0) return '';
         const pct = (n / tallied) * 100;
-        const color = getAQIColor(US_CATEGORY_SAMPLES[i], 'us').hex;
-        const name = getAQICategory(US_CATEGORY_SAMPLES[i], 'us');
+        const color = getAQIColor(categorySample(i, standard), standard).hex;
+        const name = getAQICategory(categorySample(i, standard), standard);
         return `<span class="cat-seg" style="flex: ${n}; background: ${color};" title="${name}: ${pct.toFixed(0)}%"></span>`;
       })
       .join('');
     const legend = tally
       .map((n, i) => {
         if (n === 0) return '';
-        const color = getAQIColor(US_CATEGORY_SAMPLES[i], 'us').hex;
-        const name = getAQICategory(US_CATEGORY_SAMPLES[i], 'us');
+        const color = getAQIColor(categorySample(i, standard), standard).hex;
+        const name = getAQICategory(categorySample(i, standard), standard);
         return `<span class="cat-key"><span class="cat-swatch" style="background: ${color};"></span>${name} ${Math.round((n / tallied) * 100)}%</span>`;
       })
       .join('');
     categories = `
       <div class="summary-categories">
-        <div class="summary-label">Time in each US AQI category${mode === 'raw' ? ', raw' : ''}</div>
+        <div class="summary-label">Time in each ${standard === 'india' ? 'NAQI' : 'US AQI'} category${mode === 'raw' ? ', raw' : ''}</div>
         <div class="cat-bar">${segments}</div>
         <div class="cat-legend">${legend}</div>
       </div>`;
@@ -691,7 +730,7 @@ function renderWeatherImpact(points: Row[]) {
   card.classList.remove('hidden');
   const overall = total / count;
   const def = METRICS[metric];
-  const unit = def.unit === 'US AQI' ? '' : ` ${def.unit}`;
+  const unit = def.index ? '' : ` ${def.unit}`;
   const step = weather ? weather.interval : 3600;
   const sub = document.getElementById('hist-weather-sub');
   if (sub) {
@@ -1252,7 +1291,7 @@ function renderCompareChart(base: Row[]) {
           callbacks: {
             label: (c) => {
               const value = typeof c.raw === 'number' ? c.raw : null;
-              return `${c.dataset.label}  ${fmt(value)} ${def.unit === 'US AQI' ? '' : def.unit}`.trim();
+              return `${c.dataset.label}  ${fmt(value)} ${def.index ? '' : def.unit}`.trim();
             },
           },
         },
@@ -1295,7 +1334,7 @@ function renderCompareStats(base: Row[]) {
   if (!host || !summary || !historyZone) return;
   const key = compareKey();
   const baseMap = seriesByTs(base, key);
-  const unit = METRICS[metric].unit === 'US AQI' ? '' : ` ${METRICS[metric].unit}`;
+  const unit = METRICS[metric].index ? '' : ` ${METRICS[metric].unit}`;
 
   const rowsHtml = compareIds
     .map((id) => {

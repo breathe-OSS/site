@@ -1,5 +1,5 @@
 import { STORAGE_KEY_PINS } from './config.js';
-import { fetchZones, getZoneAQI, getZonesAQI } from './api.js';
+import { fetchDistrictAverages, fetchZones, getZoneAQI, getZonesAQI } from './api.js';
 import {
   initTheme,
   initStandard,
@@ -23,6 +23,7 @@ import {
 import {
   initExplore,
   renderExplore,
+  setExploreAverages,
   setExploreData,
   repaintExplore,
   revealDistrict,
@@ -46,9 +47,11 @@ import {
 import { Zone, AQIData } from './types.js';
 
 let allZones: Zone[] = [];
+let districtZones: Zone[] = [];
 let dashboardHasRendered = false;
 let pinnedZoneIds: string[] = JSON.parse(localStorage.getItem(STORAGE_KEY_PINS) || '[]');
 let isReordering = false;
+const PINS_MIGRATED = 'breathe_pins_migrated';
 
 // init
 document.addEventListener('DOMContentLoaded', async () => {
@@ -81,6 +84,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   initHistory(handleShowView, () => allZones);
 
   allZones = await fetchZones();
+  districtZones = await fetchDistrictAverages(allZones);
+  setExploreAverages(districtZones);
   migratePins();
   refreshDashboard();
 
@@ -123,10 +128,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   watchDetailScroll();
 });
 
+function findZone(id: string | null): Zone | undefined {
+  if (id === null) {
+    return undefined;
+  }
+  return allZones.find((z) => z.id === id) ?? districtZones.find((z) => z.id === id);
+}
+
 function migratePins() {
-  if (allZones.length === 0) {
+  if (allZones.length === 0 || localStorage.getItem(PINS_MIGRATED) === '1') {
     return;
   }
+  localStorage.setItem(PINS_MIGRATED, '1');
   const known = new Set(allZones.map((z) => z.id));
   const next: string[] = [];
   const add = (id: string) => {
@@ -218,11 +231,9 @@ async function refreshDashboard() {
   );
   container.append(...skeletons);
 
-  const aqiById = await getZonesAQI(
-    pinnedZoneIds.filter((id) => allZones.some((z) => z.id === id))
-  );
+  const aqiById = await getZonesAQI(pinnedZoneIds.filter((id) => findZone(id) !== undefined));
   const results = pinnedZoneIds.map((id) => {
-    const zone = allZones.find((z) => z.id === id);
+    const zone = findZone(id);
     const data = aqiById[id];
     if (!zone || !data) return null;
     return { zone, data };
@@ -615,7 +626,7 @@ async function loadExploreAqi() {
     return;
   }
   exploreAqiLoading = true;
-  const byId = await getZonesAQI(allZones.map((z) => z.id));
+  const byId = await getZonesAQI([...allZones, ...districtZones].map((z) => z.id));
   exploreAqiLoading = false;
   setExploreData(byId);
 }
@@ -641,7 +652,7 @@ function togglePin(id: string, announce: boolean = true) {
 
   if (!announce) return;
 
-  const zone = allZones.find((z) => z.id === id);
+  const zone = findZone(id);
   const name = zone ? zone.name : 'place';
   showSnackbar(`${wasPinned ? 'Unpinned' : 'Pinned'} ${name}`, 'Undo', () => {
     togglePin(id, false);
@@ -673,7 +684,7 @@ async function openDetails(zoneId: string) {
     lastDetailZoneId = zoneId;
   }
   handleShowView('details');
-  const zone = allZones.find((z) => z.id === zoneId);
+  const zone = findZone(zoneId);
   if (!zone) return;
 
   const data = await getZoneAQI(zoneId);
@@ -683,7 +694,7 @@ async function openDetails(zoneId: string) {
 }
 
 function openHistoryView() {
-  const zone = allZones.find((z) => z.id === currentZoneId);
+  const zone = findZone(currentZoneId);
   if (!zone) return;
   openHistoryFor(zone);
 }
@@ -782,8 +793,8 @@ function parseRoute(pathname: string): Route {
 const RAW_SUFFIX = '-raw';
 
 function zoneSlug(id: string, raw: boolean = isRawMode()): string {
-  const zone = allZones.find((z) => z.id === id);
-  const suffix = raw && zone && !isEstimate(zone) ? RAW_SUFFIX : '';
+  const zone = findZone(id);
+  const suffix = raw && zone && !isEstimate(zone) && zone.kind !== 'district' ? RAW_SUFFIX : '';
   return encodeURIComponent(id + suffix);
 }
 
@@ -820,7 +831,7 @@ function syncRawUrl() {
 }
 
 function routeTitle(viewName: string): string {
-  const zoneName = (id: string | null) => allZones.find((z) => z.id === id)?.name;
+  const zoneName = (id: string | null) => findZone(id)?.name;
   if (viewName === 'details') {
     const name = zoneName(currentZoneId);
     if (name) {
@@ -882,11 +893,7 @@ function applyRoute(route: Route) {
       }
     }
     const legacy = legacyPlaces(route.zoneId);
-    if (
-      route.zoneId !== null &&
-      !allZones.some((z) => z.id === route.zoneId) &&
-      legacy.length > 0
-    ) {
+    if (route.zoneId !== null && findZone(route.zoneId) === undefined && legacy.length > 0) {
       if (legacy.length === 1) {
         route = { ...route, zoneId: legacy[0].id };
         const suffix = route.view === 'history' ? '/history' : '';
@@ -905,7 +912,7 @@ function applyRoute(route: Route) {
         route = { ...route, zoneId: null };
       }
     }
-    const known = route.zoneId !== null && allZones.some((z) => z.id === route.zoneId);
+    const known = findZone(route.zoneId) !== undefined;
     if (route.view === 'details' && known) {
       openDetails(route.zoneId!);
     } else if (route.view === 'history' && known) {

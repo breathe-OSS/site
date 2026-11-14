@@ -59,6 +59,47 @@ export async function fetchZones(): Promise<Zone[]> {
   }
 }
 
+export async function fetchDistrictAverages(places: Zone[]): Promise<Zone[]> {
+  const cacheKey = 'breathe_district_zones';
+  let legacy = getCachedData<Zone[]>(cacheKey);
+
+  if (!legacy) {
+    try {
+      const res = await fetch(`${API_URL}/zones`);
+      const data = await res.json();
+      legacy = data.zones as Zone[];
+      setCachedData(cacheKey, legacy);
+    } catch (e) {
+      console.error('Fetch failed', e);
+      return [];
+    }
+  }
+
+  const averages: Zone[] = [];
+  legacy.forEach((zone) => {
+    const members = places.filter((p) => p.kind !== 'estimate' && p.legacy_zone === zone.id);
+    if (members.length < 2) {
+      return;
+    }
+    const counts: { [name: string]: number } = {};
+    members.forEach((p) => {
+      const name = p.district || zone.name;
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    const district = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    const home = members.find((p) => p.district === district) || members[0];
+    averages.push({
+      ...zone,
+      name: `${district} district average`,
+      kind: 'district',
+      district,
+      division: home.division,
+      sensors: members.length,
+    });
+  });
+  return averages;
+}
+
 export async function getZoneAQI(zoneId: string): Promise<AQIData | null> {
   const cacheKey = `breathe_place_aqi_${zoneId}`;
   const cached = getCachedData<AQIData>(cacheKey);

@@ -29,6 +29,8 @@ let handlers: ExploreHandlers | null = null;
 let builtFor: Zone[] | null = null;
 let latestAqi: { [id: string]: AQIData | null } | null = null;
 let currentFilter = '';
+let averages: Zone[] = [];
+const averageEls: { [key: string]: HTMLElement } = {};
 
 const groups: DistrictGroup[] = [];
 const districtEls: { [key: string]: HTMLElement } = {};
@@ -122,6 +124,9 @@ function pinButton(place: Zone): HTMLButtonElement {
 }
 
 function placeKindHtml(place: Zone): string {
+  if (place.kind === 'district') {
+    return `Average of ${place.sensors} sensors`;
+  }
   if (isEstimate(place)) {
     return 'Satellite estimate';
   }
@@ -138,7 +143,7 @@ function buildPlaceRow(place: Zone): HTMLElement {
   row.setAttribute('aria-label', `Open ${place.name}`);
   row.innerHTML = `
     <div class="place-text">
-      <div class="place-name">${place.name}</div>
+      <div class="place-name">${place.kind === 'district' ? 'District average' : place.name}</div>
       <div class="place-kind">${placeKindHtml(place)}</div>
     </div>
     ${chipHtml()}
@@ -209,6 +214,15 @@ function buildDistrict(group: DistrictGroup, index: number): HTMLElement {
     body.className = 'district-body';
     const inner = document.createElement('div');
     inner.className = 'district-body-inner';
+    const average = averages.find(
+      (a) => a.district === group.district && (a.division || 'Other') === group.division
+    );
+    if (average) {
+      const row = buildPlaceRow(average);
+      row.classList.add('average-row');
+      averageEls[group.key] = row;
+      inner.appendChild(row);
+    }
     group.places.forEach((place) => inner.appendChild(buildPlaceRow(place)));
     body.appendChild(inner);
     card.appendChild(body);
@@ -222,6 +236,7 @@ function build(container: HTMLElement, places: Zone[]) {
   container.textContent = '';
   Object.keys(districtEls).forEach((k) => delete districtEls[k]);
   Object.keys(placeEls).forEach((k) => delete placeEls[k]);
+  Object.keys(averageEls).forEach((k) => delete averageEls[k]);
   groupPlaces(places);
 
   const rank = (division: string) => {
@@ -302,6 +317,11 @@ function paintChips() {
         worst = aqi;
       }
     });
+    const averageRow = averageEls[group.key];
+    if (averageRow) {
+      const data = byId[averageRow.dataset.placeId || ''];
+      applyChip(averageRow, data ? zoneAqi(data) : null);
+    }
     const head = districtEls[group.key]?.querySelector('.district-head') as HTMLElement | null;
     if (head) {
       applyChip(head, worst);
@@ -332,6 +352,7 @@ function applyFilter() {
         row.classList.toggle('hidden', !hit);
       }
     });
+    averageEls[group.key]?.classList.toggle('hidden', !!needle && !districtHit);
     card.classList.toggle('hidden', matches === 0);
     anyVisible = anyVisible || matches > 0;
     if (group.places.length > 1) {
@@ -363,6 +384,11 @@ export function renderExplore(places: Zone[], filter: string) {
   }
   currentFilter = filter;
   applyFilter();
+}
+
+export function setExploreAverages(list: Zone[]) {
+  averages = list;
+  builtFor = null;
 }
 
 export function setExploreData(byId: { [id: string]: AQIData | null }) {

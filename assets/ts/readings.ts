@@ -143,15 +143,23 @@ export function historyPm25(entry: AQIHistory): number | null {
 }
 
 export function placeLine(
-  place: { district?: string; division?: string } | null | undefined
+  place:
+    { district?: string; division?: string; kind?: string; sensors?: number } | null | undefined
 ): string {
   if (!place || !place.district) {
     return '';
+  }
+  if (place.kind === 'district') {
+    return `Average of ${place.sensors} sensors around ${place.district}`;
   }
   if (!place.division) {
     return `Part of the ${place.district} district`;
   }
   return `Part of the ${place.district} district in ${place.division}`;
+}
+
+export function isDistrictAverage(zone: Zone | null | undefined): boolean {
+  return !!zone && zone.kind === 'district';
 }
 
 export function isEstimate(zone: Zone | null | undefined): boolean {

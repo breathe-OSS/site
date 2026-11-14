@@ -17,6 +17,7 @@ import {
 import { Zone, AQIData, AQIHistory, Pollutants, WeatherInfo, SensorInfo } from './types.js';
 import {
   historyAqi,
+  isDistrictAverage,
   isEstimate,
   isRawMode,
   placeLine,
@@ -417,6 +418,9 @@ function sourceIndicatorHtml(zone: Zone, data: AQIData): { html: string; muted: 
   if (data.source && data.source.startsWith('openmeteo')) {
     return { html: 'Sensor offline, showing a satellite estimate', muted: true };
   }
+  if (isDistrictAverage(zone)) {
+    return { html: '<span class="live-dot"></span> Live ground sensors', muted: false };
+  }
   if (rawApplies(data)) {
     return { html: `${LIVE_SOURCE_HTML} · raw readings`, muted: false };
   }
@@ -585,7 +589,7 @@ function renderRawControls(zone: Zone, data: AQIData) {
   const hasRaw = !!data.raw;
 
   if (switcher) {
-    switcher.classList.toggle('hidden', estimate);
+    switcher.classList.toggle('hidden', estimate || isDistrictAverage(zone));
     switcher.querySelectorAll<HTMLButtonElement>('[data-raw-choice]').forEach((btn) => {
       if (btn.dataset.rawChoice === 'raw') {
         btn.disabled = !hasRaw;
@@ -604,7 +608,9 @@ function renderRawControls(zone: Zone, data: AQIData) {
 
   if (unavailable) {
     let text = '';
-    if (isRawMode() && !estimate && !hasRaw) {
+    if (isRawMode() && isDistrictAverage(zone)) {
+      text = 'Raw readings are switched on, but district averages only come calibrated.';
+    } else if (isRawMode() && !estimate && !hasRaw) {
       text =
         'Raw readings are switched on, but this sensor has no live reading to show raw, so these are the calibrated satellite numbers.';
     } else if (isRawMode() && estimate) {
@@ -621,7 +627,7 @@ async function renderSensorCard(zone: Zone, data: AQIData) {
   const container = document.getElementById('sensor-card-container');
   if (!container) return;
 
-  if (isEstimate(zone)) {
+  if (isEstimate(zone) || isDistrictAverage(zone)) {
     container.innerHTML = '';
     return;
   }
@@ -883,7 +889,10 @@ function renderChart(history: AQIHistory[]) {
             if (values[c.dataIndex] === null) {
               return 0;
             }
-            if ((before === null || before === undefined) && (after === null || after === undefined)) {
+            if (
+              (before === null || before === undefined) &&
+              (after === null || after === undefined)
+            ) {
               return 3;
             }
             return 0;
@@ -893,7 +902,8 @@ function renderChart(history: AQIHistory[]) {
           pointHoverBackgroundColor: (c) => getAQIColor(Number(c.raw) || 0, std).hex,
           fill: true,
           segment: {
-            borderColor: (c) => getAQIColor(Math.max(c.p0.parsed.y ?? 0, c.p1.parsed.y ?? 0), std).hex,
+            borderColor: (c) =>
+              getAQIColor(Math.max(c.p0.parsed.y ?? 0, c.p1.parsed.y ?? 0), std).hex,
           },
         },
       ],
@@ -934,9 +944,7 @@ function renderChart(history: AQIHistory[]) {
           },
           ticks: { color: tickColor, padding: 6, font: { size: 11 } },
           afterBuildTicks: (axis) => {
-            axis.ticks = breakpoints
-              .filter((b) => b <= topBand)
-              .map((b) => ({ value: b }));
+            axis.ticks = breakpoints.filter((b) => b <= topBand).map((b) => ({ value: b }));
           },
         },
       },
@@ -1156,7 +1164,9 @@ export function renderExtendedDotsGrid(
 ) {
   const container = target ?? document.getElementById('extended-dots-grid');
   const subtitle =
-    subtitleTarget !== undefined ? subtitleTarget : document.getElementById('extended-dots-subtitle');
+    subtitleTarget !== undefined
+      ? subtitleTarget
+      : document.getElementById('extended-dots-subtitle');
   if (!container) return;
   container.innerHTML = '';
   extDotSelected = null;

@@ -1,4 +1,4 @@
-export type PlaceKind = 'sensor' | 'estimate';
+export type PlaceKind = 'sensor' | 'estimate' | 'district';
 
 export interface Zone {
   id: string;
@@ -11,6 +11,7 @@ export interface Zone {
   district?: string;
   division?: string;
   legacy_zone?: string;
+  sensors?: number;
 }
 
 export interface AQIHistory {

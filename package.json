@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "test": "tsc --outDir .test-build && node -e \"require('fs').writeFileSync('.test-build/package.json', '{\\\"type\\\":\\\"module\\\"}')\" && node --import ./tests/setup.mjs --test \"tests/*.test.mjs\"",
     "fmt": "npx prettier --write .",
     "dev": "npx tsc --watch"
   },

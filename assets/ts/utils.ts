@@ -434,29 +434,59 @@ export function aqiTextColor(aqi: number, standard: 'india' | 'us' = 'us'): stri
   return '#ffffff';
 }
 
-function usAqiInterp(c: number, cLow: number, cHigh: number, iLow: number, iHigh: number): number {
-  return Math.round(((iHigh - iLow) / (cHigh - cLow)) * (c - cLow) + iLow);
+type AqiBand = [number, number, number, number];
+
+const US_PM25_BANDS: AqiBand[] = [
+  [0.0, 9.0, 0, 50],
+  [9.1, 35.4, 51, 100],
+  [35.5, 55.4, 101, 150],
+  [55.5, 125.4, 151, 200],
+  [125.5, 225.4, 201, 300],
+  [225.5, 325.4, 301, 500],
+];
+
+const US_PM10_BANDS: AqiBand[] = [
+  [0, 54, 0, 50],
+  [55, 154, 51, 100],
+  [155, 254, 101, 150],
+  [255, 354, 151, 200],
+  [355, 424, 201, 300],
+  [425, 504, 301, 400],
+  [505, 604, 401, 500],
+];
+
+const NAQI_PM25_BANDS: AqiBand[] = [
+  [0, 30, 0, 50],
+  [31, 60, 51, 100],
+  [61, 90, 101, 200],
+  [91, 120, 201, 300],
+  [121, 250, 301, 400],
+  [251, 380, 401, 500],
+];
+
+function bandInterp(c: number, band: AqiBand): number {
+  const [cLow, cHigh, iLow, iHigh] = band;
+  return Math.trunc(((iHigh - iLow) / (cHigh - cLow)) * (c - cLow) + iLow);
+}
+
+function aqiFromBands(c: number, bands: AqiBand[]): number {
+  if (c < bands[0][0]) {
+    return 0;
+  }
+  for (const band of bands) {
+    if (c >= band[0] && c <= band[1]) {
+      return bandInterp(c, band);
+    }
+  }
+  return bandInterp(c, bands[bands.length - 1]);
 }
 
 export function calculateUsAqi(pm25: number): number {
-  const c = Math.floor(pm25 * 10) / 10;
-  if (c <= 9.0) return usAqiInterp(c, 0, 9.0, 0, 50);
-  if (c <= 35.4) return usAqiInterp(c, 9.1, 35.4, 51, 100);
-  if (c <= 55.4) return usAqiInterp(c, 35.5, 55.4, 101, 150);
-  if (c <= 125.4) return usAqiInterp(c, 55.5, 125.4, 151, 200);
-  if (c <= 225.4) return usAqiInterp(c, 125.5, 225.4, 201, 300);
-  if (c <= 325.4) return usAqiInterp(c, 225.5, 325.4, 301, 400);
-  return usAqiInterp(c, 325.5, 500.4, 401, 500);
+  return aqiFromBands(Math.floor(pm25 * 10) / 10, US_PM25_BANDS);
 }
 
 export function calculateNaqiPm25(pm25: number): number {
-  const c = Math.round(pm25);
-  if (c <= 30) return usAqiInterp(c, 0, 30, 0, 50);
-  if (c <= 60) return usAqiInterp(c, 31, 60, 51, 100);
-  if (c <= 90) return usAqiInterp(c, 61, 90, 101, 200);
-  if (c <= 120) return usAqiInterp(c, 91, 120, 201, 300);
-  if (c <= 250) return usAqiInterp(c, 121, 250, 301, 400);
-  return Math.min(usAqiInterp(c, 251, 380, 401, 500), 500);
+  return Math.min(aqiFromBands(Math.trunc(pm25), NAQI_PM25_BANDS), 500);
 }
 
 export function pm25ToAqi(pm25: number, standard: 'india' | 'us'): number {
@@ -467,14 +497,7 @@ export function pm25ToAqi(pm25: number, standard: 'india' | 'us'): number {
 }
 
 export function calculateUsAqiPm10(pm10: number): number {
-  const c = Math.floor(pm10);
-  if (c <= 54) return usAqiInterp(c, 0, 54, 0, 50);
-  if (c <= 154) return usAqiInterp(c, 55, 154, 51, 100);
-  if (c <= 254) return usAqiInterp(c, 155, 254, 101, 150);
-  if (c <= 354) return usAqiInterp(c, 255, 354, 151, 200);
-  if (c <= 424) return usAqiInterp(c, 355, 424, 201, 300);
-  if (c <= 504) return usAqiInterp(c, 425, 504, 301, 400);
-  return usAqiInterp(c, 505, 604, 401, 500);
+  return aqiFromBands(Math.trunc(pm10), US_PM10_BANDS);
 }
 
 export type HistoryPeriodMode = 'month' | 'week' | 'days';

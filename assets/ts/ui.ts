@@ -635,7 +635,9 @@ async function renderSensorCard(zone: Zone, data: AQIData) {
   const readings = zoneReadings(data);
   const raw = rawApplies(data);
   const fmt = (value: number | null | undefined, unit: string) =>
-    value === null || value === undefined ? '--' : `${Math.round(value * 10) / 10}${unit}`;
+    value === null || value === undefined
+      ? '--'
+      : `${Math.round(value * 10) / 10}<span class="sensor-reading-unit">${unit}</span>`;
 
   const readingRows = readings
     ? `

@@ -329,6 +329,9 @@ body {
   position: relative;
   z-index: 1;
 }
+.view > header {
+  z-index: 2;
+}
 .view.enter-forward {
   animation: viewInForward var(--motion-screen) var(--motion-easing-emphasized-decelerate);
 }

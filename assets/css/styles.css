@@ -5567,7 +5567,7 @@ input:checked + .slider {
   color: var(--on-surface-variant);
 }
 #forecast-record-modal {
-  z-index: 2100;
+  z-index: 3100;
 }
 .forecast-record-card {
   max-width: 720px;

@@ -12,7 +12,14 @@ import {
 } from './utils.js';
 import { initMotion, motionEnabled } from './motion.js';
 import { initMapOptions } from './mapoptions.js';
-import { initForecastToggle, renderForecastCard } from './forecast.js';
+import {
+  closeForecastRecord,
+  initForecastToggle,
+  openForecastRecord,
+  renderForecastCard,
+  setForecastRecordDays,
+  setForecastRecordHorizon,
+} from './forecast.js';
 import { initMap, updateMapTiles, resizeMap, openMapZoneById, stopMapPlayback } from './map.js';
 import { getPanelZoneId, setPanelPinned, closeZonePanel, refreshZonePanel } from './panel.js';
 import {
@@ -726,6 +733,10 @@ window.addEventListener('resize', drawEmptyHints);
 (window as any).hideRawHint = hideRawHint;
 (window as any).openModal = (id: string) => document.getElementById(id)?.classList.remove('hidden');
 (window as any).closeModal = (id: string) => document.getElementById(id)?.classList.add('hidden');
+(window as any).openForecastRecord = openForecastRecord;
+(window as any).closeForecastRecord = closeForecastRecord;
+(window as any).setForecastRecordDays = setForecastRecordDays;
+(window as any).setForecastRecordHorizon = setForecastRecordHorizon;
 
 const VIEW_DEPTH: { [name: string]: number } = {
   dashboard: 0,

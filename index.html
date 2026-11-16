@@ -1015,6 +1015,15 @@
       </div>
     </div>
 
+    <div id="forecast-record-modal" class="modal-overlay hidden" onclick="if (event.target === this) closeForecastRecord()">
+      <div class="modal-card forecast-record-card" role="dialog" aria-label="Forecast track record">
+        <div id="forecast-record-body"></div>
+        <div class="modal-actions">
+          <button class="btn-text" onclick="closeForecastRecord()">Close</button>
+        </div>
+      </div>
+    </div>
+
     <div id="snackbar" class="snackbar" role="status" aria-live="polite">
       <span id="snackbar-message"></span>
       <button type="button" id="snackbar-action"></button>

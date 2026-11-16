@@ -136,12 +136,62 @@ export interface ForecastPoint {
   uses_day_before: boolean;
 }
 
+export interface ForecastRecentHour {
+  ts: number;
+  pm2_5: number;
+  pm10: number;
+  us_aqi: number;
+}
+
 export interface Forecast {
   zone_id: string;
   zone_name: string;
   model: string;
   experimental: boolean;
   issued_at: number;
-  current: { pm2_5: number; pm10: number };
+  current: { pm2_5: number; pm10: number; us_aqi?: number };
+  recent?: ForecastRecentHour[];
   points: ForecastPoint[];
+}
+
+export interface ForecastRate {
+  forecasts: number;
+  right: number;
+  right_rate: number | null;
+  persistence_right_rate: number | null;
+}
+
+export interface ForecastHorizonRecord extends ForecastRate {
+  horizon_minutes: number;
+  mean_miss_pm2_5: number | null;
+}
+
+export interface ForecastDayRecord {
+  date: string;
+  forecasts: number;
+  right: number;
+  right_rate: number | null;
+}
+
+export interface ForecastSeriesPoint {
+  ts: number;
+  forecast_pm2_5: number;
+  actual_pm2_5: number;
+  forecast_us_aqi: number;
+  actual_us_aqi: number;
+  right: boolean;
+}
+
+export interface ForecastTrackRecord {
+  zone_id: string;
+  zone_name: string;
+  model: string;
+  days: number;
+  rule: string;
+  from: number;
+  to: number;
+  overall: ForecastRate;
+  horizons: ForecastHorizonRecord[];
+  daily: ForecastDayRecord[];
+  series: { [horizon: string]: ForecastSeriesPoint[] };
 }

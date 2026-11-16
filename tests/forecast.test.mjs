@@ -2,8 +2,8 @@ import { beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { API_URL } from '../.test-build/config.js';
-import { fetchForecast } from '../.test-build/api.js';
-import { forecastCity, isForecastOn } from '../.test-build/forecast.js';
+import { fetchForecast, fetchForecastRecord } from '../.test-build/api.js';
+import { changeText, forecastCity, isForecastOn, percent } from '../.test-build/forecast.js';
 
 const FORECAST = {
   zone_id: 'jammu_city',
@@ -67,4 +67,31 @@ test('forecast toggle is off by default', () => {
   assert.equal(isForecastOn(), false);
   localStorage.setItem('breathe_forecast', 'on');
   assert.equal(isForecastOn(), true);
+});
+
+test('track record is fetched per period', async () => {
+  const calls = [];
+  globalThis.fetch = async (url) => {
+    calls.push(url);
+    return { ok: true, status: 200, json: async () => ({ zone_id: 'srinagar' }) };
+  };
+  try {
+    await fetchForecastRecord('srinagar', 7);
+    await fetchForecastRecord('srinagar', 7);
+    await fetchForecastRecord('srinagar', 30);
+    assert.deepEqual(calls, [
+      `${API_URL}/forecast/srinagar/track-record?days=7`,
+      `${API_URL}/forecast/srinagar/track-record?days=30`,
+    ]);
+  } finally {
+    delete globalThis.fetch;
+  }
+});
+
+test('rates and changes read plainly', () => {
+  assert.equal(percent(0.6146), '61%');
+  assert.equal(percent(null), '--');
+  assert.equal(changeText(50, 84), '↑ 34');
+  assert.equal(changeText(50, 41), '↓ 9');
+  assert.equal(changeText(50, 51), 'about the same');
 });

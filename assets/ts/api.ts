@@ -1,5 +1,5 @@
 import { API_URL } from './config.js';
-import { Zone, AQIData, WeatherHistory, SensorInfo, Forecast } from './types.js';
+import { Zone, AQIData, WeatherHistory, SensorInfo, Forecast, ForecastTrackRecord } from './types.js';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -246,6 +246,30 @@ export async function fetchForecast(zoneId: string): Promise<Forecast | null> {
 
   try {
     const res = await fetch(`${API_URL}/forecast/${encodeURIComponent(zoneId)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    setCachedData(cacheKey, data);
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function fetchForecastRecord(
+  zoneId: string,
+  days: number
+): Promise<ForecastTrackRecord | null> {
+  const cacheKey = `breathe_forecast_record_${zoneId}_${days}`;
+  const cached = getCachedData<ForecastTrackRecord>(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const res = await fetch(
+      `${API_URL}/forecast/${encodeURIComponent(zoneId)}/track-record?days=${days}`
+    );
     if (!res.ok) return null;
     const data = await res.json();
     setCachedData(cacheKey, data);

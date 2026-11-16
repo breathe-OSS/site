@@ -12,6 +12,7 @@ import {
 } from './utils.js';
 import { initMotion, motionEnabled } from './motion.js';
 import { initMapOptions } from './mapoptions.js';
+import { initForecastToggle, renderForecastCard } from './forecast.js';
 import { initMap, updateMapTiles, resizeMap, openMapZoneById, stopMapPlayback } from './map.js';
 import { getPanelZoneId, setPanelPinned, closeZonePanel, refreshZonePanel } from './panel.js';
 import {
@@ -57,6 +58,7 @@ const PINS_MIGRATED = 'breathe_pins_migrated';
 document.addEventListener('DOMContentLoaded', async () => {
   initMotion();
   initMapOptions(() => stopMapPlayback());
+  initForecastToggle(() => refreshForecastCards());
   initKeyboardActivation();
   initSheetDragging();
 
@@ -127,6 +129,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   watchDetailScroll();
 });
+
+function refreshForecastCards() {
+  refreshZonePanel();
+  const zone = findZone(currentZoneId);
+  if (zone) {
+    renderForecastCard('detail-forecast', zone);
+  }
+}
 
 function findZone(id: string | null): Zone | undefined {
   if (id === null) {

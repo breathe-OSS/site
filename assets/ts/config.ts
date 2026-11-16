@@ -4,3 +4,4 @@ export const STORAGE_KEY_PINS = 'breathe_pinned_zones';
 export const STORAGE_KEY_STANDARD = 'aqi_standard';
 export const STORAGE_KEY_MOTION = 'breathe_motion';
 export const STORAGE_KEY_RAW = 'breathe_raw_readings';
+export const STORAGE_KEY_FORECAST = 'breathe_forecast';

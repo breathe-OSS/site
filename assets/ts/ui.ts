@@ -30,6 +30,7 @@ import {
   zoneReadings,
 } from './readings.js';
 import { getSensorInfoList } from './api.js';
+import { renderForecastCard } from './forecast.js';
 import type { Chart as ChartJS, ChartConfiguration } from 'chart.js';
 
 declare const Chart: typeof ChartJS;
@@ -545,6 +546,8 @@ export function updateDetailView(zone: Zone, data: AQIData) {
   if (adviceContainer) {
     adviceContainer.innerHTML = renderHealthAdviceCard(displayAqi, std);
   }
+
+  renderForecastCard('detail-forecast', zone);
 
   if (cigaretteContainer) {
     const averages = zoneAverages(data);

@@ -125,3 +125,23 @@ export interface AQIColorResult {
   bg: string;
   hex: string;
 }
+
+export interface ForecastPoint {
+  horizon_minutes: number;
+  ts: number;
+  pm2_5: number;
+  pm10: number;
+  us_aqi: number;
+  aqi: number;
+  uses_day_before: boolean;
+}
+
+export interface Forecast {
+  zone_id: string;
+  zone_name: string;
+  model: string;
+  experimental: boolean;
+  issued_at: number;
+  current: { pm2_5: number; pm10: number };
+  points: ForecastPoint[];
+}

@@ -1,4 +1,5 @@
 import { fetchHistoricalData } from './api.js';
+import { renderForecastCard } from './forecast.js';
 import { STORAGE_KEY_PINS } from './config.js';
 import { Zone, AQIData, AQIHistory } from './types.js';
 import {
@@ -289,6 +290,7 @@ function renderPanel() {
     <div class="panel-content">
       ${heroHtml(data)}
       ${renderHealthAdviceCard(displayAqi(data), std)}
+      <div class="panel-card forecast-card hidden" id="panel-forecast"></div>
       ${chartCardHtml(isLive)}
       ${statTilesHtml(data)}
       ${isLive ? gridCardHtml() : ''}
@@ -311,6 +313,7 @@ function renderPanel() {
   if (isLive) {
     renderPanelGrid(zone.id);
   }
+  renderForecastCard('panel-forecast', zone);
 }
 
 async function renderPanelGrid(zoneId: string) {

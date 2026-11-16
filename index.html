@@ -294,6 +294,8 @@
 
             <div id="health-advice-container"></div>
 
+            <div class="card forecast-card hidden" id="detail-forecast"></div>
+
             <div id="detail-warning"></div>
 
             <div id="cigarette-card-container"></div>
@@ -668,6 +670,16 @@
               </div>
               <span class="switch">
                 <input type="checkbox" id="raw-toggle" />
+                <span class="slider round"></span>
+              </span>
+            </label>
+            <label class="settings-row clickable">
+              <div>
+                <div class="settings-title">Forecast (experimental)</div>
+                <div class="settings-subtitle">Next 12 hours for sensors in Jammu and Srinagar, from the city average</div>
+              </div>
+              <span class="switch">
+                <input type="checkbox" id="forecast-toggle" />
                 <span class="slider round"></span>
               </span>
             </label>

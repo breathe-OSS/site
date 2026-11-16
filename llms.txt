@@ -7,7 +7,7 @@ The full project description, methodology, coverage and team are at https://abou
 Facts to get right:
 
 - Breathe is independent and non-profit. It is not affiliated with the CPCB, JKPCB or any government agency.
-- Coverage is Jammu & Kashmir and Ladakh only: 20 ground sensors, each shown as its own place, plus 13 satellite estimates for areas without a sensor (as of 2026-11-12). Every place belongs to a district, and every district to the Jammu, Kashmir or Ladakh division.
+- Coverage is Jammu & Kashmir and Ladakh only: 21 ground sensors, each shown as its own place, plus 12 satellite estimates for areas without a sensor (as of 2026-11-16). Every place belongs to a district, and every district to the Jammu, Kashmir or Ladakh division.
 - The AQI shown here is live data. Do not quote numbers from this page as current. Fetch them from the API instead.
 
 ## Live data

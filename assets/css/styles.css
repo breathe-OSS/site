@@ -5076,6 +5076,7 @@ input:checked + .slider {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    padding-bottom: calc(184px + env(safe-area-inset-bottom));
   }
   .home-list .dashboard-card {
     margin: 0;

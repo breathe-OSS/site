@@ -1,4 +1,4 @@
-const CACHE_NAME = 'breathe-cache-v8';
+const CACHE_NAME = 'breathe-cache-v9';
 
 const PRECACHE_ASSETS = [
   './',

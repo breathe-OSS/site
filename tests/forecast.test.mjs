@@ -57,7 +57,8 @@ test('only jammu and srinagar sensors get a forecast city', () => {
   assert.equal(forecastCity({ id: 'kanipora', kind: 'sensor', legacy_zone: 'srinagar' }), 'srinagar');
   assert.equal(forecastCity({ id: 'srinagar', provider: 'airgradient' }), 'srinagar');
   assert.equal(forecastCity({ id: 'kashtigarh', kind: 'sensor', legacy_zone: 'doda_town' }), null);
-  assert.equal(forecastCity({ id: 'jammu_city', kind: 'district' }), null);
+  assert.equal(forecastCity({ id: 'jammu_city', kind: 'district' }), 'jammu_city');
+  assert.equal(forecastCity({ id: 'doda_town', kind: 'district' }), null);
   assert.equal(forecastCity({ id: 'jammu_city', kind: 'estimate' }), null);
   assert.equal(forecastCity(null), null);
 });

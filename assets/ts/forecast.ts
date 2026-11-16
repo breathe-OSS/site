@@ -34,7 +34,7 @@ export function initForecastToggle(onChange: () => void): void {
 }
 
 export function forecastCity(zone: Zone | null | undefined): string | null {
-  if (!zone || isEstimate(zone) || zone.kind === 'district') {
+  if (!zone || isEstimate(zone)) {
     return null;
   }
   const city = zone.legacy_zone || zone.id;

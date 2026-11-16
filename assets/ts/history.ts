@@ -311,7 +311,42 @@ function timeLabel(ts: number, bucket: number): string {
     return day;
   }
   const hh = d.getHours() < 10 ? `0${d.getHours()}` : `${d.getHours()}`;
+  if (bucket < 3600) {
+    const mm = d.getMinutes() < 10 ? `0${d.getMinutes()}` : `${d.getMinutes()}`;
+    return `${day} ${hh}:${mm}`;
+  }
   return `${day} ${hh}:00`;
+}
+
+function stepLabel(bucket: number): string {
+  if (bucket >= 86400) {
+    const days = Math.round(bucket / 86400);
+    return days === 1 ? 'daily averages' : `${days} day averages`;
+  }
+  if (bucket === 3600) {
+    return 'hourly';
+  }
+  if (bucket > 3600) {
+    return `${Math.round(bucket / 3600)} hour averages`;
+  }
+  const minutes = Math.max(Math.round(bucket / 60), 1);
+  return minutes === 1 ? 'every minute' : `every ${minutes} minutes`;
+}
+
+function stepUnit(bucket: number): string {
+  if (bucket === 3600) {
+    return 'hours';
+  }
+  if (bucket === 86400) {
+    return 'days';
+  }
+  if (bucket > 86400) {
+    return `${Math.round(bucket / 86400)} day steps`;
+  }
+  if (bucket > 3600) {
+    return `${Math.round(bucket / 3600)} hour steps`;
+  }
+  return `${Math.max(Math.round(bucket / 60), 1)} minute steps`;
 }
 
 function bandColorFor(value: number, bands: number[]): string {
@@ -402,8 +437,7 @@ function renderMainChart(points: Row[]) {
   const subEl = document.getElementById('hist-chart-sub');
   if (titleEl) titleEl.textContent = def.label;
   if (subEl) {
-    const step =
-      bucket >= 86400 ? 'daily averages' : bucket >= 4 * 3600 ? '4 hour averages' : 'hourly';
+    const step = stepLabel(bucket);
     subEl.textContent = `${def.unit}, ${step}${def.bands ? (def.standard === 'india' ? ', shaded by NAQI category' : ', shaded by US AQI category') : ''}`;
   }
 
@@ -666,7 +700,7 @@ function renderSummary(points: Row[]) {
   const coverage = expected > 0 ? Math.min(100, Math.round((rows.length / expected) * 100)) : 0;
   const filterNote =
     weatherFilter === 'all'
-      ? `${coverage}% of ${intervalSeconds(currentInterval) <= 3600 ? 'hours' : 'buckets'} have readings`
+      ? `${coverage}% of ${stepUnit(intervalSeconds(currentInterval))} have readings`
       : `Only ${WEATHER_LABELS[weatherFilter].toLowerCase()} hours, ${points.length} of ${rows.length}`;
 
   host.innerHTML = `

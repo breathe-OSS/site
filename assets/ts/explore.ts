@@ -318,16 +318,36 @@ function paintChips() {
       }
     });
     const averageRow = averageEls[group.key];
+    let avgAqi: number | null = null;
     if (averageRow) {
       const data = byId[averageRow.dataset.placeId || ''];
-      applyChip(averageRow, data ? zoneAqi(data) : null);
+      avgAqi = data ? zoneAqi(data) : null;
+      applyChip(averageRow, avgAqi);
     }
     const head = districtEls[group.key]?.querySelector('.district-head') as HTMLElement | null;
     if (head) {
-      applyChip(head, worst);
-      const chip = head.querySelector(':scope > .explore-aqi') as HTMLElement | null;
-      if (chip && group.places.length > 1 && worst !== null) {
-        chip.title = `Worst in the district: ${chip.title}`;
+      if (group.places.length > 1) {
+        let displayAqi = avgAqi;
+        if (displayAqi === null) {
+          const sensorPlaces = group.places.filter((p) => !isEstimate(p));
+          const targetPlaces = sensorPlaces.length > 0 ? sensorPlaces : group.places;
+          const validAqis = targetPlaces
+            .map((p) => {
+              const d = byId[p.id];
+              return d ? zoneAqi(d) : null;
+            })
+            .filter((val): val is number => val !== null);
+          if (validAqis.length > 0) {
+            displayAqi = Math.round(validAqis.reduce((a, b) => a + b, 0) / validAqis.length);
+          }
+        }
+        applyChip(head, displayAqi);
+        const chip = head.querySelector(':scope > .explore-aqi') as HTMLElement | null;
+        if (chip && displayAqi !== null) {
+          chip.title = `District average: ${chip.title}`;
+        }
+      } else {
+        applyChip(head, worst);
       }
     }
   });

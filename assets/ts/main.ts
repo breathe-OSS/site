@@ -881,11 +881,22 @@ let applyingRoute = false;
 
 function syncUrl(viewName: string) {
   const path = routePath(viewName);
+  const fullUrl = `https://breatheoss.app${routePath(viewName, false)}`;
   document.title = routeTitle(viewName);
-  const canonical = document.querySelector('link[rel="canonical"]');
-  if (canonical) {
-    canonical.setAttribute('href', `https://breatheoss.app${routePath(viewName, false)}`);
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.setAttribute('rel', 'canonical');
+    document.head.appendChild(canonical);
   }
+  canonical.setAttribute('href', fullUrl);
+  let ogUrl = document.querySelector('meta[property="og:url"]');
+  if (!ogUrl) {
+    ogUrl = document.createElement('meta');
+    ogUrl.setAttribute('property', 'og:url');
+    document.head.appendChild(ogUrl);
+  }
+  ogUrl.setAttribute('content', fullUrl);
   if (applyingRoute || path === location.pathname) {
     return;
   }

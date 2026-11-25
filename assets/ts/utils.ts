@@ -6,6 +6,10 @@ export function makeActivatable(el: HTMLElement): void {
   el.setAttribute('tabindex', '0');
 }
 
+export function isPlainClick(e: MouseEvent): boolean {
+  return e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey;
+}
+
 export function initKeyboardActivation(): void {
   const selector = '.settings-item.clickable, .promo-card.clickable';
   document.querySelectorAll<HTMLElement>(selector).forEach((el) => makeActivatable(el));

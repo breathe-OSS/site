@@ -9,6 +9,7 @@ import {
   getAQIStandard,
   getAQIColor,
   aqiTextColor,
+  isPlainClick,
 } from './utils.js';
 import { initMotion, motionEnabled } from './motion.js';
 import { initMapOptions } from './mapoptions.js';
@@ -724,6 +725,17 @@ function openDistrictInExplore(district: string) {
 // navigation logic
 
 (window as any).showView = handleShowView;
+
+function navClick(e: MouseEvent, viewName: string): boolean {
+  if (!isPlainClick(e)) {
+    return true;
+  }
+  e.preventDefault();
+  handleShowView(viewName);
+  return false;
+}
+
+(window as any).navClick = navClick;
 (window as any).toggleReorder = toggleReorder;
 window.addEventListener('resize', drawEmptyHints);
 (window as any).openDetails = openDetails;

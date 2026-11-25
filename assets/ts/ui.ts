@@ -15,6 +15,7 @@ import {
   getHealthAdvice,
 } from './utils.js';
 import { Zone, AQIData, AQIHistory, Pollutants, WeatherInfo, SensorInfo } from './types.js';
+import { areasHeading, placeHeading, placeIntro } from './seo.js';
 import {
   historyAqi,
   isDistrictAverage,
@@ -428,9 +429,35 @@ function sourceIndicatorHtml(zone: Zone, data: AQIData): { html: string; muted: 
   return { html: LIVE_SOURCE_HTML, muted: false };
 }
 
+export function renderPlaceAbout(zone: Zone, members: Zone[]) {
+  const titleHeader = document.getElementById('detail-title-header');
+  if (titleHeader) titleHeader.innerText = placeHeading(zone);
+
+  const introEl = document.getElementById('detail-intro');
+  if (introEl) introEl.textContent = placeIntro(zone, members);
+
+  const areasEl = document.getElementById('detail-areas');
+  const areasTitle = document.getElementById('detail-areas-title');
+  const areasList = document.getElementById('detail-areas-list');
+  if (!areasEl || !areasTitle || !areasList) return;
+  areasEl.classList.toggle('hidden', members.length === 0);
+  areasTitle.textContent = members.length > 0 ? areasHeading(zone) : '';
+  areasList.innerHTML = '';
+  members.forEach((member) => {
+    const item = document.createElement('li');
+    const link = document.createElement('a');
+    link.className = 'place-link';
+    link.href = `/zone/${encodeURIComponent(member.id)}`;
+    link.dataset.placeId = member.id;
+    link.textContent = member.name;
+    item.appendChild(link);
+    areasList.appendChild(item);
+  });
+}
+
 export function updateDetailView(zone: Zone, data: AQIData) {
   const titleHeader = document.getElementById('detail-title-header');
-  if (titleHeader) titleHeader.innerText = zone.name;
+  if (titleHeader) titleHeader.innerText = placeHeading(zone);
 
   const std = getAQIStandard();
   const displayAqi = zoneAqi(data, std);

@@ -19,6 +19,7 @@ const PRECACHE_ASSETS = [
   './assets/js/ui.js',
   './assets/js/utils.js',
   './assets/js/seo.js',
+  './assets/js/districts.js',
   './assets/images/web-icon.webp',
   './assets/images/logo.png',
   './assets/images/icon-192.png',

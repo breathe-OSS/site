@@ -1,4 +1,5 @@
 import { API_URL } from './config.js';
+import { buildDistrictAverages } from './districts.js';
 import { Zone, AQIData, WeatherHistory, SensorInfo, Forecast, ForecastTrackRecord } from './types.js';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -75,29 +76,7 @@ export async function fetchDistrictAverages(places: Zone[]): Promise<Zone[]> {
     }
   }
 
-  const averages: Zone[] = [];
-  legacy.forEach((zone) => {
-    const members = places.filter((p) => p.kind !== 'estimate' && p.legacy_zone === zone.id);
-    if (members.length < 2) {
-      return;
-    }
-    const counts: { [name: string]: number } = {};
-    members.forEach((p) => {
-      const name = p.district || zone.name;
-      counts[name] = (counts[name] || 0) + 1;
-    });
-    const district = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
-    const home = members.find((p) => p.district === district) || members[0];
-    averages.push({
-      ...zone,
-      name: `${district} district average`,
-      kind: 'district',
-      district,
-      division: home.division,
-      sensors: members.length,
-    });
-  });
-  return averages;
+  return buildDistrictAverages(legacy, places);
 }
 
 export async function getZoneAQI(zoneId: string): Promise<AQIData | null> {

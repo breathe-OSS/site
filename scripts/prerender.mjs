@@ -189,10 +189,27 @@ function page(template, opts) {
   return html;
 }
 
+function injectHero(html, heading, intro, bodyHtml = '') {
+  const heroHtml =
+    `<body>\n    <section class="place-hero" id="seo-hero">\n` +
+    `      <h1>${esc(heading)}</h1>\n` +
+    `      <p class="place-intro">${esc(intro)}</p>\n` +
+    (bodyHtml ? `      ${bodyHtml}\n` : '') +
+    `    </section>`;
+
+  html = swap(html, /<body>/, heroHtml);
+  html = swap(
+    html,
+    /<noscript>[\s\S]*?<\/noscript>/,
+    '<noscript><p class="place-hero-noscript">Live readings and charts require JavaScript.</p></noscript>'
+  );
+  return html;
+}
+
 function detailEdit(place, members) {
   return (html) => {
-    const heading = esc(placeHeading(place));
-    const intro = esc(placeIntro(place, members));
+    const heading = placeHeading(place);
+    const intro = placeIntro(place, members);
     const items = members
       .map(
         (m) =>
@@ -203,23 +220,12 @@ function detailEdit(place, members) {
       members.length > 0
         ? `<div class="place-areas"><h2 class="section-title">${esc(areasHeading(place))}</h2><ul class="place-areas-list">${items}</ul></div>`
         : '';
-    const heroHtml =
-      `<body>\n    <section class="place-hero" id="seo-hero">\n` +
-      `      <h1>${heading}</h1>\n` +
-      `      <p class="place-intro">${intro}</p>\n` +
-      (areasHtml ? `      ${areasHtml}\n` : '') +
-      `    </section>`;
 
-    html = swap(html, /<body>/, heroHtml);
-    html = swap(
-      html,
-      /<noscript>[\s\S]*?<\/noscript>/,
-      '<noscript><p class="place-hero-noscript">Live readings and charts require JavaScript.</p></noscript>'
-    );
+    html = injectHero(html, heading, intro, areasHtml);
     html = swap(
       html,
       /<h1 id="detail-title-header">[^<]*<\/h1>/,
-      `<h1 id="detail-title-header">${heading}</h1>`
+      `<h1 id="detail-title-header">${esc(heading)}</h1>`
     );
     html = swap(
       html,
@@ -229,7 +235,7 @@ function detailEdit(place, members) {
     html = swap(
       html,
       /<p class="place-intro" id="detail-intro"><\/p>/,
-      `<p class="place-intro" id="detail-intro">${intro}</p>`
+      `<p class="place-intro" id="detail-intro">${esc(intro)}</p>`
     );
     if (members.length > 0) {
       html = swap(
@@ -295,9 +301,14 @@ write(
 
 ['map', 'explore', 'settings'].forEach((view) => {
   const meta = viewMeta(view);
+  const heading = meta.title.replace(/\s*\|\s*Breathe$/, '');
+  const edit =
+    view === 'settings'
+      ? undefined
+      : (html) => injectHero(html, heading, meta.description, view === 'explore' ? index : '');
   write(
     `${view}.html`,
-    page(template, { route: `/${view}`, ...meta, noindex: view === 'settings', index })
+    page(template, { route: `/${view}`, ...meta, noindex: view === 'settings', index, edit })
   );
 });
 

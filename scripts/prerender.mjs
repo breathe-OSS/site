@@ -147,31 +147,6 @@ function staticIndex(pages) {
   return `<div class="static-index">${sections.join('')}</div>`;
 }
 
-function setView(html, view) {
-  html = swap(
-    html,
-    /<div id="view-dashboard" class="view active-view">/,
-    '<div id="view-dashboard" class="view">'
-  );
-  html = swap(
-    html,
-    new RegExp(`<div id="view-${view}" class="view">`),
-    `<div id="view-${view}" class="view active-view">`
-  );
-  const nav = view === 'details' || view === 'history' ? 'dashboard' : view;
-  if (nav !== 'dashboard') {
-    html = html.replace(/(<a class="(?:nav-btn|nav-item)) active(")/g, '$1$2');
-    html = html.replace(
-      new RegExp(
-        `(<a class="(?:nav-btn|nav-item))(" href="[^"]*" onclick="return navClick\\(event, '${nav}'\\)")`,
-        'g'
-      ),
-      '$1 active$2'
-    );
-  }
-  return html;
-}
-
 function page(template, opts) {
   let html = template;
   const url = opts.route === null ? null : `${SITE_URL}${opts.route}`;
@@ -202,9 +177,6 @@ function page(template, opts) {
   html = swap(html, /<\/head>/, `    ${head.join('\n    ')}\n  </head>`);
   if (opts.ld !== undefined) {
     html = swap(html, /<script type="application\/ld\+json">[\s\S]*?<\/script>/, opts.ld);
-  }
-  if (opts.view && opts.view !== 'dashboard') {
-    html = setView(html, opts.view);
   }
   html = swap(
     html,
@@ -306,7 +278,7 @@ write(
   const meta = viewMeta(view);
   write(
     `${view}.html`,
-    page(template, { route: `/${view}`, ...meta, view, noindex: view === 'settings', index })
+    page(template, { route: `/${view}`, ...meta, noindex: view === 'settings', index })
   );
 });
 
@@ -322,7 +294,6 @@ pages.forEach((place) => {
       title: placeTitle(place),
       description,
       ld: placeLd(place, url, members),
-      view: 'details',
       index,
       edit: detailEdit(place, members),
     })
@@ -336,7 +307,6 @@ pages.forEach((place) => {
         description,
         noindex: true,
         ld: '',
-        view: 'history',
         index,
         edit: historyEdit(place),
       })

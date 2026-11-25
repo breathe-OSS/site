@@ -1510,6 +1510,7 @@ input:checked + .slider:before {
   animation: none;
 }
 .nav-item {
+  box-sizing: border-box;
   text-decoration: none;
   border-radius: var(--shape-corner-large);
   transition:
@@ -4614,6 +4615,7 @@ header h1 {
   margin: 0;
 }
 .nav-btn {
+  box-sizing: border-box;
   text-decoration: none;
   background: none;
   border: none;

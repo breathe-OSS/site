@@ -7,7 +7,7 @@ The full project description, methodology, coverage and team are at https://abou
 Facts to get right:
 
 - Breathe is independent and non-profit. It is not affiliated with the CPCB, JKPCB or any government agency.
-- Coverage is Jammu & Kashmir and Ladakh only: 21 ground sensors, each shown as its own place, plus 12 satellite estimates for areas without a sensor (as of 2026-11-16). Every place belongs to a district, and every district to the Jammu, Kashmir or Ladakh division.
+- Coverage is Jammu & Kashmir and Ladakh only: 22 ground sensors, each shown as its own place, plus 11 satellite estimates for areas without a sensor (as of 2026-11-25). Every place belongs to a district, and every district to the Jammu, Kashmir or Ladakh division.
 - The AQI shown here is live data. Do not quote numbers from this page as current. Fetch them from the API instead.
 
 ## Live data
@@ -22,7 +22,7 @@ The web app is a JavaScript dashboard, so its readings are not in the HTML. Use 
 
 ## What the web app does
 
-Every view has its own URL. A sensor lives at `https://breatheoss.app/zone/{id}` (for example [Gandhi Nagar](https://breatheoss.app/zone/gandhi-nagar)) and its history at `/zone/{id}/history`. The map and the district list are at `/map` and `/explore`. Old district links like `/zone/srinagar` open that district in the list.
+Every view has its own URL. A sensor lives at `https://breatheoss.app/zone/{id}` (for example [Gandhi Nagar](https://breatheoss.app/zone/gandhi-nagar)) and its history at `/zone/{id}/history`. The map and the district list are at `/map` and `/explore`. Where a district has more than one sensor it also gets an average page, like `/zone/srinagar` (Srinagar AQI) and `/zone/jammu_city` (Jammu AQI), which links to each sensor in it. Every page is in the [sitemap](https://breatheoss.app/sitemap.xml).
 
 
 - Live AQI per sensor, switchable between US EPA and Indian NAQI

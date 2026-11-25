@@ -296,6 +296,7 @@ body {
     color var(--motion-color) var(--motion-easing-standard);
   font-family: var(--font-plain);
   font-optical-sizing: auto;
+  touch-action: manipulation;
 }
 :root.theme-changing *,
 :root.theme-changing *::before,

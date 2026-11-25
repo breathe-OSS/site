@@ -16,7 +16,7 @@ export function buildDistrictAverages(legacy: Zone[], places: Zone[]): Zone[] {
     const home = members.find((p) => p.district === district) || members[0];
     averages.push({
       ...zone,
-      name: `${district} district average`,
+      name: `${district} District`,
       kind: 'district',
       district,
       division: home.division,

@@ -3,3 +3,4 @@ assets/js/
 .DS_Store
 Thumbs.db
 .test-build/
+dist/

@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/prerender.mjs",
     "test": "tsc --outDir .test-build && node -e \"require('fs').writeFileSync('.test-build/package.json', '{\\\"type\\\":\\\"module\\\"}')\" && node --import ./tests/setup.mjs --test \"tests/*.test.mjs\"",
     "fmt": "npx prettier --write .",
     "dev": "npx tsc --watch"

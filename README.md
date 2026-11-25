@@ -39,7 +39,7 @@
 - **Rendering:** Vanilla DOM (no framework)
 - **Charts:** Chart.js
 - **Maps:** Leaflet
-- **Build:** tsc
+- **Build:** tsc, then `scripts/prerender.mjs` writes one static page per route into `dist/`
 
 ## Structure
 
@@ -57,6 +57,8 @@
 │       ├── ui.ts       # UI rendering
 │       └── utils.ts    # Helper functions
 ├── privacy/            # Privacy policy page
+├── scripts/
+│   └── prerender.mjs   # Per-route HTML, sitemap, _redirects and 404 into dist/
 └── index.html          # App shell
 ```
 
@@ -80,6 +82,7 @@
 
 4. **Build and Run:**
    - Compile the TypeScript with `npm run dev` (`tsc --watch`), then serve the folder statically, e.g. `npx serve .`
+   - `npm run build` compiles and prerenders into `dist/`. It needs the live API, since every zone gets its own page, and it fails if the API is down. `npx wrangler pages dev dist` serves it the way Cloudflare Pages does.
 
 ## AQI Data Providers
 

@@ -191,10 +191,35 @@ function page(template, opts) {
 
 function detailEdit(place, members) {
   return (html) => {
+    const heading = esc(placeHeading(place));
+    const intro = esc(placeIntro(place, members));
+    const items = members
+      .map(
+        (m) =>
+          `<li><a class="place-link" href="${zoneUrl(m.id)}" data-place-id="${esc(m.id)}">${esc(m.name)}</a></li>`
+      )
+      .join('');
+    const areasHtml =
+      members.length > 0
+        ? `<div class="place-areas"><h2 class="section-title">${esc(areasHeading(place))}</h2><ul class="place-areas-list">${items}</ul></div>`
+        : '';
+    const heroHtml =
+      `<body>\n    <section class="place-hero" id="seo-hero">\n` +
+      `      <h1>${heading}</h1>\n` +
+      `      <p class="place-intro">${intro}</p>\n` +
+      (areasHtml ? `      ${areasHtml}\n` : '') +
+      `    </section>`;
+
+    html = swap(html, /<body>/, heroHtml);
+    html = swap(
+      html,
+      /<noscript>[\s\S]*?<\/noscript>/,
+      '<noscript><p class="place-hero-noscript">Live readings and charts require JavaScript.</p></noscript>'
+    );
     html = swap(
       html,
       /<h1 id="detail-title-header">[^<]*<\/h1>/,
-      `<h1 id="detail-title-header">${esc(placeHeading(place))}</h1>`
+      `<h1 id="detail-title-header">${heading}</h1>`
     );
     html = swap(
       html,
@@ -204,15 +229,9 @@ function detailEdit(place, members) {
     html = swap(
       html,
       /<p class="place-intro" id="detail-intro"><\/p>/,
-      `<p class="place-intro" id="detail-intro">${esc(placeIntro(place, members))}</p>`
+      `<p class="place-intro" id="detail-intro">${intro}</p>`
     );
     if (members.length > 0) {
-      const items = members
-        .map(
-          (m) =>
-            `<li><a class="place-link" href="${zoneUrl(m.id)}" data-place-id="${esc(m.id)}">${esc(m.name)}</a></li>`
-        )
-        .join('');
       html = swap(
         html,
         /<div class="place-areas hidden" id="detail-areas">/,

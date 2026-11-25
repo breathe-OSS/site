@@ -113,6 +113,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   history.replaceState({ depth: 0 }, '', location.pathname);
   applyRoute(parseRoute(location.pathname));
+  document.body.classList.add('js-ready');
   window.addEventListener('popstate', () => {
     applyRoute(parseRoute(location.pathname));
   });

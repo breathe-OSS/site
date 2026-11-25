@@ -286,7 +286,20 @@ COPY.forEach((entry) => {
   fs.cpSync(path.join(ROOT, entry), path.join(OUT, entry), { recursive: true });
 });
 
-write('index.html', page(template, { route: '/', ...viewMeta('dashboard'), index }));
+const homeHero = (html) =>
+  injectHero(
+    html,
+    'Live air quality for Jammu & Kashmir and Ladakh',
+    'Breathe (BreatheOSS) is a free, open-source air quality network for Jammu & Kashmir and Ladakh. Real-time AQI comes from our own AirGradient ground sensors, with CAMS satellite fallback where there is no sensor, shown in both US EPA AQI and Indian NAQI, with a live map and history for every district in the Jammu, Kashmir and Ladakh divisions.',
+    '<ul class="place-areas-list">' +
+      '<li><a class="place-link" href="/zone/srinagar">Srinagar AQI</a></li>' +
+      '<li><a class="place-link" href="/zone/jammu_city">Jammu AQI</a></li>' +
+      '<li><a class="place-link" href="/explore">AQI by district</a></li>' +
+      '<li><a class="place-link" href="/map">Live map</a></li>' +
+      '</ul>'
+  );
+
+write('index.html', page(template, { route: '/', ...viewMeta('dashboard'), index, edit: homeHero }));
 write(
   '404.html',
   page(template, {

@@ -12,6 +12,7 @@ import {
   isPlainClick,
 } from './utils.js';
 import { initMotion, motionEnabled } from './motion.js';
+import { districtMembers, historyTitle, placeDescription, placeTitle, viewMeta } from './seo.js';
 import { initMapOptions } from './mapoptions.js';
 import {
   closeForecastRecord,
@@ -26,6 +27,7 @@ import { getPanelZoneId, setPanelPinned, closeZonePanel, refreshZonePanel } from
 import {
   renderDashboardCard,
   updateDetailView,
+  renderPlaceAbout,
   updateChartTheme,
   renderSkeletonCard,
 } from './ui.js';
@@ -92,6 +94,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     openPlace: (id) => openDetails(id),
   });
   initHistory(handleShowView, () => allZones);
+  document.getElementById('detail-areas-list')?.addEventListener('click', (e) => {
+    const link = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[data-place-id]');
+    if (!link || !isPlainClick(e)) {
+      return;
+    }
+    e.preventDefault();
+    openDetails(link.dataset.placeId!);
+  });
 
   allZones = await fetchZones();
   districtZones = await fetchDistrictAverages(allZones);
@@ -116,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     document.title = getPanelZoneId()
       ? `${allZones.find((z) => z.id === getPanelZoneId())?.name ?? 'Zone'} on the map | Breathe`
-      : routeTitle('map');
+      : routeMeta('map').title;
   });
 
   // Listen for custom event from map detail sheet
@@ -701,14 +711,24 @@ async function openDetails(zoneId: string) {
     resetDetailReadings();
     lastDetailZoneId = zoneId;
   }
-  handleShowView('details');
   const zone = findZone(zoneId);
+  if (zone) {
+    renderPlaceAbout(zone, membersOf(zone));
+  }
+  handleShowView('details');
   if (!zone) return;
 
   const data = await getZoneAQI(zoneId);
   if (data) {
     updateDetailView(zone, data);
   }
+}
+
+function membersOf(zone: Zone): Zone[] {
+  if (zone.kind !== 'district') {
+    return [];
+  }
+  return districtMembers(zone, allZones);
 }
 
 function openHistoryView() {
@@ -803,8 +823,6 @@ interface Route {
   zoneId: string | null;
 }
 
-const DEFAULT_TITLE = document.title;
-
 function parseRoute(pathname: string): Route {
   const parts = pathname.split('/').filter((part) => part.length > 0);
   if (parts[0] === 'zone' && parts[1]) {
@@ -863,30 +881,29 @@ function syncRawUrl() {
   }
 }
 
-function routeTitle(viewName: string): string {
-  const zoneName = (id: string | null) => findZone(id)?.name;
+function routeMeta(viewName: string): { title: string; description: string } {
   if (viewName === 'details') {
-    const name = zoneName(currentZoneId);
-    if (name) {
-      return `${name} air quality right now | Breathe`;
+    const zone = findZone(currentZoneId);
+    if (zone) {
+      return { title: placeTitle(zone), description: placeDescription(zone, membersOf(zone)) };
     }
   }
   if (viewName === 'history') {
-    const name = zoneName(historyZoneId());
-    if (name) {
-      return `${name} air quality history | Breathe`;
+    const zone = findZone(historyZoneId());
+    if (zone) {
+      return { title: historyTitle(zone), description: placeDescription(zone, membersOf(zone)) };
     }
   }
-  if (viewName === 'map') {
-    return 'Air quality map of Jammu & Kashmir and Ladakh | Breathe';
+  return viewMeta(viewName) || viewMeta('dashboard')!;
+}
+
+function setHeadTag(selector: string, tag: string, attrs: { [name: string]: string }) {
+  let el = document.querySelector(selector);
+  if (!el) {
+    el = document.createElement(tag);
+    document.head.appendChild(el);
   }
-  if (viewName === 'explore') {
-    return 'Sensors by district | Breathe';
-  }
-  if (viewName === 'settings') {
-    return 'Settings | Breathe';
-  }
-  return DEFAULT_TITLE;
+  Object.keys(attrs).forEach((name) => el!.setAttribute(name, attrs[name]));
 }
 
 let applyingRoute = false;
@@ -894,21 +911,19 @@ let applyingRoute = false;
 function syncUrl(viewName: string) {
   const path = routePath(viewName);
   const fullUrl = `https://breatheoss.app${routePath(viewName, false)}`;
-  document.title = routeTitle(viewName);
-  let canonical = document.querySelector('link[rel="canonical"]');
-  if (!canonical) {
-    canonical = document.createElement('link');
-    canonical.setAttribute('rel', 'canonical');
-    document.head.appendChild(canonical);
-  }
-  canonical.setAttribute('href', fullUrl);
-  let ogUrl = document.querySelector('meta[property="og:url"]');
-  if (!ogUrl) {
-    ogUrl = document.createElement('meta');
-    ogUrl.setAttribute('property', 'og:url');
-    document.head.appendChild(ogUrl);
-  }
-  ogUrl.setAttribute('content', fullUrl);
+  const meta = routeMeta(viewName);
+  document.title = meta.title;
+  setHeadTag('link[rel="canonical"]', 'link', { rel: 'canonical', href: fullUrl });
+  setHeadTag('meta[property="og:url"]', 'meta', { property: 'og:url', content: fullUrl });
+  setHeadTag('meta[name="description"]', 'meta', {
+    name: 'description',
+    content: meta.description,
+  });
+  setHeadTag('meta[property="og:title"]', 'meta', { property: 'og:title', content: meta.title });
+  setHeadTag('meta[property="og:description"]', 'meta', {
+    property: 'og:description',
+    content: meta.description,
+  });
   if (applyingRoute || path === location.pathname) {
     return;
   }

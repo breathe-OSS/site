@@ -1510,6 +1510,7 @@ input:checked + .slider:before {
   animation: none;
 }
 .nav-item {
+  text-decoration: none;
   border-radius: var(--shape-corner-large);
   transition:
     color var(--motion-duration-short3) var(--motion-easing-standard),
@@ -4072,6 +4073,10 @@ header .icon-btn + h1 {
   border-top: 1px solid var(--outline-variant);
   cursor: pointer;
 }
+.place-link {
+  color: inherit;
+  text-decoration: none;
+}
 .place-name {
   font-size: 15px;
 }
@@ -4609,6 +4614,7 @@ header h1 {
   margin: 0;
 }
 .nav-btn {
+  text-decoration: none;
   background: none;
   border: none;
   cursor: pointer;

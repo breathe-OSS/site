@@ -4,6 +4,7 @@ import {
   getAQICategory,
   getAQIColor,
   getAQIStandard,
+  isPlainClick,
   makeActivatable,
 } from './utils.js';
 import { isEstimate, zoneAqi } from './readings.js';
@@ -123,6 +124,24 @@ function pinButton(place: Zone): HTMLButtonElement {
   return btn;
 }
 
+function placeLinkHtml(id: string, text: string): string {
+  return `<a class="place-link" href="/zone/${encodeURIComponent(id)}">${text}</a>`;
+}
+
+function bindPlaceLink(el: HTMLElement) {
+  const link = el.querySelector<HTMLAnchorElement>('.place-link');
+  if (!link) {
+    return;
+  }
+  link.addEventListener('click', (e) => {
+    if (isPlainClick(e)) {
+      e.preventDefault();
+    } else {
+      e.stopPropagation();
+    }
+  });
+}
+
 function placeKindHtml(place: Zone): string {
   if (place.kind === 'district') {
     return `Average of ${place.sensors} sensors`;
@@ -143,12 +162,13 @@ function buildPlaceRow(place: Zone): HTMLElement {
   row.setAttribute('aria-label', `Open ${place.name}`);
   row.innerHTML = `
     <div class="place-text">
-      <div class="place-name">${place.kind === 'district' ? 'District average' : place.name}</div>
+      <div class="place-name">${placeLinkHtml(place.id, place.kind === 'district' ? 'District average' : place.name)}</div>
       <div class="place-kind">${placeKindHtml(place)}</div>
     </div>
     ${chipHtml()}
   `;
   row.appendChild(pinButton(place));
+  bindPlaceLink(row);
   row.addEventListener('click', () => handlers?.openPlace(place.id));
   makeActivatable(row);
   placeEls[place.id] = row;
@@ -177,7 +197,7 @@ function buildDistrict(group: DistrictGroup, index: number): HTMLElement {
   head.setAttribute('tabindex', '0');
   head.innerHTML = `
     <div class="district-text">
-      <div class="district-name">${group.district} district</div>
+      <div class="district-name">${single ? placeLinkHtml(group.places[0].id, `${group.district} district`) : `${group.district} district`}</div>
       <div class="district-sub">${single && !isEstimate(group.places[0]) ? '<span class="status-indicator"></span> ' : ''}${districtSummary(group)}</div>
     </div>
     ${chipHtml()}
@@ -190,6 +210,7 @@ function buildDistrict(group: DistrictGroup, index: number): HTMLElement {
     head.dataset.placeName = place.name;
     head.setAttribute('aria-label', `Open ${place.name}`);
     head.appendChild(pinButton(place));
+    bindPlaceLink(head);
     head.addEventListener('click', () => handlers?.openPlace(place.id));
     placeEls[place.id] = head;
   } else {

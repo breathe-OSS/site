@@ -127,22 +127,22 @@
         <span class="brand-name">Breathe</span>
       </div>
       <div class="nav-links">
-        <button class="nav-btn active" onclick="showView('dashboard')" id="side-dashboard">
+        <a class="nav-btn active" href="/" onclick="return navClick(event, 'dashboard')" id="side-dashboard">
           <span class="nav-indicator"><span class="msr" aria-hidden="true">home</span></span>
           <span class="nav-label">Home</span>
-        </button>
-        <button class="nav-btn" onclick="showView('map')" id="side-map">
+        </a>
+        <a class="nav-btn" href="/map" onclick="return navClick(event, 'map')" id="side-map">
           <span class="nav-indicator"><span class="msr" aria-hidden="true">map</span></span>
           <span class="nav-label">Map</span>
-        </button>
-        <button class="nav-btn" onclick="showView('explore')" id="side-explore">
+        </a>
+        <a class="nav-btn" href="/explore" onclick="return navClick(event, 'explore')" id="side-explore">
           <span class="nav-indicator"><span class="msr" aria-hidden="true">explore</span></span>
           <span class="nav-label">Explore</span>
-        </button>
-        <button class="nav-btn" onclick="showView('settings')" id="side-settings">
+        </a>
+        <a class="nav-btn" href="/settings" onclick="return navClick(event, 'settings')" id="side-settings">
           <span class="nav-indicator"><span class="msr" aria-hidden="true">settings</span></span>
           <span class="nav-label">Settings</span>
-        </button>
+        </a>
       </div>
     </nav>
 
@@ -1028,22 +1028,22 @@
     </div>
 
     <nav class="bottom-nav mobile-only-flex" aria-label="Main">
-      <button class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard">
+      <a class="nav-item active" href="/" onclick="return navClick(event, 'dashboard')" id="nav-dashboard">
         <span class="nav-indicator"><span class="msr" aria-hidden="true">home</span></span>
         <span class="nav-label">Home</span>
-      </button>
-      <button class="nav-item" onclick="showView('map')" id="nav-map">
+      </a>
+      <a class="nav-item" href="/map" onclick="return navClick(event, 'map')" id="nav-map">
         <span class="nav-indicator"><span class="msr" aria-hidden="true">map</span></span>
         <span class="nav-label">Map</span>
-      </button>
-      <button class="nav-item" onclick="showView('explore')" id="nav-explore">
+      </a>
+      <a class="nav-item" href="/explore" onclick="return navClick(event, 'explore')" id="nav-explore">
         <span class="nav-indicator"><span class="msr" aria-hidden="true">explore</span></span>
         <span class="nav-label">Explore</span>
-      </button>
-      <button class="nav-item" onclick="showView('settings')" id="nav-settings">
+      </a>
+      <a class="nav-item" href="/settings" onclick="return navClick(event, 'settings')" id="nav-settings">
         <span class="nav-indicator"><span class="msr" aria-hidden="true">settings</span></span>
         <span class="nav-label">Settings</span>
-      </button>
+      </a>
     </nav>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

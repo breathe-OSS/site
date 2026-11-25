@@ -379,6 +379,9 @@ write(
     .join('\n')}\n</urlset>\n`
 );
 
+const INDEXNOW_KEY = 'ada7ed50e8d2452bb798c69fba7e1d6c';
+write(`${INDEXNOW_KEY}.txt`, INDEXNOW_KEY);
+
 console.log(
   `prerendered ${pages.length} places, ${districts.length} districts, ${redirects.length} redirects`
 );

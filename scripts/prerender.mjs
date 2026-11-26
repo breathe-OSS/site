@@ -147,6 +147,33 @@ function staticIndex(pages) {
   return `<div class="static-index">${sections.join('')}</div>`;
 }
 
+const VIEWS = ['dashboard', 'details', 'history', 'map', 'explore', 'settings'];
+
+function templateInactiveViews(html, activeView) {
+  const marks = VIEWS.map((v) => ({ v, at: html.indexOf(`<div id="view-${v}"`) }));
+  marks.forEach((m) => {
+    if (m.at < 0) throw new Error(`view-${m.v} missing from index.html`);
+  });
+  for (let i = 1; i < marks.length; i++) {
+    if (marks[i].at < marks[i - 1].at) throw new Error('view order changed in index.html');
+  }
+  const mainEnd = html.indexOf('</main>');
+  if (mainEnd < marks[marks.length - 1].at) throw new Error('</main> not found after views');
+
+  for (let i = marks.length - 1; i >= 0; i--) {
+    const { v, at } = marks[i];
+    if (v === activeView) continue;
+    const end = i + 1 < marks.length ? marks[i + 1].at : mainEnd;
+    html =
+      html.slice(0, at) +
+      `<template data-view="${v}">` +
+      html.slice(at, end) +
+      '</template>' +
+      html.slice(end);
+  }
+  return html;
+}
+
 function page(template, opts) {
   let html = template;
   const url = opts.route === null ? null : `${SITE_URL}${opts.route}`;
@@ -186,6 +213,9 @@ function page(template, opts) {
   if (opts.edit) {
     html = opts.edit(html);
   }
+  if (opts.activeView) {
+    html = templateInactiveViews(html, opts.activeView);
+  }
   return html;
 }
 
@@ -224,8 +254,8 @@ function detailEdit(place, members) {
     html = injectHero(html, heading, intro, areasHtml);
     html = swap(
       html,
-      /<h1 id="detail-title-header">[^<]*<\/h1>/,
-      `<h1 id="detail-title-header">${esc(heading)}</h1>`
+      /<h2 class="view-title" id="detail-title-header">[^<]*<\/h2>/,
+      `<h2 class="view-title" id="detail-title-header">${esc(heading)}</h2>`
     );
     html = swap(
       html,
@@ -262,8 +292,8 @@ function historyEdit(place) {
   return (html) =>
     swap(
       html,
-      /<h1 id="history-title-header">[^<]*<\/h1>/,
-      `<h1 id="history-title-header">${esc(place.name)} History</h1>`
+      /<h2 class="view-title" id="history-title-header">[^<]*<\/h2>/,
+      `<h2 class="view-title" id="history-title-header">${esc(place.name)} History</h2>`
     );
 }
 
@@ -299,7 +329,16 @@ const homeHero = (html) =>
       '</ul>'
   );
 
-write('index.html', page(template, { route: '/', ...viewMeta('dashboard'), index, edit: homeHero }));
+write(
+  'index.html',
+  page(template, {
+    route: '/',
+    ...viewMeta('dashboard'),
+    activeView: 'dashboard',
+    index,
+    edit: homeHero,
+  })
+);
 write(
   '404.html',
   page(template, {
@@ -308,6 +347,7 @@ write(
     description: 'This page does not exist on Breathe.',
     noindex: true,
     ld: '',
+    activeView: 'dashboard',
     index,
   })
 );
@@ -321,7 +361,14 @@ write(
       : (html) => injectHero(html, heading, meta.description, view === 'explore' ? index : '');
   write(
     `${view}.html`,
-    page(template, { route: `/${view}`, ...meta, noindex: view === 'settings', index, edit })
+    page(template, {
+      route: `/${view}`,
+      ...meta,
+      noindex: view === 'settings',
+      activeView: view,
+      index,
+      edit,
+    })
   );
 });
 
@@ -337,6 +384,7 @@ pages.forEach((place) => {
       title: placeTitle(place),
       description,
       ld: placeLd(place, url, members),
+      activeView: 'details',
       index,
       edit: detailEdit(place, members),
     })
@@ -350,6 +398,7 @@ pages.forEach((place) => {
         description,
         noindex: true,
         ld: '',
+        activeView: 'history',
         index,
         edit: historyEdit(place),
       })

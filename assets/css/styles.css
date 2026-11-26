@@ -3553,7 +3553,7 @@ textarea:focus-visible,
     font-size: 22px;
   }
 }
-header .icon-btn + h1 {
+header .icon-btn + .view-title {
   margin-left: 8px;
   margin-right: auto;
 }
@@ -3754,7 +3754,7 @@ header .icon-btn + h1 {
   flex: 1;
   min-width: 0;
 }
-.header-titles h1 {
+.header-titles .view-title {
   margin: 0;
 }
 .header-sub {
@@ -4575,7 +4575,8 @@ select,
 textarea {
   font-family: inherit;
 }
-h1 {
+h1,
+.view-title {
   font-family: var(--font-brand);
 }
 .aqi-display-large {
@@ -4592,7 +4593,7 @@ h1 {
   font-weight: 700;
   color: var(--on-surface);
 }
-header h1 {
+header .view-title {
   font-size: 32px;
   line-height: 40px;
   font-weight: 600;

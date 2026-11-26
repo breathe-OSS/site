@@ -150,10 +150,10 @@
       <div id="view-dashboard" class="view active-view">
         <header>
           <div class="header-title">
-            <h1 class="desktop-only">Dashboard</h1>
-            <h1 class="mobile-only">
+            <h2 class="view-title desktop-only">Dashboard</h2>
+            <h2 class="view-title mobile-only">
               Breathe <img src="assets/images/logo.png" alt="Logo" class="app-logo" />
-            </h1>
+            </h2>
           </div>
 
           <div class="header-actions">
@@ -217,7 +217,7 @@
               <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
             </svg>
           </button>
-          <h1 id="detail-title-header">Location</h1>
+          <h2 class="view-title" id="detail-title-header">Location</h2>
           <span class="header-aqi" id="detail-header-aqi" aria-hidden="true"></span>
         </header>
 
@@ -372,7 +372,7 @@
             </svg>
           </button>
           <div class="header-titles">
-            <h1 id="history-title-header">Location History</h1>
+            <h2 class="view-title" id="history-title-header">Location History</h2>
             <div class="header-sub" id="history-place-line"></div>
           </div>
         </header>
@@ -589,7 +589,7 @@
 
       <div id="view-settings" class="view">
         <header>
-          <h1>Settings</h1>
+          <h2 class="view-title">Settings</h2>
         </header>
         <div class="content-scroll settings-content">
           <div class="settings-section-title">Appearance</div>
@@ -1055,6 +1055,11 @@
     </nav>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+      document.querySelectorAll('template[data-view]').forEach(function (t) {
+        t.replaceWith(t.content.cloneNode(true));
+      });
+    </script>
     <script type="module" src="assets/js/main.js"></script>
   </body>
 </html>
